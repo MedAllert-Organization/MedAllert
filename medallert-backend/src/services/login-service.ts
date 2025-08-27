@@ -2,7 +2,7 @@ import * as z from "zod";
 import * as argon2 from "argon2";
 import { error, ok } from "try";
 import type { PromiseResult } from "../common/type-helpers.js";
-import { findUser } from "../repositories/users.js";
+import type { UsersRepository } from "../repositories/users.js";
 import type { JWTProvider } from "../common/jwt.js";
 
 export const LoginSchema = z.object({
@@ -20,14 +20,13 @@ export type LoginType = z.infer<typeof LoginSchema>;
 
 type Token = string;
 export class LoginService {
-  constructor(private tokenProvider: JWTProvider) {}
+  constructor(
+    private readonly usersRepository: UsersRepository,
+    private readonly tokenProvider: JWTProvider,
+  ) {}
 
   async execute({ email, password }: LoginType): PromiseResult<Token> {
-    if (!findUser(email)) {
-      return error("Cant find user account");
-    }
-
-    const user = findUser(email);
+    const user = await this.usersRepository.findUser(email);
     if (!user) {
       return error("Invalid user");
     }

@@ -7,6 +7,7 @@ import {
   LoginService,
 } from "../../services/login-service.js";
 import { defaultTokenProvider } from "../../common/jwt.js";
+import { defaultUsersRepository } from "../../repositories/users.js";
 
 export const login = new Hono();
 
@@ -32,7 +33,10 @@ login.post(
   async (c) => {
     const userCandidate = c.req.valid("json");
 
-    const service = new LoginService(defaultTokenProvider);
+    const service = new LoginService(
+      defaultUsersRepository,
+      defaultTokenProvider,
+    );
 
     const [ok, error, token] = await service.execute(userCandidate);
     if (!(ok && token)) {
