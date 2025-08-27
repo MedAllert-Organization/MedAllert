@@ -1,12 +1,13 @@
 import { Hono } from "hono";
-import { logger } from "hono/logger";
-import { health } from "./routes/health.js";
-import { requestId } from "hono/request-id";
 import { hello } from "./routes/hello.js";
+import { configureOpenAPIDocs } from "./routes/open-api.js";
+import { auth, authMiddleware } from "./routes/auth.js";
 
 export const app = new Hono();
 
-app.use(logger());
-app.use("*", requestId());
+configureOpenAPIDocs(app);
+app.route("/auth", auth);
+
+/// Authenticated Routes
+app.use(authMiddleware);
 app.route("/", hello);
-app.route("/health", health);

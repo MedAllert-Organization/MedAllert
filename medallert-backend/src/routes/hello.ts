@@ -3,25 +3,26 @@ import * as z from "zod";
 import { describeRoute } from "hono-openapi";
 import { resolver } from "hono-openapi/zod";
 
-export const hello = new Hono();
-
-const responseSchema = z.string();
+export const hello = new Hono<{ Variables: { userId?: string } }>();
 
 hello.get(
-  "/",
+  "/hello",
   describeRoute({
     description: "Hello Endpoint",
-    validateResponse: true,
     responses: {
       200: {
         description: "Successful response",
         content: {
-          "text/plain": { schema: resolver(responseSchema) },
+          "text/plain": { schema: resolver(z.string()) },
         },
+      },
+      401: {
+        description: "User must be logged in",
       },
     },
   }),
   (c) => {
+    console.log(c.get("userId"));
     return c.text("Hello world");
   },
 );

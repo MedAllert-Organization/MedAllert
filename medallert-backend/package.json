@@ -10,6 +10,8 @@
   "dependencies": {
     "@hono/node-server": "1.19.0",
     "@hono/swagger-ui": "0.5.2",
+    "argon2": "0.44.0",
+    "dayjs": "1.11.13",
     "hono": "4.9.2",
     "hono-openapi": "0.4.8",
     "install": "0.13.0",
