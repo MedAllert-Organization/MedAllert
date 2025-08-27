@@ -16,6 +16,7 @@
     "hono-openapi": "0.4.8",
     "install": "0.13.0",
     "resend": "6.0.1",
+    "try": "1.0.0-beta.10",
     "twilio": "5.8.0",
     "zod": "3.25.76",
     "zod-openapi": "4.2.4"
