@@ -31,7 +31,7 @@ export function configureOpenAPIDocs(honoServerInstance: Hono) {
   );
 
   honoServerInstance.get(
-    "/",
+    "/swagger",
     basicAuth({ username: "dev", password: "dev" }),
     swaggerUI({ url: "/openapi" }),
   );
