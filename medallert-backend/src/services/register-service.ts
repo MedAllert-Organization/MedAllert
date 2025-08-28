@@ -7,26 +7,26 @@ import type { LoginType } from "./login-service.js";
 import type { EmailTransport } from "../common/email-transport.js";
 
 export class RegisterService {
-  constructor(
-    private readonly usersRepository: UsersRepository,
-    private readonly emailTransport: EmailTransport,
-  ) {}
+	constructor(
+		private readonly usersRepository: UsersRepository,
+		private readonly emailTransport: EmailTransport,
+	) {}
 
-  async execute({ email, password }: LoginType): PromiseResult<User> {
-    if (await this.usersRepository.findUserByEmail(email)) {
-      return error("User already has an account");
-    }
-    const hash = await argon2.hash(password);
-    const user: User = { id: randomUUID(), email, hash };
-    await this.usersRepository.addUser(user);
-    await this.emailTransport.sendEmail({
-      to: email,
-      subject: "Cadastro no MedAllert",
-      body: `
+	async execute({ email, password }: LoginType): PromiseResult<User> {
+		if (await this.usersRepository.findUserByEmail(email)) {
+			return error("User already has an account");
+		}
+		const hash = await argon2.hash(password);
+		const user: User = { id: randomUUID(), email, hash };
+		await this.usersRepository.addUser(user);
+		await this.emailTransport.sendEmail({
+			to: email,
+			subject: "Cadastro no MedAllert",
+			body: `
       Você se cadastrou no MedAllert.
       Seja bem vindo(a)!
       `,
-    });
-    return ok(user);
-  }
+		});
+		return ok(user);
+	}
 }

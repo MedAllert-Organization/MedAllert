@@ -9,30 +9,30 @@ import { defaultEmailTransport } from "../../common/email-transport.js";
 export const register = new Hono();
 
 register.post(
-  "/register",
-  describeRoute({
-    description: "Hello Endpoint",
-    responses: {
-      201: {
-        description: "Successful user registration",
-      },
-      400: {
-        description: "Invalid user registration",
-      },
-    },
-  }),
-  validator("json", LoginSchema),
-  async (c) => {
-    const userCandidate = c.req.valid("json");
-    const service = new RegisterService(
-      defaultUsersRepository,
-      defaultEmailTransport,
-    );
-    const [ok, error, user] = await service.execute(userCandidate);
-    if (!(ok && user)) {
-      console.error(error);
-      return c.text("", 400);
-    }
-    return c.text("", 201);
-  },
+	"/register",
+	describeRoute({
+		description: "Hello Endpoint",
+		responses: {
+			201: {
+				description: "Successful user registration",
+			},
+			400: {
+				description: "Invalid user registration",
+			},
+		},
+	}),
+	validator("json", LoginSchema),
+	async (c) => {
+		const userCandidate = c.req.valid("json");
+		const service = new RegisterService(
+			defaultUsersRepository,
+			defaultEmailTransport,
+		);
+		const [ok, error, user] = await service.execute(userCandidate);
+		if (!(ok && user)) {
+			console.error(error);
+			return c.text("", 400);
+		}
+		return c.text("", 201);
+	},
 );

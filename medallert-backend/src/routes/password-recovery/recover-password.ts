@@ -10,35 +10,38 @@ import { defaultEmailTransport } from "../../common/email-transport.js";
 export const requestRecovery = new Hono<Env>();
 
 requestRecovery.post(
-  "/",
-  describeRoute({
-    description: "Starts password recovery flow by sending an code via email",
-    responses: {
-      200: {
-        description: "Successfully sent code",
-      },
-      401: {
-        description: "Invalid login",
-      },
-      500: {
-        description: "Internal error, check logs",
-      },
-    },
-  }),
-  async (c) => {
-    const userId = c.get("userId");
-    if (!userId) return c.text("", 401);
-    const service = new PasswordRecoveryService(
-      defaultCodeProvider,
-      defaultPasswordHasher,
-      defaultUsersRepository,
-      defaultEmailTransport,
-    );
-    const [ok, error] = await service.createAndSendRecoveryCode(userId);
-    if (!ok || error) {
-      console.error(error);
-      return c.text("", 500);
-    }
-    return c.text("", 200);
-  },
+	"/",
+	describeRoute({
+		description: "Starts password recovery flow by sending an code via email",
+		responses: {
+			200: {
+				description: "Successfully sent code",
+			},
+			401: {
+				description: "Invalid login",
+			},
+			429: {
+				description: "User should wait to generate another code",
+			},
+			500: {
+				description: "Internal error, check logs",
+			},
+		},
+	}),
+	async (c) => {
+		const userId = c.get("userId");
+		if (!userId) return c.text("", 401);
+		const service = new PasswordRecoveryService(
+			defaultCodeProvider,
+			defaultPasswordHasher,
+			defaultUsersRepository,
+			defaultEmailTransport,
+		);
+		const [ok, error] = await service.createAndSendRecoveryCode(userId);
+		if (!ok || error) {
+			console.error(error);
+			return c.text("", (error as string).includes("wait") ? 429 : 500);
+		}
+		return c.text("", 200);
+	},
 );
