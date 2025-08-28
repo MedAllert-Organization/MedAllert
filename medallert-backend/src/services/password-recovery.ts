@@ -4,6 +4,7 @@ import type { PromiseResult } from "../common/type-helpers.js";
 import type { UsersRepository } from "../repositories/users.js";
 import * as z from "zod";
 import type { PasswordHasher } from "../common/password-hash.js";
+import type { EmailTransport } from "../common/email-transport.js";
 
 export const ChangePasswordRequest = z.object({
   code: z.string().length(6, "O Código deve possuir 6 dígitos"),
@@ -21,15 +22,34 @@ export class PasswordRecoveryService {
     private readonly codeProvider: PasswordRecoveryCodeProvider,
     private readonly passwordHahser: PasswordHasher,
     private readonly usersRepository: UsersRepository,
+    private readonly emailTransport: EmailTransport,
   ) {}
 
   async createAndSendRecoveryCode(userId: string): PromiseResult<string> {
-    const responseResult = await t(this.codeProvider.generateCode(userId));
-    if (!responseResult.ok) {
+    const [codeOk, _, generated] = await t(
+      this.codeProvider.generateCode(userId),
+    );
+    if (!codeOk && !generated) {
       return error("failed to create code");
     }
-    console.log("generated code:\n", responseResult.value);
-    return ok(responseResult.value.id);
+
+    const [userOk, __, user] = await t(this.usersRepository.findUser(userId));
+    if (!userOk || !user) {
+      return error("Failed to find user");
+    }
+    const [emailOk] = await t(
+      this.emailTransport.sendEmail({
+        to: user.email,
+        subject: "Solicitacão de Recuperação de senha",
+        body: `
+Você solicitou a recuperação da senha da sua conta.
+O seu código é: ${generated.value}`,
+      }),
+    );
+    if (!emailOk) {
+      return error("failed to send email");
+    }
+    return ok(generated.id);
   }
 
   async confirmCodeAndChangePassword(

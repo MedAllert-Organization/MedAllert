@@ -9,13 +9,14 @@ import {
   PasswordRecoveryService,
 } from "../../services/password-recovery.js";
 import { defaultPasswordHasher } from "../../common/password-hash.js";
+import { defaultEmailTransport } from "../../common/email-transport.js";
 
 export const changePassword = new Hono<Env>();
 
 changePassword.post(
   "/change-password",
   describeRoute({
-    description: "Use recovery code for change password",
+    description: "Use recovery code for changing password",
     responses: {
       200: {
         description: "Successfully confirmed code and changed password",
@@ -37,6 +38,7 @@ changePassword.post(
       defaultCodeProvider,
       defaultPasswordHasher,
       defaultUsersRepository,
+      defaultEmailTransport,
     );
     const [ok, error] = await service.confirmCodeAndChangePassword(
       userId,

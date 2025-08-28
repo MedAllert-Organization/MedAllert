@@ -5,16 +5,17 @@ import { defaultCodeProvider } from "../../common/password-recovery-code.js";
 import { defaultUsersRepository } from "../../repositories/users.js";
 import { PasswordRecoveryService } from "../../services/password-recovery.js";
 import { defaultPasswordHasher } from "../../common/password-hash.js";
+import { defaultEmailTransport } from "../../common/email-transport.js";
 
 export const requestRecovery = new Hono<Env>();
 
 requestRecovery.post(
   "/",
   describeRoute({
-    description: "Starts password recovery flow",
+    description: "Starts password recovery flow by sending an code via email",
     responses: {
       200: {
-        description: "Successfully sent codes",
+        description: "Successfully sent code",
       },
       401: {
         description: "Invalid login",
@@ -31,9 +32,13 @@ requestRecovery.post(
       defaultCodeProvider,
       defaultPasswordHasher,
       defaultUsersRepository,
+      defaultEmailTransport,
     );
-    const [ok] = await service.createAndSendRecoveryCode(userId);
-    if (!ok) return c.text("", 500);
+    const [ok, error] = await service.createAndSendRecoveryCode(userId);
+    if (!ok || error) {
+      console.error(error);
+      return c.text("", 500);
+    }
     return c.text("", 200);
   },
 );
