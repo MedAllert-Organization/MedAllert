@@ -1,5 +1,3 @@
-import * as argon2 from "argon2";
-
 export type User = {
   id: string;
   email: string;
@@ -23,11 +21,7 @@ class InMemoryUsersRepository implements UsersRepository {
     this.users.push(newUser);
   }
 
-  async updatePasswordForUser(
-    userId: string,
-    newPassword: string,
-  ): Promise<void> {
-    const hash = await argon2.hash(newPassword);
+  async updatePasswordForUser(userId: string, hash: string): Promise<void> {
     const idx = this.users.findIndex((u) => u.id === userId);
     if (idx !== -1) {
       const previousUser = this.users[idx];

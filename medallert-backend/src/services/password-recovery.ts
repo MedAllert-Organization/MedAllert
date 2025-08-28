@@ -3,6 +3,7 @@ import type { PasswordRecoveryCodeProvider } from "../common/password-recovery-c
 import type { PromiseResult } from "../common/type-helpers.js";
 import type { UsersRepository } from "../repositories/users.js";
 import * as z from "zod";
+import type { PasswordHasher } from "../common/password-hash.js";
 
 export const ChangePasswordRequest = z.object({
   code: z.string().length(6, "O Código deve possuir 6 dígitos"),
@@ -18,6 +19,7 @@ export type ChangePasswordRequestType = z.infer<typeof ChangePasswordRequest>;
 export class PasswordRecoveryService {
   constructor(
     private readonly codeProvider: PasswordRecoveryCodeProvider,
+    private readonly passwordHahser: PasswordHasher,
     private readonly usersRepository: UsersRepository,
   ) {}
 
@@ -38,8 +40,12 @@ export class PasswordRecoveryService {
     if (!confirmOk) {
       return error("could not confirm code");
     }
+    const [hashOk, _, hash] = await t(this.passwordHahser.hash(newPassword));
+    if (!hashOk && !hash) {
+      return error("could not hash password");
+    }
     const [updatePasswordOk] = await t(
-      this.usersRepository.updatePasswordForUser(userId, newPassword),
+      this.usersRepository.updatePasswordForUser(userId, hash),
     );
     if (!updatePasswordOk) {
       return error("could not update password");
