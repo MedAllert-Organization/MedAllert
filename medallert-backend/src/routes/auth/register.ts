@@ -29,7 +29,6 @@ register.post(
       console.error(error);
       return c.text("", 400);
     }
-    console.log("created: ---\n", user);
     return c.text("", 201);
   },
 );
