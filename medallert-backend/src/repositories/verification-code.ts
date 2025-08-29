@@ -1,25 +1,31 @@
 import { randomBytes, randomUUID } from "node:crypto";
 import dayjs from "dayjs";
 
-type Code = {
+type CodeType = "VERIFICATION" | "RECOVERY";
+
+type VerificationCode = {
   id: string;
   userId: string;
   value: string;
+  type: CodeType;
   expiresAt: Date;
   confirmedAt?: Date;
 };
 
-export interface PasswordRecoveryCodeProvider {
-  generateCode(userId: string): Promise<Code>;
-  confirmCode(userId: string, value: string): Promise<void>;
+export interface VerificationCodeRepository {
+  generateCode(userId: string, type: CodeType): Promise<VerificationCode>;
+  confirmCode(userId: string, value: string, type: CodeType): Promise<void>;
   canGenerateNextRecoveryCode(userId: string): Promise<boolean>;
 }
 
-class InmemoryCodeProvider implements PasswordRecoveryCodeProvider {
-  codes: Code[] = [];
+class InmemoryVerificationCodeRepository implements VerificationCodeRepository {
+  codes: VerificationCode[] = [];
 
-  async generateCode(userId: string): Promise<Code> {
-    const code = this.makeCode(userId);
+  async generateCode(
+    userId: string,
+    type: CodeType,
+  ): Promise<VerificationCode> {
+    const code = this.makeCode(userId, type);
     this.codes.push(code);
     return code;
   }
@@ -31,16 +37,18 @@ class InmemoryCodeProvider implements PasswordRecoveryCodeProvider {
   }
 
   async canGenerateNextRecoveryCode(userId: string): Promise<boolean> {
-    const latest = this.getLastTokenGenerated(userId);
+    const latest = this.getLastGeneratedRecoveryCode(userId);
     if (latest) {
       return dayjs().isAfter(dayjs(latest.expiresAt));
     }
     return true;
   }
 
-  private getLastTokenGenerated(userId: string) {
+  private getLastGeneratedRecoveryCode(userId: string) {
     const latest = this.codes
-      .filter((c) => c.userId === userId)
+      .filter(
+        (c) => c.userId === userId && c.type === "RECOVERY" && !c.confirmedAt,
+      )
       .sort((a, b) => b.expiresAt.getTime() - a.expiresAt.getTime())
       .reverse()
       .at(0);
@@ -52,18 +60,25 @@ class InmemoryCodeProvider implements PasswordRecoveryCodeProvider {
     return value;
   }
 
-  private makeCode(userId: string): Code {
+  private makeCode(
+    userId: string,
+    type: CodeType = "RECOVERY",
+  ): VerificationCode {
     const expiresAt = dayjs().add(15, "minutes").toDate();
-    const code: Code = {
+    const code: VerificationCode = {
       id: randomUUID(),
       userId,
+      type,
       value: this.makeSixDigitsCodeValue(),
       expiresAt,
     };
     return code;
   }
 
-  private findCodeByValue(userId: string, value: string): Code | undefined {
+  private findCodeByValue(
+    userId: string,
+    value: string,
+  ): VerificationCode | undefined {
     const isValid = (test: Date) => dayjs().isBefore(dayjs(test));
     const code = this.codes.find(
       (t) =>
@@ -79,10 +94,13 @@ class InmemoryCodeProvider implements PasswordRecoveryCodeProvider {
     const idx = this.codes.findIndex((c) => c.id === codeId);
     if (idx !== -1) {
       const previousCode = this.codes[idx];
-      const confirmed: Code = { ...previousCode, confirmedAt: new Date() };
+      const confirmed: VerificationCode = {
+        ...previousCode,
+        confirmedAt: new Date(),
+      };
       this.codes[idx] = confirmed;
     }
   }
 }
 
-export const defaultCodeProvider = new InmemoryCodeProvider();
+export const defaultCodeRepository = new InmemoryVerificationCodeRepository();

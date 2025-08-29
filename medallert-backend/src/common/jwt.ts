@@ -1,7 +1,8 @@
 import dayjs from "dayjs";
 import { sign, verify } from "hono/jwt";
 
-const jwtSecret = "";
+// FIXME: this is temporary, should be an environment variable
+const jwtSecret = "7a6f364276826368377671a70250efcf8cd47a76ffb0aab2";
 
 type Token = string;
 type TokenPayload = unknown;

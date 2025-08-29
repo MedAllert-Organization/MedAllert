@@ -4,37 +4,40 @@ import { validator } from "hono-openapi/zod";
 import { defaultEmailTransport } from "../../common/email-transport.js";
 import { defaultUsersRepository } from "../../repositories/users.js";
 import { defaultCodeRepository } from "../../repositories/verification-code.js";
-import { LoginSchema } from "../../services/login-service.js";
-import { RegisterService } from "../../services/register-service.js";
+import {
+  ConfirmAccountRequest,
+  RegisterService,
+} from "../../services/register-service.js";
 
-export const register = new Hono();
+export const confirm = new Hono();
 
-register.post(
-  "/register",
+confirm.post(
+  "/confirm-account",
   describeRoute({
-    description: "Register a new user",
+    description: "Confirm the code sent via email",
     responses: {
-      201: {
-        description: "Successful user registration",
+      200: {
+        description: "Successful user confirmation",
       },
-      400: {
-        description: "Invalid user registration",
+      500: {
+        description: "Internal server error",
       },
     },
   }),
-  validator("json", LoginSchema),
+  validator("json", ConfirmAccountRequest),
   async (c) => {
-    const userCandidate = c.req.valid("json");
+    const confirmationRequest = c.req.valid("json");
     const service = new RegisterService(
       defaultUsersRepository,
       defaultCodeRepository,
       defaultEmailTransport,
     );
-    const [ok, error, user] = await service.registerUser(userCandidate);
+    const [ok, error, user] =
+      await service.confirmUserAccount(confirmationRequest);
     if (!(ok && user)) {
       console.error(error);
       return c.text("", 400);
     }
-    return c.text("", 201);
+    return c.text("", 200);
   },
 );

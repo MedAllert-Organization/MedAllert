@@ -1,20 +1,20 @@
 import { Hono } from "hono";
 import { describeRoute } from "hono-openapi";
 import { validator } from "hono-openapi/zod";
-import { defaultEmailTransport } from "../../common/email-transport.js";
-import { defaultPasswordHasher } from "../../common/password-hash.js";
-import { defaultCodeProvider } from "../../common/password-recovery-code.js";
-import type { Env } from "../../common/type-helpers.js";
-import { defaultUsersRepository } from "../../repositories/users.js";
+import { defaultEmailTransport } from "../../../common/email-transport.js";
+import { defaultPasswordHasher } from "../../../common/password-hash.js";
+import type { Env } from "../../../common/type-helpers.js";
+import { defaultUsersRepository } from "../../../repositories/users.js";
+import { defaultCodeRepository } from "../../../repositories/verification-code.js";
 import {
   ChangePasswordRequest,
   PasswordRecoveryService,
-} from "../../services/password-recovery.js";
+} from "../../../services/password-recovery.js";
 
 export const changePassword = new Hono<Env>();
 
 changePassword.post(
-  "/change-password",
+  "/",
   describeRoute({
     description: "Use recovery code for changing password",
     responses: {
@@ -33,7 +33,7 @@ changePassword.post(
   async (c) => {
     const request = c.req.valid("json");
     const service = new PasswordRecoveryService(
-      defaultCodeProvider,
+      defaultCodeRepository,
       defaultPasswordHasher,
       defaultUsersRepository,
       defaultEmailTransport,

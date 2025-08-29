@@ -2,9 +2,9 @@ import { error, ok, t } from "try";
 import * as z from "zod";
 import type { EmailTransport } from "../common/email-transport.js";
 import type { PasswordHasher } from "../common/password-hash.js";
-import type { PasswordRecoveryCodeProvider } from "../common/password-recovery-code.js";
 import type { PromiseResult } from "../common/type-helpers.js";
 import type { UsersRepository } from "../repositories/users.js";
+import type { VerificationCodeRepository } from "../repositories/verification-code.js";
 
 export const ChangePasswordRequest = z.object({
   code: z.string().length(6, "O Código deve possuir 6 dígitos"),
@@ -24,7 +24,7 @@ export const RecoveryCodeRequest = z.object({
 
 export class PasswordRecoveryService {
   constructor(
-    private readonly codeProvider: PasswordRecoveryCodeProvider,
+    private readonly codeRepository: VerificationCodeRepository,
     private readonly passwordHahser: PasswordHasher,
     private readonly usersRepository: UsersRepository,
     private readonly emailTransport: EmailTransport,
@@ -32,13 +32,13 @@ export class PasswordRecoveryService {
 
   async createAndSendRecoveryCode(email: string): PromiseResult<string> {
     const [userOk, ___, user] = await t(
-      this.usersRepository.findUserByEmail(email),
+      this.usersRepository.findUnverifiedUserByEmail(email),
     );
     if (!userOk || !user) {
       return error("Failed to find user");
     }
     const [canGenerateOk, _, canGenerate] = await t(
-      this.codeProvider.canGenerateNextRecoveryCode(user.id),
+      this.codeRepository.canGenerateNextRecoveryCode(user.id),
     );
     if (!canGenerateOk || !canGenerate) {
       return error(
@@ -46,7 +46,7 @@ export class PasswordRecoveryService {
       );
     }
     const [codeOk, __, generated] = await t(
-      this.codeProvider.generateCode(user.id),
+      this.codeRepository.generateCode(user.id, "RECOVERY"),
     );
     if (!codeOk || !generated) {
       return error("failed to create code");
@@ -72,13 +72,15 @@ O seu código é: ${generated.value}`,
     email,
   }: ChangePasswordRequestType): PromiseResult<string> {
     const [userOk, _, user] = await t(
-      this.usersRepository.findUserByEmail(email),
+      this.usersRepository.findUnverifiedUserByEmail(email),
     );
     if (!userOk || !user) {
       return error("Failed to find user");
     }
 
-    const [confirmOk] = await t(this.codeProvider.confirmCode(user.id, code));
+    const [confirmOk] = await t(
+      this.codeRepository.confirmCode(user.id, code, "RECOVERY"),
+    );
     if (!confirmOk) {
       return error("could not confirm code");
     }
