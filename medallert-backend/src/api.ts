@@ -1,8 +1,8 @@
 import { Hono } from "hono";
-import { hello } from "./routes/hello.js";
-import { configureOpenAPIDocs } from "./routes/open-api.js";
-import { authMiddleware } from "./routes/middleware/auth-middleware.js";
 import { auth } from "./routes/auth/index.js";
+import { hello } from "./routes/hello.js";
+import { authMiddleware } from "./routes/middleware/auth-middleware.js";
+import { configureOpenAPIDocs } from "./routes/open-api.js";
 import { passwordRecovery } from "./routes/password-recovery/index.js";
 
 export const app = new Hono();
