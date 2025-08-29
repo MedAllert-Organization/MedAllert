@@ -9,7 +9,7 @@ export const app = new Hono();
 
 configureOpenAPIDocs(app);
 app.route("/auth", auth);
+app.route("/recover-password", passwordRecovery);
 /// Authenticated Routes
 app.use(authMiddleware);
-app.route("/recover-password", passwordRecovery);
 app.route("/", hello);

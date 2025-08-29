@@ -8,6 +8,7 @@ import type { UsersRepository } from "../repositories/users.js";
 
 export const ChangePasswordRequest = z.object({
   code: z.string().length(6, "O Código deve possuir 6 dígitos"),
+  email: z.string().min(1, "Email é obrigatório").email("Email inválido"),
   newPassword: z
     .string()
     .min(8, "Senha deve possuir 8 caracteres")
@@ -17,6 +18,10 @@ export const ChangePasswordRequest = z.object({
 
 export type ChangePasswordRequestType = z.infer<typeof ChangePasswordRequest>;
 
+export const RecoveryCodeRequest = z.object({
+  email: z.string().min(1, "Email é obrigatório").email("Email inválido"),
+});
+
 export class PasswordRecoveryService {
   constructor(
     private readonly codeProvider: PasswordRecoveryCodeProvider,
@@ -25,9 +30,15 @@ export class PasswordRecoveryService {
     private readonly emailTransport: EmailTransport,
   ) {}
 
-  async createAndSendRecoveryCode(userId: string): PromiseResult<string> {
+  async createAndSendRecoveryCode(email: string): PromiseResult<string> {
+    const [userOk, ___, user] = await t(
+      this.usersRepository.findUserByEmail(email),
+    );
+    if (!userOk || !user) {
+      return error("Failed to find user");
+    }
     const [canGenerateOk, _, canGenerate] = await t(
-      this.codeProvider.canGenerateNextRecoveryCode(userId),
+      this.codeProvider.canGenerateNextRecoveryCode(user.id),
     );
     if (!canGenerateOk || !canGenerate) {
       return error(
@@ -35,15 +46,10 @@ export class PasswordRecoveryService {
       );
     }
     const [codeOk, __, generated] = await t(
-      this.codeProvider.generateCode(userId),
+      this.codeProvider.generateCode(user.id),
     );
     if (!codeOk || !generated) {
       return error("failed to create code");
-    }
-
-    const [userOk, ___, user] = await t(this.usersRepository.findUser(userId));
-    if (!userOk || !user) {
-      return error("Failed to find user");
     }
     const [emailOk] = await t(
       this.emailTransport.sendEmail({
@@ -60,20 +66,28 @@ O seu código é: ${generated.value}`,
     return ok(generated.id);
   }
 
-  async confirmCodeAndChangePassword(
-    userId: string,
-    { code, newPassword }: ChangePasswordRequestType,
-  ): PromiseResult<string> {
-    const [confirmOk] = await t(this.codeProvider.confirmCode(userId, code));
+  async confirmCodeAndChangePassword({
+    code,
+    newPassword,
+    email,
+  }: ChangePasswordRequestType): PromiseResult<string> {
+    const [userOk, _, user] = await t(
+      this.usersRepository.findUserByEmail(email),
+    );
+    if (!userOk || !user) {
+      return error("Failed to find user");
+    }
+
+    const [confirmOk] = await t(this.codeProvider.confirmCode(user.id, code));
     if (!confirmOk) {
       return error("could not confirm code");
     }
-    const [hashOk, _, hash] = await t(this.passwordHahser.hash(newPassword));
+    const [hashOk, __, hash] = await t(this.passwordHahser.hash(newPassword));
     if (!hashOk && !hash) {
       return error("could not hash password");
     }
     const [updatePasswordOk] = await t(
-      this.usersRepository.updatePasswordForUser(userId, hash),
+      this.usersRepository.updatePasswordForUser(user.id, hash),
     );
     if (!updatePasswordOk) {
       return error("could not update password");

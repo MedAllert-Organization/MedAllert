@@ -31,8 +31,6 @@ changePassword.post(
   }),
   validator("json", ChangePasswordRequest),
   async (c) => {
-    const userId = c.get("userId");
-    if (!userId) return c.text("", 401);
     const request = c.req.valid("json");
     const service = new PasswordRecoveryService(
       defaultCodeProvider,
@@ -40,10 +38,7 @@ changePassword.post(
       defaultUsersRepository,
       defaultEmailTransport,
     );
-    const [ok, error] = await service.confirmCodeAndChangePassword(
-      userId,
-      request,
-    );
+    const [ok, error] = await service.confirmCodeAndChangePassword(request);
     if (!ok || error) return c.text("", 403);
     return c.text("", 200);
   },
