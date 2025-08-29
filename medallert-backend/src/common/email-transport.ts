@@ -15,7 +15,8 @@ Development Email Transport:
 =========================
 To: ${to}
 Subject: ${subject}
-Body: ${body}`);
+Body: ${body}
+=========================`);
   }
 }
 

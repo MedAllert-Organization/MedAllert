@@ -9,7 +9,6 @@ export const authMiddleware = createMiddleware(async (c, next) => {
     defaultTokenProvider.validateToken(token ?? ""),
   );
   if (!(ok && result)) {
-    console.error("token validation error");
     return c.text("", 401);
   }
   const verified = result as { sub: string };
