@@ -1,24 +1,38 @@
 import { swaggerUI } from "@hono/swagger-ui";
-import { openAPISpecs } from "hono-openapi";
-import { app } from "../api.js";
+import type { Hono } from "hono";
 import { basicAuth } from "hono/basic-auth";
+import { openAPISpecs } from "hono-openapi";
 
-app.get(
-  "/openapi",
-  openAPISpecs(app, {
-    documentation: {
-      info: {
-        title: "MedAlert API",
-        version: "1.0.0",
-        description: "MedAlert",
+export function configureOpenAPIDocs(honoServerInstance: Hono) {
+  honoServerInstance.get(
+    "/openapi",
+    openAPISpecs(honoServerInstance, {
+      documentation: {
+        info: {
+          title: "MedAlert API",
+          version: "1.0.0",
+          description: "MedAlert",
+        },
+        servers: [
+          { url: "http://localhost:3000", description: "Local Backend" },
+        ],
+        components: {
+          securitySchemes: {
+            bearerAuth: {
+              type: "http",
+              scheme: "bearer",
+              bearerFormat: "JWT",
+            },
+          },
+        },
+        security: [{ bearerAuth: [] }],
       },
-      servers: [{ url: "http://localhost:3000", description: "Local Server" }],
-    },
-  }),
-);
+    }),
+  );
 
-app.get(
-  "/swagger",
-  basicAuth({ username: "dev", password: "dev" }),
-  swaggerUI({ url: "/openapi" }),
-);
+  honoServerInstance.get(
+    "/swagger",
+    basicAuth({ username: "dev", password: "dev" }),
+    swaggerUI({ url: "/openapi" }),
+  );
+}

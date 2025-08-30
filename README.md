@@ -41,8 +41,8 @@ npm run dev
 
 - Endereço da API: `http://localhost:3000`
 - Swagger `http://localhost:3000/swagger`
-  - usuário: dev
-  - senha: dev
+  - usuário: `dev`
+  - senha: `dev`
 
 #### **Build (_Docker_)**
 
