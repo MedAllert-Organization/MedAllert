@@ -5,4 +5,4 @@ RUN npm ci
 COPY --chown=node:node . .
 USER node
 RUN npm run build
-CMD ["node", "dist/index.js","npm","touch"]
+CMD ["node", "dist/index.js"]
