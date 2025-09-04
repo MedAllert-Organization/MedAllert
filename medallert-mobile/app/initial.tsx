@@ -1,14 +1,15 @@
-import InitialMedicineComponent from "@/components/initial-medicine-component";
-import Colors from "@/constants/Colors";
-import React from "react";
+import React, { useState } from "react";
 import { useColorScheme, ScrollView, Text, View, TouchableOpacity, Switch, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
-
+import InitialMedicineComponent from "@/components/initial-medicine-component";
+import Colors from "@/constants/Colors";
 
 export default function Initial() {
     const colorScheme = useColorScheme();
     const theme = Colors[colorScheme ?? "light"];
+
+    const [outOfUsualTimeZone, setOutOfUsualTimeZone] = useState(false);
 
     const medicines = [
         { name: "Z", taken: 1, total: 1, time: "09:35" },
@@ -19,8 +20,11 @@ export default function Initial() {
 
     return (
         <View style={{ flex: 1 }}>
-            <LinearGradient colors={["#70c8ffff", theme.background, theme.background]} style={{ flex: 1 }}>
-                <SafeAreaView style={{ flex: 1, padding: 15}}>
+            <LinearGradient
+                colors={["#61AEF0", colorScheme === "dark" ? "#1a1a1a" : "#f2f2f2", colorScheme === "dark" ? "#1a1a1a" : "#f2f2f2"]}
+                style={{ flex: 1 }}
+            >
+                <SafeAreaView style={{ flex: 1, padding: 15 }}>
                     {/* Header */}
                     <View style={styles.header}>
                         <Text style={[styles.title, { color: theme.text }]}>Summary</Text>
@@ -32,12 +36,14 @@ export default function Initial() {
                         <View style={styles.section}>
                             <Text style={[styles.sectionTitle, { color: theme.text }]}>Important</Text>
 
-                            <View style={[styles.card, { backgroundColor: theme.background}]}>
-                                <View style={styles.row}>
-                                    <Switch value={true} onValueChange={() => { }} />
-                                    <Text style={[{ color: theme.text }]}>
-                                        You seem to be away from your usual time zone. Would you like to temporarily
-                                        change your current time zone?
+                            <View style={[styles.card, { backgroundColor: theme.background }]}>
+                                <View style={styles.toggleRow}>
+                                    <Switch
+                                        value={outOfUsualTimeZone}
+                                        onValueChange={(value) => setOutOfUsualTimeZone(value)}
+                                    />
+                                    <Text style={[styles.toggleText, { color: theme.text }]}>
+                                        You seem to be away from your usual time zone. Would you like to temporarily change your current time zone?
                                     </Text>
                                 </View>
                             </View>
@@ -47,14 +53,14 @@ export default function Initial() {
                         <View style={styles.section}>
                             <Text style={[styles.sectionTitle, { color: theme.text }]}>Medicine</Text>
 
-                            <View style={[styles.card, , { backgroundColor: theme.background}]}>
+                            <View style={[styles.card, { backgroundColor: theme.background }]}>
                                 <Text style={[styles.subTitle, { color: theme.text }]}>Today</Text>
                                 {medicines.map((m, idx) => (
                                     <InitialMedicineComponent key={idx} {...m} />
                                 ))}
                             </View>
 
-                            <TouchableOpacity style={[styles.addButton, { backgroundColor: theme.background, borderColor: theme.tint }]}>
+                            <TouchableOpacity style={[styles.addButton, { backgroundColor: theme.background, borderColor: theme.background }]}>
                                 <Text style={{ color: theme.text, fontWeight: "600" }}>＋ Add med</Text>
                             </TouchableOpacity>
                         </View>
@@ -62,7 +68,6 @@ export default function Initial() {
                 </SafeAreaView>
             </LinearGradient>
         </View>
-
     );
 }
 
@@ -86,6 +91,8 @@ const styles = StyleSheet.create({
         elevation: 2,
     },
     row: { flexDirection: "row", alignItems: "flex-start" },
+    toggleRow: { flexDirection: "row", alignItems: "flex-start", gap: 12 }, // gap adiciona espaço entre switch e texto
+    toggleText: { flex: 1, fontSize: 14, lineHeight: 20 },
     addButton: {
         marginTop: 8,
         padding: 14,
