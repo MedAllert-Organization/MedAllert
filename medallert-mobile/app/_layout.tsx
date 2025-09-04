@@ -18,7 +18,7 @@ export default function RootLayout() {
       </Stack> 
       : 
       <Stack>
-         <Stack.Screen name="(tabs)/_layout" options={{ headerShown: false}} />
+         <Stack.Screen name="login" options={{ headerShown: false}} />
       </Stack>}
     </ThemeProvider>
   );

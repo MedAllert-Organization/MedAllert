@@ -1,16 +1,18 @@
 // import
 import { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, KeyboardAvoidingView, Platform } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, KeyboardAvoidingView, Platform, useColorScheme } from "react-native";
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { LinearGradient } from "expo-linear-gradient";
 import Colors from "../constants/Colors";
 
 // funcao de login
 export default function Login() {
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
-  // router para transitar entre telas
   const router = useRouter();
+  const colorScheme = useColorScheme();
+  const theme = Colors[colorScheme ?? "light"];
 
   // tratamento de erro
   const handleLogin = () => {
@@ -20,51 +22,61 @@ export default function Login() {
     }
 
     Alert.alert("Login", `Email: ${email}\nSenha: ${password}`);
-
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: Colors.light.background }}>
-      <KeyboardAvoidingView
-        style={styles.container}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
+    <View style={{ flex: 1 }}>
+      <LinearGradient
+        colors={[
+          "#61AEF0",
+          colorScheme === "dark" ? "#1a1a1a" : "#f2f2f2",
+          colorScheme === "dark" ? "#1a1a1a" : "#f2f2f2"
+        ]}
+        style={{ flex: 1 }}
       >
-        <Text style={styles.title}>MedAllert</Text>
-        <Text style={styles.subtitle}>Bem-vindo! Faça login para continuar.</Text>
+        <SafeAreaView style={{ flex: 1 }}>
+          <KeyboardAvoidingView
+            style={styles.container}
+            behavior={Platform.OS === "ios" ? "padding" : undefined}
+          >
+            <Text style={[styles.title, { color: theme.tint }]}>MedAllert</Text>
+            <Text style={[styles.subtitle, { color: theme.text }]}>
+              Bem-vindo! Faça login para continuar.
+            </Text>
 
-        <TextInput
-          style={styles.input}
-          placeholder="E-mail"
-          placeholderTextColor="#999"
-          value={email}
-          onChangeText={setEmail}
-          keyboardType="email-address"
-          autoCapitalize="none"
-        />
+            <TextInput
+              style={styles.input}
+              placeholder="E-mail"
+              placeholderTextColor="#999"
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
 
-        <TextInput
-          style={styles.input}
-          placeholder="Senha"
-          placeholderTextColor="#999"
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-        />
+            <TextInput
+              style={styles.input}
+              placeholder="Senha"
+              placeholderTextColor="#999"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+            />
 
-        <TouchableOpacity style={styles.button} onPress={handleLogin}>
-          <Text style={styles.buttonText}>Entrar</Text>
-        </TouchableOpacity>
+            <TouchableOpacity style={styles.button} onPress={handleLogin}>
+              <Text style={styles.buttonText}>Entrar</Text>
+            </TouchableOpacity>
 
-        <TouchableOpacity onPress={() => router.push("/create-account")}>
-          <Text style={styles.forgotLink}>Esqueci minha senha</Text>
-        </TouchableOpacity>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+            <TouchableOpacity onPress={() => router.push("/create-account")}>
+              <Text style={[styles.forgotLink, { color: theme.tint }]}>Esqueci minha senha</Text>
+            </TouchableOpacity>
+          </KeyboardAvoidingView>
+        </SafeAreaView>
+      </LinearGradient>
+    </View>
   );
 }
 
-
- // TO-DO: Colocar o style para um arquivo separado posteriormente (Renan)
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -74,13 +86,11 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 36,
     fontWeight: "bold",
-    color: Colors.light.tint,
     textAlign: "center",
     marginBottom: 5,
   },
   subtitle: {
     fontSize: 16,
-    color: "#555",
     textAlign: "center",
     marginBottom: 30,
   },
@@ -91,7 +101,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginBottom: 15,
     paddingHorizontal: 15,
-    backgroundColor: Colors.light.background,
+    backgroundColor: "#fff",
   },
   button: {
     height: 50,
@@ -102,12 +112,11 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   buttonText: {
-    color: Colors.light.background,
+    color: "#fff",
     fontSize: 18,
     fontWeight: "bold",
   },
   forgotLink: {
-    color: Colors.light.tint,
     textAlign: "center",
     marginTop: 10,
   },
