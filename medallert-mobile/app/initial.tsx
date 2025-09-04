@@ -12,10 +12,10 @@ export default function Initial() {
     const [outOfUsualTimeZone, setOutOfUsualTimeZone] = useState(false);
 
     const medicines = [
-        { name: "Z", taken: 1, total: 1, time: "09:35" },
-        { name: "X", taken: 0, total: 1, time: "13:22" },
-        { name: "A", taken: 0, total: 2, time: "13:25" },
-        { name: "C", taken: 1, total: 2, time: "19:22" },
+        { name: "Omeprasol", taken: 1, total: 1, time: "09:35" },
+        { name: "Paracetamol", taken: 0, total: 1, time: "13:22" },
+        { name: "Dipirona", taken: 0, total: 2, time: "13:25" },
+        { name: "Complexo B", taken: 1, total: 2, time: "19:22" },
     ];
 
     return (
@@ -50,20 +50,11 @@ export default function Initial() {
                         </View>
 
                         {/* Medicine Section */}
-                        <View style={styles.section}>
-                            <Text style={[styles.sectionTitle, { color: theme.text }]}>Medicine</Text>
+                        <Text style={[styles.sectionTitle, { color: theme.text }]}>
+                            Medicine
+                        </Text>
+                        <InitialMedicineComponent medicines={medicines} />
 
-                            <View style={[styles.card, { backgroundColor: theme.background }]}>
-                                <Text style={[styles.subTitle, { color: theme.text }]}>Today</Text>
-                                {medicines.map((m, idx) => (
-                                    <InitialMedicineComponent key={idx} {...m} />
-                                ))}
-                            </View>
-
-                            <TouchableOpacity style={[styles.addButton, { backgroundColor: theme.background, borderColor: theme.background }]}>
-                                <Text style={{ color: theme.text, fontWeight: "600" }}>＋ Add med</Text>
-                            </TouchableOpacity>
-                        </View>
                     </ScrollView>
                 </SafeAreaView>
             </LinearGradient>
