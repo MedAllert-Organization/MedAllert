@@ -14,7 +14,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Users{
+model Users {
   user_id   Int @id @default(autoincrement())
   full_name String 
   email     String @unique
@@ -24,78 +24,80 @@ model Users{
   accepted_tos_at DateTime @default(now())
   account_confirmed_at DateTime? @default(now())
   created_at DateTime @default(now())
-  updated_at  DateTime @updated_at
+  updated_at DateTime @updatedAt
 }
 
-model verification_codes{
+model verification_codes {
   code_id Int @id @default(autoincrement())
   user_id Int 
-  user_ID Users @relation(fields: [user_id], references:[user_id])
+  user    Users @relation(fields: [user_id], references: [user_id])
   value String
   code_type String
   confirmed_at DateTime? @default(now())
   expires_at DateTime @default(now())
   created_at DateTime @default(now())
-  updated_at DateTime @updated_at
+  updated_at DateTime @updatedAt
 }
 
-model medications{
+model medications {
   medication_id Int @id @default(autoincrement())
   user_id Int
-  user_ID Users @relation(fields: [user_id], references[user_id])
+  user    Users @relation(fields: [user_id], references: [user_id])
   name String
   dose String?
   description String?
   visual_type_id Int
-  visual_type_ID visual_types @relation(fields:[visual_type_id],references[visual_id])
+  visual_type   visual_types @relation(fields:[visual_type_id], references: [visual_id])
   sound_type_id Int
-  sound_type_ID sound_types @relation(fields:[sound_type_id],references[sound_id])
-  alert_period_in_hours Integer
+  sound_type    sound_types  @relation(fields:[sound_type_id], references: [sound_id])
+  alert_period_in_hours Int
   end_treatment_at DateTime? @default(now())
   created_at DateTime @default(now())
-  updated_at DateTime @updated_at
+  updated_at DateTime @updatedAt
 }
 
-model notifications{
+model notifications {
   notification_id Int @id @default(autoincrement())
   medication_id Int
-  medication_ID medications @relation(fields: [medication_id], references[medication_id])
+  medication    medications @relation(fields: [medication_id], references: [medication_id])
   name String
   alert_at DateTime @default(now())
   sound_id Int
   created_at DateTime @default(now())
-  updated_at DateTime @updated_at
+  updated_at DateTime @updatedAt
 }
 
-model annotations{
+model annotations {
   annotation_id Int @id @default(autoincrement())
   medication_id Int
-  medication_ID medications @relation(fields:[medication_id], references[medication_id])
+  medication    medications @relation(fields:[medication_id], references: [medication_id])
   content String
   created_at DateTime @default(now())
-  updated_at DateTime @updated_at
+  updated_at DateTime @updatedAt
 }
 
-model sharings{
+model sharings {
   sharing_id Int @id @default(autoincrement())
   patient_id Int
-  patient_ID Users @relation(fields:[patient_id],references[user_id])
   caretaker_id Int
-  caretaker_ID Users @relation(fields:[caretaker_id],references[user_id])
+
+  patient   Users @relation(fields:[patient_id], references: [user_id])
+  caretaker Users @relation(fields:[caretaker_id], references: [user_id])
+
   created_at DateTime @default(now())
-  updated_at DateTime @updated_at
+  updated_at DateTime @updatedAt
 }
 
-model visual_types{
+model visual_types {
   visual_id Int @id @default(autoincrement())
   visual String
   created_at DateTime @default(now())
-  updated_at DateTime @updated_at
+  updated_at DateTime @updatedAt
 }
 
-model sound_types{
+model sound_types {
   sound_id Int @id @default(autoincrement())
   sound String
   created_at DateTime @default(now())
-  updated_at DateTime @updated_at
+  updated_at DateTime @updatedAt
 }
