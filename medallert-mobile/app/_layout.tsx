@@ -1,49 +1,24 @@
-import {
-  DarkTheme,
-  DefaultTheme,
-  ThemeProvider,
-} from "@react-navigation/native";
+import React from "react";
+import { DarkTheme, DefaultTheme, ThemeProvider } from "@react-navigation/native";
 import { Stack } from "expo-router";
-import "react-native-reanimated";
-
 import { useColorScheme } from "@/components/useColorScheme";
 
-export { ErrorBoundary } from "expo-router";
-
-export const unstable_settings = {
-  // initialRouteName: "login",
-  initialRoutesName: "initial"
-};
-
 export default function RootLayout() {
-  return <RootLayoutNav />;
-}
-
-// FIXME: this is temporary
-const isLoggedIn = false;
-
-function RootLayoutNav() {
   const colorScheme = useColorScheme();
+  const theme = colorScheme === "dark" ? DarkTheme : DefaultTheme;
+
+  const isLoggedIn = true;
 
   return (
-    <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Protected guard={!isLoggedIn}>
-          <Stack.Screen name="initial" options={{ headerShown: false }} />
-          <Stack.Screen name="login" options={{ headerShown: true }} />
-          <Stack.Screen name="select-user-type" options={{ headerShown: true }}/>
-          <Stack.Screen name="create-account" options={{ headerShown: true }} />
-          <Stack.Screen name="terms-of-use" options={{ headerShown: true }} />
-          <Stack.Screen name="verify-email" options={{ headerShown: true }} />
-          <Stack.Screen name="verify-number" options={{ headerShown: true }} />
-          <Stack.Screen name="recover-account" options={{ headerShown: true }}/>
-          <Stack.Screen name="recover-code" options={{ headerShown: true }} />
-          <Stack.Screen name="reset-password" options={{ headerShown: true }} />
-        </Stack.Protected>
-        <Stack.Protected guard={isLoggedIn}>
-            {/* <Stack.Screen name="initial" options={{ headerShown: false }} /> */}
-        </Stack.Protected>
-      </Stack>
+    <ThemeProvider value={theme}>
+      {isLoggedIn ? <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="(tabs)/_layout" />
+        <Stack.Screen name="login" options={{ headerShown: true }} />
+        <Stack.Screen name="select-user-type" options={{ headerShown: true }} />
+        <Stack.Screen name="create-account" options={{ headerShown: true }} />
+      </Stack> : <Stack>
+        <Stack.Screen name="login" options={{ headerShown: true }} />
+      </Stack>}
     </ThemeProvider>
   );
 }

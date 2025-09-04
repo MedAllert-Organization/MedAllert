@@ -9,7 +9,7 @@ export default function Initial() {
     const colorScheme = useColorScheme();
     const theme = Colors[colorScheme ?? "light"];
 
-    const [outOfUsualTimeZone, setOutOfUsualTimeZone] = useState(false);
+    const [outOfUsualTimeZone, setOutOfUsualTimeZone] = useState(true);
 
     const medicines = [
         { name: "Omeprasol", taken: 1, total: 1, time: "09:35" },
