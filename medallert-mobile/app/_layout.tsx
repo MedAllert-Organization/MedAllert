@@ -11,13 +11,14 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider value={theme}>
-      {isLoggedIn ? <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="(tabs)/_layout" />
-        <Stack.Screen name="login" options={{ headerShown: true }} />
-        <Stack.Screen name="select-user-type" options={{ headerShown: true }} />
-        <Stack.Screen name="create-account" options={{ headerShown: true }} />
-      </Stack> : <Stack>
-        <Stack.Screen name="login" options={{ headerShown: true }} />
+      {!isLoggedIn ? <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="login" options={{ headerShown: false }} />
+        <Stack.Screen name="select-user-type" options={{ headerShown: false }} />
+        <Stack.Screen name="create-account" options={{ headerShown: false }} />
+      </Stack> 
+      : 
+      <Stack>
+         <Stack.Screen name="(tabs)/_layout" options={{ headerShown: false}} />
       </Stack>}
     </ThemeProvider>
   );

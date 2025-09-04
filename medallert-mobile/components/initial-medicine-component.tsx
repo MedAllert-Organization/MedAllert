@@ -1,12 +1,12 @@
 import React from "react";
-import { Text, View, StyleSheet, ScrollView } from "react-native";
+import { Text, View, StyleSheet, ScrollView, Pressable, TouchableOpacity } from "react-native";
 import { useColorScheme } from "react-native";
 import Colors from "@/constants/Colors";
+import styles from "@/utils/styles";
+
 
 type Medicine = {
     name: string;
-    taken: number;
-    total: number;
     time: string;
 };
 
@@ -19,38 +19,56 @@ export default function InitialMedicineComponent({ medicines }: Props) {
     const theme = Colors[colorScheme ?? "light"];
 
     return (
-        <View style={[styles.card, { backgroundColor: theme.background }]}>
-            {medicines.map((med, idx) => (
-                <View
-                    key={idx}
-                    style={[
-                        styles.row,
-                        {
-                            borderBottomWidth: idx !== medicines.length - 1 ? StyleSheet.hairlineWidth : 0,
-                            borderBottomColor: theme.text,
-                            paddingVertical: 3,
-                        },
-                    ]}
-                >
-                    <View style={{ flex: 1 }}>
-                        <Text style={{ color: theme.text, fontWeight: "500" }}>{med.name}</Text>
-                        <Text style={{ color: theme.text, marginTop: 4 }}>{med.time}</Text>
-                    </View>
-                    <Text style={{ color: theme.text, fontWeight: "500", marginLeft: 16 }}>
-                        {med.taken}/{med.total}
-                    </Text>
+        <View>
+            <Text style={[styles.sectionTitle, { color: theme.text }]}>Today's Medicine</Text>
+            <View style={[localStyles.card, { backgroundColor: theme.background }]}>
+                {
+                    medicines.map((med, idx) => (
+                        <View
+                            key={idx}
+                            style={[
+                                localStyles.row,
+                                {
+                                    borderBottomWidth: idx !== medicines.length - 1 ? 0.2 : 0,
+                                    borderBottomColor: theme.text,
+                                    paddingVertical: 3,
+                                    
+                                },
+                            ]}
+                        >
+
+                            <Text style={{ color: theme.text, fontWeight: "500" }}>{med.name}</Text>
+                                <Text style={{ color: theme.text, marginTop: 4 }}>{med.time}</Text>
+
+                            {/* <View style={{ flex: 1 }}>
+                                <Text style={{ color: theme.text, fontWeight: "500" }}>{med.name}</Text>
+                                <Text style={{ color: theme.text, marginTop: 4 }}>{med.time}</Text>
+                            </View> */}
+                        </View>
+                    ))
+                }
+            </View>
+
+            <TouchableOpacity  onPress={(() => null)}>
+                <View style={[localStyles.card, { backgroundColor: theme.background }]}>
+                    <Text style={{color:theme.text}}>+ Add med</Text>
                 </View>
-            ))}
+            </TouchableOpacity>
+
 
         </View>
     );
 }
 
-const styles = StyleSheet.create({
+const localStyles = StyleSheet.create({
+    button: {
+
+    },
     card: {
         borderRadius: 12,
         padding: 12,
         marginBottom: 12,
+        backgroundColor: "#fff",
         shadowColor: "#000",
         shadowOpacity: 0.05,
         shadowOffset: { width: 0, height: 2 },
