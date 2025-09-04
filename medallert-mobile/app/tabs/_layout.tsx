@@ -1,5 +1,7 @@
 import React from "react";
 import { Tabs } from "expo-router";
+import FontAwesome from '@expo/vector-icons/FontAwesome';
+
 
 export default function TabsLayout() {
   return (
@@ -11,8 +13,17 @@ export default function TabsLayout() {
         tabBarStyle: { backgroundColor: "#fff", height: 60 },
       }}
     >
-      <Tabs.Screen name="initial" options={{ title: "Home" }} />
-      <Tabs.Screen name="settings" options={{ title: "Settings" }} />
+      <Tabs.Screen name="initial" options={
+        { 
+          title: "Home" , 
+          tabBarIcon: ({ color }) => <FontAwesome size={28} name="home" color={color} /> 
+        }}/>
+
+      <Tabs.Screen name="settings" options={
+        { 
+          title: "Settings",
+          tabBarIcon: ({ color }) => <FontAwesome size={28} name="gear" color={color} /> 
+          }} />
     </Tabs>
   );
 }

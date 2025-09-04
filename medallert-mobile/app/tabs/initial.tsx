@@ -50,9 +50,7 @@ export default function Initial() {
                         </View>
 
                         {/* Medicine Section */}
-                        <Text style={[styles.sectionTitle, { color: theme.text }]}>
-                            Medicine
-                        </Text>
+                        <Text style={[styles.sectionTitle, { color: theme.text }]}>Today's Medicine</Text>
                         <InitialMedicineComponent medicines={medicines} />
 
                     </ScrollView>

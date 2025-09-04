@@ -20,7 +20,6 @@ export default function InitialMedicineComponent({ medicines }: Props) {
 
     return (
         <View style={[styles.card, { backgroundColor: theme.background }]}>
-            <Text style={[styles.subTitle, { color: theme.text }]}>Today</Text>
             {medicines.map((med, idx) => (
                 <View
                     key={idx}
@@ -29,13 +28,13 @@ export default function InitialMedicineComponent({ medicines }: Props) {
                         {
                             borderBottomWidth: idx !== medicines.length - 1 ? StyleSheet.hairlineWidth : 0,
                             borderBottomColor: theme.text,
-                            paddingVertical: 10,
+                            paddingVertical: 3,
                         },
                     ]}
                 >
                     <View style={{ flex: 1 }}>
                         <Text style={{ color: theme.text, fontWeight: "500" }}>{med.name}</Text>
-                        <Text style={{ color: theme.text, fontSize: 15, marginTop: 4 }}>{med.time}</Text>
+                        <Text style={{ color: theme.text, marginTop: 4 }}>{med.time}</Text>
                     </View>
                     <Text style={{ color: theme.text, fontWeight: "500", marginLeft: 16 }}>
                         {med.taken}/{med.total}
