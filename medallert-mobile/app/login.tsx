@@ -19,8 +19,8 @@ export default function Login() {
       return;
     }
 
-    
     Alert.alert("Login", `Email: ${email}\nSenha: ${password}`);
+
   };
 
   return (
