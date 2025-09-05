@@ -14,15 +14,26 @@ services:
   medallert-db:
     image: postgres:15
     container_name: medallert-db
-    restart: always
     environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
     ports:
-      - "5432:5432"
+      - "${DB_PORT}:${DB_PORT}"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin-medalert
+    restart: always
+    ports:
+      - "4332:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@medallert.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    depends_on:
+      - medallert-db
 
 volumes:
   postgres_data:
