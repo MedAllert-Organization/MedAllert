@@ -1,2 +1,3 @@
-// Index para rota
-console.log("Hello")
+import { PrismaClient } from "@prisma/client"
+
+const prisma = new PrismaClient();

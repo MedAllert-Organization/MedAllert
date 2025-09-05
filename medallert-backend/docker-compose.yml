@@ -1,0 +1,30 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: medallert-backend
+    env_file:
+      - .env  # Fixed the indentation and syntax
+    ports:
+      - "${PORT}:${PORT}"  # Make sure PORT is defined in your .env file
+    depends_on:
+      - postgres  # Add this if you have a database service
+    restart: unless-stopped  # Good practice for restart policy
+
+  # Add your database service if needed
+  postgres:
+    image: postgres:13
+    container_name: medallert-db
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_DATABASE_NAME}
+    ports:
+      - "${DB_PORT}:5432"  # Maps host DB_PORT to container port 5432
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
