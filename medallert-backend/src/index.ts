@@ -1,6 +1,10 @@
 import { serve } from "@hono/node-server";
 import { app } from "./api.js";
+import dotenv from "dotenv";
+
 import "./routes/open-api.js";
+
+dotenv.config({ path: "envs/.env.development" });
 
 serve(
   {
@@ -9,5 +13,5 @@ serve(
   },
   (info) => {
     console.log(`Server is running on http://localhost:${info.port}`);
-  },
+  }
 );
