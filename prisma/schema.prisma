@@ -25,6 +25,11 @@ model Users {
   account_confirmed_at DateTime? @default(now())
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
+
+  verification_codes verification_codes[]
+  medications medications[]
+  patient_sharings sharings[] @relation("PatientSharings")
+  caretaker_sharings sharings[] @relation("CaretakerSharings")
 }
 
 model verification_codes {
@@ -54,6 +59,9 @@ model medications {
   end_treatment_at DateTime? @default(now())
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
+
+  notifications notifications[]
+  annotations annotations[]
 }
 
 model notifications {
@@ -93,6 +101,8 @@ model visual_types {
   visual String
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
+
+  medications medications[]
 }
 
 model sound_types {
@@ -100,4 +110,6 @@ model sound_types {
   sound String
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
+
+  medications medications[]
 }
