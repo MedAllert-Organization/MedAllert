@@ -36,7 +36,7 @@ npm run ios
 ```sh
 cd medallert-backend
 npm install
-npm run dev
+npm run dev:backend
 ```
 
 - Endereço da API: `http://localhost:3000`
