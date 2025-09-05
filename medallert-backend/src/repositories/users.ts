@@ -1,9 +1,8 @@
-export type User = {
-  id: string;
-  email: string;
-  hash: string;
-  confirmed_at?: Date;
-};
+import { PrismaClient, type User } from "../generated/prisma/index.js";
+
+export type { User };
+
+export const prisma = new PrismaClient();
 
 export interface UsersRepository {
   findUnverifiedUserByEmail(email: string): Promise<User | undefined>;
@@ -14,7 +13,7 @@ export interface UsersRepository {
   confirmUserAccount(email: string): Promise<void>;
 }
 
-class InMemoryUsersRepository implements UsersRepository {
+class PrismaUsersRepository implements UsersRepository {
   users: User[] = [];
 
   async findUnverifiedUserByEmail(email: string): Promise<User | undefined> {
@@ -25,7 +24,7 @@ class InMemoryUsersRepository implements UsersRepository {
 
   async findUserByEmail(email: string): Promise<User | undefined> {
     return this.users.find((u) => {
-      return u.email === email && u.confirmed_at;
+      return prisma.user.findUnique({ where: { email } });
     });
   }
 
@@ -54,4 +53,4 @@ class InMemoryUsersRepository implements UsersRepository {
   }
 }
 
-export const defaultUsersRepository = new InMemoryUsersRepository();
+export const defaultUsersRepository = new PrismaUsersRepository();

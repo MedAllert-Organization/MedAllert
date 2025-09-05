@@ -9,16 +9,16 @@ datasource db {
 }
 
 model User {
-  user_id   String @id @default(uuid())
-  full_name String
-  email     String @unique
-  phone     String
-  hash      String
-  // image String?
-  // accepted_tos_at DateTime? @default(now())
-  // account_confirmed_at DateTime? @default(now())
-  // created_at DateTime? @default(now())
-  // updated_at DateTime? @updatedAt
+  user_id              String    @id @default(uuid())
+  full_name            String
+  email                String    @unique
+  phone                String
+  hash                 String
+  image                String?
+  accepted_tos_at      DateTime? @default(now())
+  account_confirmed_at DateTime? @default(now())
+  created_at           DateTime? @default(now())
+  updated_at           DateTime? @updatedAt
 
   @@map("tb_users")
 }
