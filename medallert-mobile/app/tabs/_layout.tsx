@@ -3,8 +3,6 @@ import { Tabs } from "expo-router";
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import Colors from "@/constants/Colors";
 
-
-
 export default function TabsLayout() {
   return (
     <Tabs

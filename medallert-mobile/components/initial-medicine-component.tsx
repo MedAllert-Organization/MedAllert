@@ -4,7 +4,6 @@ import { useColorScheme } from "react-native";
 import Colors from "@/constants/Colors";
 import styles from "@/utils/styles";
 
-
 type Medicine = {
     name: string;
     time: string;
@@ -32,18 +31,12 @@ export default function InitialMedicineComponent({ medicines }: Props) {
                                     borderBottomWidth: idx !== medicines.length - 1 ? 0.2 : 0,
                                     borderBottomColor: theme.text,
                                     paddingVertical: 3,
-                                    
                                 },
                             ]}
                         >
 
                             <Text style={{ color: theme.text, fontWeight: "500" }}>{med.name}</Text>
-                                <Text style={{ color: theme.text, marginTop: 4 }}>{med.time}</Text>
-
-                            {/* <View style={{ flex: 1 }}>
-                                <Text style={{ color: theme.text, fontWeight: "500" }}>{med.name}</Text>
-                                <Text style={{ color: theme.text, marginTop: 4 }}>{med.time}</Text>
-                            </View> */}
+                            <Text style={{ color: theme.text, marginTop: 4 }}>{med.time}</Text>
                         </View>
                     ))
                 }
