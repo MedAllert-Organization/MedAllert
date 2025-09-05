@@ -1,0 +1,115 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Users {
+  user_id   Int @id @default(autoincrement())
+  full_name String 
+  email     String @unique
+  phone     String
+  hash      String
+  image     String?
+  accepted_tos_at DateTime @default(now())
+  account_confirmed_at DateTime? @default(now())
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  verification_codes verification_codes[]
+  medications medications[]
+  patient_sharings sharings[] @relation("PatientSharings")
+  caretaker_sharings sharings[] @relation("CaretakerSharings")
+}
+
+model verification_codes {
+  code_id Int @id @default(autoincrement())
+  user_id Int 
+  user    Users @relation(fields: [user_id], references: [user_id])
+  value String
+  code_type String
+  confirmed_at DateTime? @default(now())
+  expires_at DateTime @default(now())
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+
+model medications {
+  medication_id Int @id @default(autoincrement())
+  user_id Int
+  user    Users @relation(fields: [user_id], references: [user_id])
+  name String
+  dose String?
+  description String?
+  visual_type_id Int
+  visual_type   visual_types @relation(fields:[visual_type_id], references: [visual_id])
+  sound_type_id Int
+  sound_type    sound_types  @relation(fields:[sound_type_id], references: [sound_id])
+  alert_period_in_hours Int
+  end_treatment_at DateTime? @default(now())
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  notifications notifications[]
+  annotations annotations[]
+}
+
+model notifications {
+  notification_id Int @id @default(autoincrement())
+  medication_id Int
+  medication    medications @relation(fields: [medication_id], references: [medication_id])
+  name String
+  alert_at DateTime @default(now())
+  sound_id Int
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+
+model annotations {
+  annotation_id Int @id @default(autoincrement())
+  medication_id Int
+  medication    medications @relation(fields:[medication_id], references: [medication_id])
+  content String
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+
+model sharings {
+  sharing_id Int @id @default(autoincrement())
+  patient_id Int
+  caretaker_id Int
+
+  patient   Users @relation("PatientSharings",fields:[patient_id], references: [user_id])
+  caretaker Users @relation("CaretakerSharings",fields:[caretaker_id], references: [user_id])
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+
+model visual_types {
+  visual_id Int @id @default(autoincrement())
+  visual String
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  medications medications[]
+}
+
+model sound_types {
+  sound_id Int @id @default(autoincrement())
+  sound String
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  medications medications[]
+}

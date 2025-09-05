@@ -7,7 +7,7 @@ services:
     env_file:
       - .env  # Fixed the indentation and syntax
     ports:
-      - "${PORT}:${PORT}"  # Make sure PORT is defined in your .env file
+      - "5432:5432"  # Make sure PORT is defined in your .env file
     depends_on:
       - postgres  # Add this if you have a database service
     restart: unless-stopped  # Good practice for restart policy
@@ -17,9 +17,9 @@ services:
     image: postgres:13
     container_name: medallert-db
     environment:
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_DB: ${DB_DATABASE_NAME}
+      POSTGRES_USER: ${root}
+      POSTGRES_PASSWORD: ${password}
+      POSTGRES_DB: ${MedAlertDB}
     ports:
       - "${DB_PORT}:5432"  # Maps host DB_PORT to container port 5432
     volumes:
