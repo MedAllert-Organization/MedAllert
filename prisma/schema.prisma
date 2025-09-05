@@ -81,8 +81,8 @@ model sharings {
   patient_id Int
   caretaker_id Int
 
-  patient   Users @relation(fields:[patient_id], references: [user_id])
-  caretaker Users @relation(fields:[caretaker_id], references: [user_id])
+  patient   Users @relation("PatientSharings",fields:[patient_id], references: [user_id])
+  caretaker Users @relation("CaretakerSharings",fields:[caretaker_id], references: [user_id])
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
