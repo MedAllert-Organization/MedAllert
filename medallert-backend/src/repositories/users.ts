@@ -1,8 +1,11 @@
+import { date } from "zod/v4";
+
 export type User = {
   id: string;
   email: string;
   hash: string;
   confirmed_at?: Date;
+  alerts : [Date]
 };
 
 export interface UsersRepository {
@@ -12,6 +15,7 @@ export interface UsersRepository {
   addUser(newUser: User): Promise<void>;
   updatePasswordForUser(userId: string, newPassword: string): Promise<void>;
   confirmUserAccount(email: string): Promise<void>;
+  addAlert(id : string, alert : Date): Promise<Date | undefined>;
 }
 
 class InMemoryUsersRepository implements UsersRepository {
@@ -50,6 +54,16 @@ class InMemoryUsersRepository implements UsersRepository {
     if (idx !== -1) {
       const previousUser = this.users[idx];
       this.users[idx] = { ...previousUser, confirmed_at: new Date() };
+    }
+  }
+
+  async addAlert(id: string, alert: Date): Promise<Date | undefined> {
+    const index = this.users.findIndex((u) => u.id === id);
+    if (index !== -1){
+      const user = this.users[index];
+      user.alerts.push(alert);
+      //Salvar no banco de dados
+      return alert
     }
   }
 }
