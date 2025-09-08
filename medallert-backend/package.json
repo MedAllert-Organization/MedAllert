@@ -7,11 +7,12 @@
     "build": "tsc -p tsconfig.json",
     "start": "node dist/index.js",
     "check": "tsc --noEmit --strict",
-    "format": "npx @biomejs/biome check --write --unsafe"
+    "format": "npx @biomejs/biome check --write"
   },
   "dependencies": {
     "@hono/node-server": "1.19.0",
     "@hono/swagger-ui": "0.5.2",
+    "@prisma/client": "6.15.0",
     "argon2": "0.44.0",
     "dayjs": "1.11.13",
     "hono": "4.9.2",
@@ -26,7 +27,11 @@
   "devDependencies": {
     "@biomejs/biome": "2.2.2",
     "@types/node": "20.11.17",
+    "prisma": "6.15.0",
     "tsx": "4.7.1",
     "typescript": "5.8.3"
+  },
+  "prisma": {
+    "schema": "./src/infra/prisma/schema.prisma"
   }
 }
