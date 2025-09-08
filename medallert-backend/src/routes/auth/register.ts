@@ -4,8 +4,10 @@ import { validator } from "hono-openapi/zod";
 import { defaultEmailTransport } from "../../common/email-transport.js";
 import { defaultUsersRepository } from "../../repositories/users.js";
 import { defaultCodeRepository } from "../../repositories/verification-code.js";
-import { LoginSchema } from "../../services/login-service.js";
-import { RegisterService } from "../../services/register-service.js";
+import {
+  CreateUserRequest,
+  RegisterService,
+} from "../../services/register-service.js";
 
 export const register = new Hono();
 
@@ -22,7 +24,7 @@ register.post(
       },
     },
   }),
-  validator("json", LoginSchema),
+  validator("json", CreateUserRequest),
   async (c) => {
     const userCandidate = c.req.valid("json");
     const service = new RegisterService(
