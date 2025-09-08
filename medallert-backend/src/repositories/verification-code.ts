@@ -1,7 +1,7 @@
 import { randomBytes, randomUUID } from "node:crypto";
 import dayjs from "dayjs";
-import type { PrismaClient } from "../infra/prisma/generated/prisma/index.js";
 import { prisma } from "../infra/prisma/client.js";
+import type { PrismaClient } from "../infra/prisma/generated/prisma/index.js";
 
 type CodeType = "VERIFICATION" | "RECOVERY";
 

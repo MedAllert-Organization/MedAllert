@@ -22,7 +22,7 @@ export const CreateUserRequest = z.object({
     .min(8, "Telefone é obrigatório")
     .max(20, "Telefone inválido")
     .regex(
-      /^(?:(?:\+|00)?(55)\s?)?(?:(?:$(\d{2})$|(\d{2}))\s?)?(?:((?:9?\d{3})\-?\d{4}))$/,
+      /^(?:(?:\+|00)?(55)\s?)?(?:(?:$(\d{2})$|(\d{2}))\s?)?(?:((?:9?\d{3})-?\d{4}))$/,
       "Telefone inválido",
     ),
 });
