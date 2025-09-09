@@ -32,13 +32,13 @@ export class PasswordRecoveryService {
 
   async createAndSendRecoveryCode(email: string): PromiseResult<string> {
     const [userOk, ___, user] = await t(
-      this.usersRepository.findUnverifiedUserByEmail(email),
+      this.usersRepository.findAnyUserByEmail(email),
     );
     if (!userOk || !user) {
       return error("Failed to find user");
     }
     const [canGenerateOk, _, canGenerate] = await t(
-      this.codeRepository.canGenerateNextRecoveryCode(user.id),
+      this.codeRepository.canGenerateNextRecoveryCode(user.userId),
     );
     if (!canGenerateOk || !canGenerate) {
       return error(
@@ -46,7 +46,7 @@ export class PasswordRecoveryService {
       );
     }
     const [codeOk, __, generated] = await t(
-      this.codeRepository.generateCode(user.id, "RECOVERY"),
+      this.codeRepository.generateCode(user.userId, "RECOVERY"),
     );
     if (!codeOk || !generated) {
       return error("failed to create code");
@@ -63,7 +63,7 @@ O seu código é: ${generated.value}`,
     if (!emailOk) {
       return error("failed to send email");
     }
-    return ok(generated.id);
+    return ok(generated.codeId);
   }
 
   async confirmCodeAndChangePassword({
@@ -72,14 +72,14 @@ O seu código é: ${generated.value}`,
     email,
   }: ChangePasswordRequestType): PromiseResult<string> {
     const [userOk, _, user] = await t(
-      this.usersRepository.findUnverifiedUserByEmail(email),
+      this.usersRepository.findAnyUserByEmail(email),
     );
     if (!userOk || !user) {
       return error("Failed to find user");
     }
 
     const [confirmOk] = await t(
-      this.codeRepository.confirmCode(user.id, code, "RECOVERY"),
+      this.codeRepository.confirmCode(user.userId, code, "RECOVERY"),
     );
     if (!confirmOk) {
       return error("could not confirm code");
@@ -89,7 +89,7 @@ O seu código é: ${generated.value}`,
       return error("could not hash password");
     }
     const [updatePasswordOk] = await t(
-      this.usersRepository.updatePasswordForUser(user.id, hash),
+      this.usersRepository.updatePasswordForUser(user.userId, hash),
     );
     if (!updatePasswordOk) {
       return error("could not update password");

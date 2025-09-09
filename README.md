@@ -34,9 +34,15 @@ npm run ios
 #### **Commandos**
 
 ```sh
+# Setup das Variáveis de ambiente
+cp example.env .env
+```
+
+```sh
+# Subindo só o backend
 cd medallert-backend
 npm install
-npm run dev
+PORT=3000 npm run dev
 ```
 
 - Endereço da API: `http://localhost:3000`
@@ -44,9 +50,23 @@ npm run dev
   - usuário: `dev`
   - senha: `dev`
 
-#### **Build (_Docker_)**
+#### **Docker**
 
 ```sh
+cd medallert-backend
+# Docker compose
+docker compose up -d --build
+# Ver logs
+docker logs medallert-backend -f
+
+# Desligar
+docker compose down
+```
+
+#### **Build (Docker para prod)**
+
+```sh
+# Somente o container do Backend
 cd medallert-backend
 docker build -t medallert:v1 .
 # Rodar o container (sem travar o terminal)

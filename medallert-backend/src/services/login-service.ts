@@ -26,7 +26,7 @@ export class LoginService {
   ) {}
 
   async execute({ email, password }: LoginType): PromiseResult<Token> {
-    const user = await this.usersRepository.findUserByEmail(email);
+    const user = await this.usersRepository.findConfirmedUserByEmail(email);
     if (!user) {
       return error("Invalid user");
     }
@@ -36,7 +36,7 @@ export class LoginService {
       return error("Invalid user");
     }
 
-    const token = await this.tokenProvider.createToken(user.id);
+    const token = await this.tokenProvider.createToken(user.userId);
     return ok(token);
   }
 }

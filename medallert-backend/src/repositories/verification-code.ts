@@ -1,15 +1,17 @@
 import { randomBytes, randomUUID } from "node:crypto";
 import dayjs from "dayjs";
+import { prisma } from "../infra/prisma/client.js";
+import type { PrismaClient } from "../infra/prisma/generated/prisma/index.js";
 
 type CodeType = "VERIFICATION" | "RECOVERY";
 
 type VerificationCode = {
-  id: string;
+  codeId: string;
   userId: string;
   value: string;
-  type: CodeType;
+  codeType: CodeType;
+  confirmedAt: Date | null;
   expiresAt: Date;
-  confirmedAt?: Date;
 };
 
 export interface VerificationCodeRepository {
@@ -18,40 +20,43 @@ export interface VerificationCodeRepository {
   canGenerateNextRecoveryCode(userId: string): Promise<boolean>;
 }
 
-class InmemoryVerificationCodeRepository implements VerificationCodeRepository {
-  codes: VerificationCode[] = [];
+class PrismaVerificationCodeRepository implements VerificationCodeRepository {
+  constructor(private readonly prisma: PrismaClient) {}
 
   async generateCode(
     userId: string,
     type: CodeType,
   ): Promise<VerificationCode> {
     const code = this.makeCode(userId, type);
-    this.codes.push(code);
+    await this.prisma.verificationCodes.create({
+      data: code,
+    });
     return code;
   }
 
   async confirmCode(userId: string, value: string): Promise<void> {
-    const codeCandidate = this.findCodeByValue(userId, value);
+    const codeCandidate = await this.findCodeByValue(userId, value);
     if (!codeCandidate) throw new Error("Invalid code cant be confirmed");
-    this.markCodeAsConfirmed(codeCandidate.id);
+    await this.markCodeAsConfirmed(codeCandidate.codeId);
   }
 
   async canGenerateNextRecoveryCode(userId: string): Promise<boolean> {
-    const latest = this.getLastGeneratedRecoveryCode(userId);
+    const latest = await this.getLastGeneratedRecoveryCode(userId);
     if (latest) {
       return dayjs().isAfter(dayjs(latest.expiresAt));
     }
     return true;
   }
 
-  private getLastGeneratedRecoveryCode(userId: string) {
-    const latest = this.codes
-      .filter(
-        (c) => c.userId === userId && c.type === "RECOVERY" && !c.confirmedAt,
-      )
-      .sort((a, b) => b.expiresAt.getTime() - a.expiresAt.getTime())
-      .reverse()
-      .at(0);
+  private async getLastGeneratedRecoveryCode(userId: string) {
+    const latest = await this.prisma.verificationCodes.findFirst({
+      where: {
+        userId,
+        codeType: { equals: "RECOVERY" },
+        confirmedAt: { equals: null },
+      },
+      orderBy: { expiresAt: "desc" },
+    });
     return latest;
   }
 
@@ -62,45 +67,47 @@ class InmemoryVerificationCodeRepository implements VerificationCodeRepository {
 
   private makeCode(
     userId: string,
-    type: CodeType = "RECOVERY",
+    codeType: CodeType = "RECOVERY",
   ): VerificationCode {
     const expiresAt = dayjs().add(15, "minutes").toDate();
     const code: VerificationCode = {
-      id: randomUUID(),
+      codeId: randomUUID(),
       userId,
-      type,
+      codeType,
       value: this.makeSixDigitsCodeValue(),
       expiresAt,
+      confirmedAt: null,
     };
     return code;
   }
 
-  private findCodeByValue(
+  private async findCodeByValue(
     userId: string,
     value: string,
-  ): VerificationCode | undefined {
-    const isValid = (test: Date) => dayjs().isBefore(dayjs(test));
-    const code = this.codes.find(
-      (t) =>
-        t.userId === userId &&
-        t.value.toLowerCase() === value.toLowerCase() &&
-        !t.confirmedAt &&
-        isValid(t.expiresAt),
-    );
-    return code;
+  ): Promise<VerificationCode | null> {
+    const code = await this.prisma.verificationCodes.findFirst({
+      where: {
+        userId,
+        value,
+        confirmedAt: { equals: null },
+        expiresAt: { gte: new Date() },
+      },
+    });
+    if (code) {
+      const { codeType: type, ...rest } = code;
+      return { ...rest, codeType: type as CodeType };
+    }
+    return null;
   }
 
-  private markCodeAsConfirmed(codeId: string) {
-    const idx = this.codes.findIndex((c) => c.id === codeId);
-    if (idx !== -1) {
-      const previousCode = this.codes[idx];
-      const confirmed: VerificationCode = {
-        ...previousCode,
-        confirmedAt: new Date(),
-      };
-      this.codes[idx] = confirmed;
-    }
+  private async markCodeAsConfirmed(codeId: string) {
+    await this.prisma.verificationCodes.update({
+      where: { codeId },
+      data: { confirmedAt: new Date() },
+    });
   }
 }
 
-export const defaultCodeRepository = new InmemoryVerificationCodeRepository();
+export const defaultCodeRepository = new PrismaVerificationCodeRepository(
+  prisma,
+);

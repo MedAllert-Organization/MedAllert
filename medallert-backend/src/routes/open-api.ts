@@ -14,7 +14,10 @@ export function configureOpenAPIDocs(honoServerInstance: Hono) {
           description: "MedAlert",
         },
         servers: [
-          { url: "http://localhost:3000", description: "Local Backend" },
+          {
+            url: `http://localhost:${process.env.PORT ? Number(process.env.PORT) : undefined}`,
+            description: "Local Backend",
+          },
         ],
         components: {
           securitySchemes: {

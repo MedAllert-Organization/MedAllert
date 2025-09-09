@@ -2,17 +2,23 @@ services:
   app:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: dev.Dockerfile
     container_name: medallert-backend
     env_file:
       - .env
     ports:
       - "${PORT}:${PORT}"
+    volumes:
+      - ./:/home/node:cached
+      - /home/node/node_modules
+    command: sh -c "npx prisma migrate deploy && npm run dev"
+    environment:
+      - NODE_ENV=development
     depends_on:
       - medallert-db
 
   medallert-db:
-    image: postgres:15
+    image: postgres:17-alpine
     container_name: medallert-db
     environment:
       POSTGRES_USER: ${DB_USER}

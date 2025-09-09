@@ -1,0 +1,132 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider      = "prisma-client-js"
+  output        = "./generated/prisma"
+  binaryTargets = ["native", "linux-musl"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DB_URL")
+}
+
+model Users {
+  userId             String    @id @default(cuid()) @map("user_id")
+  fullName           String    @map("full_name")
+  email              String    @unique
+  phone              String
+  hash               String
+  image              String?
+  acceptedTosAt      DateTime  @default(now()) @map("accepted_tos_at")
+  accountConfirmedAt DateTime? @default(now()) @map("account_confirmed_at")
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @updatedAt @map("updated_at")
+
+  verificationCodes VerificationCodes[]
+  medications       Medications[]
+  patientSharings   Sharings[]          @relation("PatientSharings")
+  caretakerSharings Sharings[]          @relation("CaretakerSharings")
+
+  @@map("users")
+}
+
+model VerificationCodes {
+  codeId      String    @id @default(cuid()) @map("code_id")
+  userId      String    @map("user_id")
+  user        Users     @relation(fields: [userId], references: [userId])
+  value       String
+  codeType    String    @map("code_type")
+  confirmedAt DateTime? @map("confirmed_at")
+  expiresAt   DateTime  @map("expires_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  @@map("verification_codes")
+}
+
+model Medications {
+  medicationId       String      @id @default(cuid()) @map("medication_id")
+  userId             String      @map("user_id")
+  user               Users       @relation(fields: [userId], references: [userId])
+  name               String
+  dose               String?
+  description        String?
+  visualTypeId       String      @map("visual_type_id")
+  visualType         VisualTypes @relation(fields: [visualTypeId], references: [visualId])
+  soundTypeId        String      @map("sound_type_id")
+  soundType          SoundTypes  @relation(fields: [soundTypeId], references: [soundId])
+  alertPeriodInHours Int         @map("alert_period_in_hours")
+  endTreatmentAt     DateTime?   @default(now()) @map("end_treatment_at")
+  createdAt          DateTime    @default(now()) @map("created_at")
+  updatedAt          DateTime    @updatedAt @map("updated_at")
+
+  notifications Notifications[]
+  annotations   Annotations[]
+
+  @@map("medications")
+}
+
+model Notifications {
+  notificationId String      @id @default(cuid()) @map("notification_id")
+  medicationId   String      @map("medication_id")
+  medication     Medications @relation(fields: [medicationId], references: [medicationId])
+  name           String
+  alertAt        DateTime    @default(now()) @map("alert_at")
+  soundId        Int         @map("sound_id")
+  createdAt      DateTime    @default(now()) @map("created_at")
+  updatedAt      DateTime    @updatedAt @map("updated_at")
+
+  @@map("notifications")
+}
+
+model Annotations {
+  annotationId String      @id @default(cuid()) @map("annotation_id")
+  medicationId String      @map("medication_id")
+  medication   Medications @relation(fields: [medicationId], references: [medicationId])
+  content      String
+  createdAt    DateTime    @default(now()) @map("created_at")
+  updatedAt    DateTime    @updatedAt @map("updated_at")
+
+  @@map("annotations")
+}
+
+model Sharings {
+  sharingId   String @id @default(cuid())
+  patientId   String @map("patient_id")
+  caretakerId String @map("caretaker_id")
+
+  patient   Users @relation("PatientSharings", fields: [patientId], references: [userId])
+  caretaker Users @relation("CaretakerSharings", fields: [caretakerId], references: [userId])
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("sharings")
+}
+
+model VisualTypes {
+  visualId  String   @id @default(cuid()) @map("visual_id")
+  visual    String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  medications Medications[]
+
+  @@map("visual_types")
+}
+
+model SoundTypes {
+  soundId   String   @id @default(cuid()) @map("sound_id")
+  sound     String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  medications Medications[]
+
+  @@map("sound_types")
+}
