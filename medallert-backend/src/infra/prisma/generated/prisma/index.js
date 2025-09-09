@@ -208,7 +208,7 @@ const config = {
       "value": "prisma-client-js"
     },
     "output": {
-      "value": "/Users/fabiohbfreitas/Documents/proj/MedAllert/medallert-backend/src/infra/prisma/generated/prisma",
+      "value": "/home/node/src/infra/prisma/generated/prisma",
       "fromEnvVar": null
     },
     "config": {
@@ -217,12 +217,16 @@ const config = {
     "binaryTargets": [
       {
         "fromEnvVar": null,
-        "value": "darwin-arm64",
+        "value": "linux-musl-arm64-openssl-3.0.x",
         "native": true
+      },
+      {
+        "fromEnvVar": null,
+        "value": "linux-musl"
       }
     ],
     "previewFeatures": [],
-    "sourceFilePath": "/Users/fabiohbfreitas/Documents/proj/MedAllert/medallert-backend/src/infra/prisma/schema.prisma",
+    "sourceFilePath": "/home/node/src/infra/prisma/schema.prisma",
     "isCustomOutput": true
   },
   "relativeEnvPaths": {
@@ -236,6 +240,7 @@ const config = {
     "db"
   ],
   "activeProvider": "postgresql",
+  "postinstall": false,
   "inlineDatasources": {
     "db": {
       "url": {
@@ -244,8 +249,8 @@ const config = {
       }
     }
   },
-  "inlineSchema": "// This is your Prisma schema file,\n// learn more about it in the docs: https://pris.ly/d/prisma-schema\n\n// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?\n// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init\n\ngenerator client {\n  provider = \"prisma-client-js\"\n  output   = \"./generated/prisma\"\n}\n\ndatasource db {\n  provider = \"postgresql\"\n  url      = env(\"DB_URL\")\n}\n\nmodel Users {\n  userId             String    @id @default(cuid()) @map(\"user_id\")\n  fullName           String    @map(\"full_name\")\n  email              String    @unique\n  phone              String\n  hash               String\n  image              String?\n  acceptedTosAt      DateTime  @default(now()) @map(\"accepted_tos_at\")\n  accountConfirmedAt DateTime? @default(now()) @map(\"account_confirmed_at\")\n  createdAt          DateTime  @default(now()) @map(\"created_at\")\n  updatedAt          DateTime  @updatedAt @map(\"updated_at\")\n\n  verificationCodes VerificationCodes[]\n  medications       Medications[]\n  patientSharings   Sharings[]          @relation(\"PatientSharings\")\n  caretakerSharings Sharings[]          @relation(\"CaretakerSharings\")\n\n  @@map(\"users\")\n}\n\nmodel VerificationCodes {\n  codeId      String    @id @default(cuid()) @map(\"code_id\")\n  userId      String    @map(\"user_id\")\n  user        Users     @relation(fields: [userId], references: [userId])\n  value       String\n  codeType    String    @map(\"code_type\")\n  confirmedAt DateTime? @map(\"confirmed_at\")\n  expiresAt   DateTime  @map(\"expires_at\")\n  createdAt   DateTime  @default(now()) @map(\"created_at\")\n  updatedAt   DateTime  @updatedAt @map(\"updated_at\")\n\n  @@map(\"verification_codes\")\n}\n\nmodel Medications {\n  medicationId       String      @id @default(cuid()) @map(\"medication_id\")\n  userId             String      @map(\"user_id\")\n  user               Users       @relation(fields: [userId], references: [userId])\n  name               String\n  dose               String?\n  description        String?\n  visualTypeId       String      @map(\"visual_type_id\")\n  visualType         VisualTypes @relation(fields: [visualTypeId], references: [visualId])\n  soundTypeId        String      @map(\"sound_type_id\")\n  soundType          SoundTypes  @relation(fields: [soundTypeId], references: [soundId])\n  alertPeriodInHours Int         @map(\"alert_period_in_hours\")\n  endTreatmentAt     DateTime?   @default(now()) @map(\"end_treatment_at\")\n  createdAt          DateTime    @default(now()) @map(\"created_at\")\n  updatedAt          DateTime    @updatedAt @map(\"updated_at\")\n\n  notifications Notifications[]\n  annotations   Annotations[]\n\n  @@map(\"medications\")\n}\n\nmodel Notifications {\n  notificationId String      @id @default(cuid()) @map(\"notification_id\")\n  medicationId   String      @map(\"medication_id\")\n  medication     Medications @relation(fields: [medicationId], references: [medicationId])\n  name           String\n  alertAt        DateTime    @default(now()) @map(\"alert_at\")\n  soundId        Int         @map(\"sound_id\")\n  createdAt      DateTime    @default(now()) @map(\"created_at\")\n  updatedAt      DateTime    @updatedAt @map(\"updated_at\")\n\n  @@map(\"notifications\")\n}\n\nmodel Annotations {\n  annotationId String      @id @default(cuid()) @map(\"annotation_id\")\n  medicationId String      @map(\"medication_id\")\n  medication   Medications @relation(fields: [medicationId], references: [medicationId])\n  content      String\n  createdAt    DateTime    @default(now()) @map(\"created_at\")\n  updatedAt    DateTime    @updatedAt @map(\"updated_at\")\n\n  @@map(\"annotations\")\n}\n\nmodel Sharings {\n  sharingId   String @id @default(cuid())\n  patientId   String @map(\"patient_id\")\n  caretakerId String @map(\"caretaker_id\")\n\n  patient   Users @relation(\"PatientSharings\", fields: [patientId], references: [userId])\n  caretaker Users @relation(\"CaretakerSharings\", fields: [caretakerId], references: [userId])\n\n  createdAt DateTime @default(now()) @map(\"created_at\")\n  updatedAt DateTime @updatedAt @map(\"updated_at\")\n\n  @@map(\"sharings\")\n}\n\nmodel VisualTypes {\n  visualId  String   @id @default(cuid()) @map(\"visual_id\")\n  visual    String\n  createdAt DateTime @default(now()) @map(\"created_at\")\n  updatedAt DateTime @updatedAt @map(\"updated_at\")\n\n  medications Medications[]\n\n  @@map(\"visual_types\")\n}\n\nmodel SoundTypes {\n  soundId   String   @id @default(cuid()) @map(\"sound_id\")\n  sound     String\n  createdAt DateTime @default(now()) @map(\"created_at\")\n  updatedAt DateTime @updatedAt @map(\"updated_at\")\n\n  medications Medications[]\n\n  @@map(\"sound_types\")\n}\n",
-  "inlineSchemaHash": "f7079943245b6c727f261492ddaafcb6a73cdfeb289111e24587f1c32a1fca03",
+  "inlineSchema": "// This is your Prisma schema file,\n// learn more about it in the docs: https://pris.ly/d/prisma-schema\n\n// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?\n// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init\n\ngenerator client {\n  provider      = \"prisma-client-js\"\n  output        = \"./generated/prisma\"\n  binaryTargets = [\"native\", \"linux-musl\"]\n}\n\ndatasource db {\n  provider = \"postgresql\"\n  url      = env(\"DB_URL\")\n}\n\nmodel Users {\n  userId             String    @id @default(cuid()) @map(\"user_id\")\n  fullName           String    @map(\"full_name\")\n  email              String    @unique\n  phone              String\n  hash               String\n  image              String?\n  acceptedTosAt      DateTime  @default(now()) @map(\"accepted_tos_at\")\n  accountConfirmedAt DateTime? @default(now()) @map(\"account_confirmed_at\")\n  createdAt          DateTime  @default(now()) @map(\"created_at\")\n  updatedAt          DateTime  @updatedAt @map(\"updated_at\")\n\n  verificationCodes VerificationCodes[]\n  medications       Medications[]\n  patientSharings   Sharings[]          @relation(\"PatientSharings\")\n  caretakerSharings Sharings[]          @relation(\"CaretakerSharings\")\n\n  @@map(\"users\")\n}\n\nmodel VerificationCodes {\n  codeId      String    @id @default(cuid()) @map(\"code_id\")\n  userId      String    @map(\"user_id\")\n  user        Users     @relation(fields: [userId], references: [userId])\n  value       String\n  codeType    String    @map(\"code_type\")\n  confirmedAt DateTime? @map(\"confirmed_at\")\n  expiresAt   DateTime  @map(\"expires_at\")\n  createdAt   DateTime  @default(now()) @map(\"created_at\")\n  updatedAt   DateTime  @updatedAt @map(\"updated_at\")\n\n  @@map(\"verification_codes\")\n}\n\nmodel Medications {\n  medicationId       String      @id @default(cuid()) @map(\"medication_id\")\n  userId             String      @map(\"user_id\")\n  user               Users       @relation(fields: [userId], references: [userId])\n  name               String\n  dose               String?\n  description        String?\n  visualTypeId       String      @map(\"visual_type_id\")\n  visualType         VisualTypes @relation(fields: [visualTypeId], references: [visualId])\n  soundTypeId        String      @map(\"sound_type_id\")\n  soundType          SoundTypes  @relation(fields: [soundTypeId], references: [soundId])\n  alertPeriodInHours Int         @map(\"alert_period_in_hours\")\n  endTreatmentAt     DateTime?   @default(now()) @map(\"end_treatment_at\")\n  createdAt          DateTime    @default(now()) @map(\"created_at\")\n  updatedAt          DateTime    @updatedAt @map(\"updated_at\")\n\n  notifications Notifications[]\n  annotations   Annotations[]\n\n  @@map(\"medications\")\n}\n\nmodel Notifications {\n  notificationId String      @id @default(cuid()) @map(\"notification_id\")\n  medicationId   String      @map(\"medication_id\")\n  medication     Medications @relation(fields: [medicationId], references: [medicationId])\n  name           String\n  alertAt        DateTime    @default(now()) @map(\"alert_at\")\n  soundId        Int         @map(\"sound_id\")\n  createdAt      DateTime    @default(now()) @map(\"created_at\")\n  updatedAt      DateTime    @updatedAt @map(\"updated_at\")\n\n  @@map(\"notifications\")\n}\n\nmodel Annotations {\n  annotationId String      @id @default(cuid()) @map(\"annotation_id\")\n  medicationId String      @map(\"medication_id\")\n  medication   Medications @relation(fields: [medicationId], references: [medicationId])\n  content      String\n  createdAt    DateTime    @default(now()) @map(\"created_at\")\n  updatedAt    DateTime    @updatedAt @map(\"updated_at\")\n\n  @@map(\"annotations\")\n}\n\nmodel Sharings {\n  sharingId   String @id @default(cuid())\n  patientId   String @map(\"patient_id\")\n  caretakerId String @map(\"caretaker_id\")\n\n  patient   Users @relation(\"PatientSharings\", fields: [patientId], references: [userId])\n  caretaker Users @relation(\"CaretakerSharings\", fields: [caretakerId], references: [userId])\n\n  createdAt DateTime @default(now()) @map(\"created_at\")\n  updatedAt DateTime @updatedAt @map(\"updated_at\")\n\n  @@map(\"sharings\")\n}\n\nmodel VisualTypes {\n  visualId  String   @id @default(cuid()) @map(\"visual_id\")\n  visual    String\n  createdAt DateTime @default(now()) @map(\"created_at\")\n  updatedAt DateTime @updatedAt @map(\"updated_at\")\n\n  medications Medications[]\n\n  @@map(\"visual_types\")\n}\n\nmodel SoundTypes {\n  soundId   String   @id @default(cuid()) @map(\"sound_id\")\n  sound     String\n  createdAt DateTime @default(now()) @map(\"created_at\")\n  updatedAt DateTime @updatedAt @map(\"updated_at\")\n\n  medications Medications[]\n\n  @@map(\"sound_types\")\n}\n",
+  "inlineSchemaHash": "7fd32ecc3e4b497046178c83efa3564fbfcb371c76543b24bcb405ce9b83b896",
   "copyEngine": true
 }
 
@@ -284,8 +289,12 @@ exports.PrismaClient = PrismaClient
 Object.assign(exports, Prisma)
 
 // file annotations for bundling tools to include these files
-path.join(__dirname, "libquery_engine-darwin-arm64.dylib.node");
-path.join(process.cwd(), "src/infra/prisma/generated/prisma/libquery_engine-darwin-arm64.dylib.node")
+path.join(__dirname, "libquery_engine-linux-musl-arm64-openssl-3.0.x.so.node");
+path.join(process.cwd(), "src/infra/prisma/generated/prisma/libquery_engine-linux-musl-arm64-openssl-3.0.x.so.node")
+
+// file annotations for bundling tools to include these files
+path.join(__dirname, "libquery_engine-linux-musl.so.node");
+path.join(process.cwd(), "src/infra/prisma/generated/prisma/libquery_engine-linux-musl.so.node")
 // file annotations for bundling tools to include these files
 path.join(__dirname, "schema.prisma");
 path.join(process.cwd(), "src/infra/prisma/generated/prisma/schema.prisma")
