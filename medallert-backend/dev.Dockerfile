@@ -3,7 +3,7 @@ WORKDIR /home/node
 COPY --chown=node:node package*.json ./
 RUN npm ci
 COPY --chown=node:node . .
-USER node
-RUN npm run gen
+RUN npx prisma generate
 RUN npm run build
+USER node
 CMD ["node", "dist/index.js"]

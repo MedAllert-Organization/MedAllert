@@ -5,7 +5,7 @@ WORKDIR /app
 COPY --chown=node:node . .
 
 RUN npm ci \
-    && npx run gen \
+    && npm run gen \
     && npm run build \
     && npm prune --omit=dev
 
