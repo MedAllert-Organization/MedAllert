@@ -1,57 +1,74 @@
+import { prisma } from "../infra/prisma/client.js";
+import type { PrismaClient } from "../infra/prisma/generated/prisma/index.js";
+
 export type User = {
-  id: string;
+  userId: string;
+  fullName: string;
   email: string;
+  phone: string;
   hash: string;
-  confirmed_at?: Date;
+  image: string | null;
+  acceptedTosAt: Date;
+  accountConfirmedAt: Date | null;
 };
 
 export interface UsersRepository {
-  findUnverifiedUserByEmail(email: string): Promise<User | undefined>;
-  findUserByEmail(email: string): Promise<User | undefined>;
-  findUser(id: string): Promise<User | undefined>;
-  addUser(newUser: User): Promise<void>;
+  findAnyUserByEmail(email: string): Promise<User | null>;
+  findConfirmedUserByEmail(email: string): Promise<User | null>;
+  findUser(id: string): Promise<User | null>;
+  addUser(newUser: {
+    fullName: string;
+    email: string;
+    hash: string;
+    phone: string;
+  }): Promise<User | null>;
   updatePasswordForUser(userId: string, newPassword: string): Promise<void>;
   confirmUserAccount(email: string): Promise<void>;
 }
 
-class InMemoryUsersRepository implements UsersRepository {
-  users: User[] = [];
+class PrismaUsersRepository implements UsersRepository {
+  constructor(private readonly prisma: PrismaClient) {}
 
-  async findUnverifiedUserByEmail(email: string): Promise<User | undefined> {
-    return this.users.find((u) => {
-      return u.email === email;
+  async findAnyUserByEmail(email: string): Promise<User | null> {
+    return this.prisma.users.findUnique({
+      where: { email },
     });
   }
 
-  async findUserByEmail(email: string): Promise<User | undefined> {
-    return this.users.find((u) => {
-      return u.email === email && u.confirmed_at;
+  async findConfirmedUserByEmail(email: string): Promise<User | null> {
+    return this.prisma.users.findUnique({
+      where: { email, accountConfirmedAt: { not: null } },
     });
   }
 
-  async findUser(id: string): Promise<User | undefined> {
-    return this.users.find((u) => u.id === id);
+  async findUser(id: string): Promise<User | null> {
+    return this.prisma.users.findUnique({ where: { userId: id } });
   }
 
-  async addUser(newUser: User): Promise<void> {
-    this.users.push(newUser);
+  async addUser(newUser: {
+    fullName: string;
+    email: string;
+    hash: string;
+    phone: string;
+  }): Promise<User | null> {
+    return await this.prisma.users.create({
+      data: { ...newUser, accountConfirmedAt: null },
+    });
   }
 
   async updatePasswordForUser(userId: string, hash: string): Promise<void> {
-    const idx = this.users.findIndex((u) => u.id === userId);
-    if (idx !== -1) {
-      const previousUser = this.users[idx];
-      this.users[idx] = { ...previousUser, hash };
-    }
+    await this.prisma.users.update({
+      where: { userId },
+      data: { hash },
+    });
   }
 
   async confirmUserAccount(email: string): Promise<void> {
-    const idx = this.users.findIndex((u) => u.email === email);
-    if (idx !== -1) {
-      const previousUser = this.users[idx];
-      this.users[idx] = { ...previousUser, confirmed_at: new Date() };
-    }
+    await this.prisma.users.update({
+      where: { email },
+      data: { accountConfirmedAt: new Date() },
+    });
   }
 }
 
-export const defaultUsersRepository = new InMemoryUsersRepository();
+export const defaultUsersRepository = new PrismaUsersRepository(prisma);

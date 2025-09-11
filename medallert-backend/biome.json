@@ -6,7 +6,8 @@
     "useIgnoreFile": false
   },
   "files": {
-    "ignoreUnknown": false
+    "ignoreUnknown": true,
+    "includes": ["src/**/*.ts", "!src/infra/prisma/generated"]
   },
   "formatter": {
     "enabled": true,

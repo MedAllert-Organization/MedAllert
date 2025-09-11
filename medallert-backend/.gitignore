@@ -1,4 +1,6 @@
 # dev
+.cache
+.npm
 .yarn/
 !.yarn/releases
 .vscode/*
@@ -28,3 +30,9 @@ lerna-debug.log*
 .DS_Store
 
 dist/*
+
+# Prisma
+src/infra/prisma/generated/*
+
+# Alpine
+.ash_history

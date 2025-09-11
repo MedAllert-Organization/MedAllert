@@ -1,12 +1,45 @@
-
 services:
   app:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: dev.Dockerfile
     container_name: medallert-backend
-   
     env_file:
       - .env
     ports:
-      - ${PORT}:${PORT}
+      - "${PORT}:${PORT}"
+    volumes:
+      - ./:/home/node:cached
+      - /home/node/node_modules
+    command: sh -c "npx prisma migrate deploy && npm run dev"
+    environment:
+      - NODE_ENV=development
+    depends_on:
+      - medallert-db
+
+  medallert-db:
+    image: postgres:17-alpine
+    container_name: medallert-db
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    ports:
+      - "${DB_PORT}:${DB_PORT}"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin-medalert
+    restart: always
+    ports:
+      - "4332:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@medallert.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    depends_on:
+      - medallert-db
+
+volumes:
+  postgres_data:

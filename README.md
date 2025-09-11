@@ -2,29 +2,6 @@
 
 ## **Como rodar o projeto**
 
-### **Mobile**
-
-#### **Requisitos**
-
-- NodeJS LTS (v22) [Link](https://nodejs.org/en/download)
-- Android Studio (Android) [Link](https://developer.android.com/studio/install?hl=pt-br)
-- XCode (iOS) [Link](https://developer.apple.com/documentation/safari-developer-tools/installing-xcode-and-simulators)
-
-#### **Commandos**
-
-```sh
-cd medallert-mobile
-npm install
-npm run android
-# ou
-npm run ios
-```
-
-#### **Documentação**
-
-- [Expo](https://docs.expo.dev/get-started/start-developing/)
-- [Expo Router](https://docs.expo.dev/versions/latest/sdk/router/)
-
 ### **Backend**
 
 #### **Requisitos**
@@ -34,9 +11,15 @@ npm run ios
 #### **Commandos**
 
 ```sh
+# Setup das Variáveis de ambiente
+cp example.env .env
+```
+
+```sh
+# Subindo só o backend
 cd medallert-backend
 npm install
-npm run dev
+PORT=3000 npm run dev
 ```
 
 - Endereço da API: `http://localhost:3000`
@@ -44,9 +27,23 @@ npm run dev
   - usuário: `dev`
   - senha: `dev`
 
-#### **Build (_Docker_)**
+#### **Docker**
 
 ```sh
+cd medallert-backend
+# Docker compose
+docker compose up -d --build
+# Ver logs
+docker logs medallert-backend -f
+
+# Desligar
+docker compose down
+```
+
+#### **Build (Docker para prod)**
+
+```sh
+# Somente o container do Backend
 cd medallert-backend
 docker build -t medallert:v1 .
 # Rodar o container (sem travar o terminal)
