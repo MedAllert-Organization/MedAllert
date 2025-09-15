@@ -16,6 +16,7 @@ export const requestRecovery = new Hono<Env>();
 requestRecovery.post(
   "/",
   describeRoute({
+    tags: ["Auth"],
     description: "Starts password recovery flow by sending an code via email",
     responses: {
       200: {

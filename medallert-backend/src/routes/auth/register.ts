@@ -14,6 +14,7 @@ export const register = new Hono();
 register.post(
   "/register",
   describeRoute({
+    tags: ["Auth"],
     description: "Register a new user",
     responses: {
       201: {
