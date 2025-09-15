@@ -33,4 +33,15 @@ export class VisualTypesService {
 
         return ok(createdMedication);
     }
+
+    async getAll() {
+        const [listOk, _, listVisual] = await t(
+            this.visualTypesRepository.findAllVisuals()
+        )
+        if (!listOk || !listVisual) {
+            return error("failed to get visuals");
+        }
+
+        return ok(listVisual);
+    }
 }

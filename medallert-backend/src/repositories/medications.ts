@@ -32,13 +32,15 @@ class PrismaMedicationRepository implements MedicationRepository {
     constructor(private readonly prisma: PrismaClient) {}
    
     async findMedication(id: string): Promise<Medication | null> {
-        return prisma.medications.findUnique({
-            where: { medicationId:id },
+        return this.prisma.medications.findUnique({
+            where: { 
+                medicationId:id 
+            },
         });
     }
 
     async findAllMedications(userId: string): Promise<Medication[]> {
-        return prisma.medications.findMany({
+        return this.prisma.medications.findMany({
             where: {
                 userId: userId
             }

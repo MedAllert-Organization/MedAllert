@@ -16,6 +16,7 @@ export const changePassword = new Hono<Env>();
 changePassword.post(
   "/",
   describeRoute({
+    tags: ["Auth"],
     description: "Use recovery code for changing password",
     responses: {
       200: {

@@ -14,6 +14,7 @@ export const confirm = new Hono();
 confirm.post(
   "/confirm-account",
   describeRoute({
+    tags: ["Auth"],
     description: "Confirm the code sent via email",
     responses: {
       200: {

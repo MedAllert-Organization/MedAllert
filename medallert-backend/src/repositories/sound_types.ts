@@ -7,6 +7,7 @@ export type SoundTypes = {
 
 export interface SoundTypesRepository {
     findSoundType(id: string): Promise<SoundTypes | null>;
+    findAllSounds(): Promise<SoundTypes[] | null>;
     addSoundType(newSoundType: {
         sound: string;
     }
@@ -17,9 +18,13 @@ class PrismaSoundTypesRepository implements SoundTypesRepository {
     constructor(private readonly prisma: PrismaClient) {}
    
     async findSoundType(id: string): Promise<SoundTypes | null> {
-        return prisma.soundTypes.findUnique({
+        return this.prisma.soundTypes.findUnique({
             where: { soundId:id },
         });
+    }
+
+    async findAllSounds(): Promise<SoundTypes[] | null> {
+        return this.prisma.soundTypes.findMany();
     }
 
     async addSoundType(newSoundType: {

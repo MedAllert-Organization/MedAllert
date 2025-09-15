@@ -77,7 +77,7 @@ model Notifications {
   medication     Medications @relation(fields: [medicationId], references: [medicationId])
   name           String
   alertAt        DateTime    @default(now()) @map("alert_at")
-  soundId        Int         @map("sound_id")
+  soundId        String         @map("sound_id")
   createdAt      DateTime    @default(now()) @map("created_at")
   updatedAt      DateTime    @updatedAt @map("updated_at")
 

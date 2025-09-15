@@ -14,6 +14,7 @@ export const login = new Hono();
 login.post(
   "/login",
   describeRoute({
+    tags: ["Auth"],
     description: "Create a token for a registered user session",
     responses: {
       200: {

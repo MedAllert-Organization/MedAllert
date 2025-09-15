@@ -7,6 +7,7 @@ export type VisualTypes = {
 
 export interface VisualTypesRepository {
     findVisualType(id: string): Promise<VisualTypes | null>;
+    findAllVisuals(): Promise<VisualTypes[] | null>
     addVisualType(newVisualType: {
         visual: string;
     }
@@ -20,6 +21,10 @@ class PrismaVisualTypesRepository implements VisualTypesRepository {
         return prisma.visualTypes.findUnique({
             where: { visualId:id },
         });
+    }
+
+    async findAllVisuals(): Promise<VisualTypes[] | null> {
+        return this.prisma.visualTypes.findMany();
     }
 
     async addVisualType(newVisualType: {

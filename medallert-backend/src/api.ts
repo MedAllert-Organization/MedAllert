@@ -3,7 +3,7 @@ import { cors } from "hono/cors";
 import { auth } from "./routes/auth/index.js";
 import { authMiddleware } from "./routes/middleware/auth-middleware.js";
 import { configureOpenAPIDocs } from "./routes/open-api.js";
-import { medication } from "./routes/medications/index.js";
+import { medicationIndex } from "./routes/medications/index.js";
 
 export const app = new Hono();
 
@@ -14,4 +14,4 @@ app.route("/auth", auth);
 
 /// Authenticated Routes
 app.use(authMiddleware);
-app.route("/medication", medication);
+app.route("/medication", medicationIndex);
