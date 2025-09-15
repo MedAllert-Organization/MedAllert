@@ -8,11 +8,16 @@ export const SoundTypesSchema = z.object({
     sound: z.string(),
 })
 
+export const SoundTypesIdParamSchema = z.object({
+    id: z.string().min(1, "ID is required"),
+});
+
+export const SoundTypesUpdateSchema = SoundTypesSchema.partial();
+
 export type SoundTypesType = z.infer<typeof SoundTypesSchema>
 
 export class SoundTypesService {
     constructor(
-        private readonly usersRepository: UsersRepository,
         private readonly soundTypesRepository: SoundTypesRepository,
     ) { }
 
@@ -33,6 +38,13 @@ export class SoundTypesService {
         return ok(createdSound);
     }
 
+    async get(soundId: string): PromiseResult<SoundTypes> {
+        const sound = await this.soundTypesRepository.findSoundType(soundId);
+        if (!sound) return error("Sound not found");
+
+        return ok(sound);
+    }
+
     async getAll() {
         const [listOk, _, listSound] = await t(
             this.soundTypesRepository.findAllSounds()
@@ -42,5 +54,31 @@ export class SoundTypesService {
         }
 
         return ok(listSound);
+    }
+
+    async update(soundId: string, updateData: Partial<SoundTypesType>): PromiseResult<SoundTypes> {
+        const sound = await this.soundTypesRepository.findSoundType(soundId);
+        if (!sound) return error("Sound not found");
+
+        const [updatedOk, _, updatedSound] = await t(
+            this.soundTypesRepository.updateSoundType(soundId, { ...updateData })
+        );
+
+        if (!updatedOk || !updatedSound) return error("Failed to update sound type");
+
+        return ok(updatedSound);
+    }
+
+    async delete(soundId: string): PromiseResult<SoundTypes> {
+        const sound = await this.soundTypesRepository.findSoundType(soundId);
+        if (!sound) return error("Sound type not found");
+
+        const [deletedOk, _, deletedSound] = await t(
+            this.soundTypesRepository.deleteSoundType(soundId)
+        );
+
+        if (!deletedOk || !deletedSound) return error("Failed to delete sound type");
+
+        return ok(deletedSound);
     }
 }
