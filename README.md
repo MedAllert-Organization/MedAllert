@@ -56,3 +56,12 @@ docker exec -it medallert /bin/ash
 
 - [HonoJS](https://hono.dev/docs/)
 - [Hono OpenAPI](https://hono.dev/examples/hono-openapi)
+
+#### **Emails**
+
+Envio de email é feito através do [Resend](https://resend.com/) com 3k de emails/mês.
+Pro envio precisa de uma chave de API e de um domínio configurado.
+Atualmente caso não seja encontrado as variáveis `RESEND_API_KEY` e `RESEND_FROM_EMAIL` os emails não são enviados e somente são logados no console.
+
+- [Resend API Key](https://resend.com/docs/dashboard/api-keys/introduction)
+- [Resend Domínio](https://resend.com/docs/dashboard/domains/introduction)
