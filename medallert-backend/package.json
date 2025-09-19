@@ -16,7 +16,7 @@
     "@prisma/client": "^6.16.1",
     "argon2": "0.44.0",
     "dayjs": "1.11.13",
-    "hono": "4.9.2",
+    "hono": "^4.9.8",
     "hono-openapi": "0.4.8",
     "install": "0.13.0",
     "resend": "6.0.1",
@@ -29,7 +29,7 @@
     "@types/node": "20.11.17",
     "dotenv-cli": "^10.0.0",
     "prisma": "^6.16.1",
-    "tsx": "4.7.1",
+    "tsx": "^4.20.5",
     "typescript": "5.8.3"
   }
 }
