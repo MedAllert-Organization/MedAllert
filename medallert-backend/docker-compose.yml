@@ -31,6 +31,7 @@ services:
 
   pgadmin:
     image: dpage/pgadmin4
+    attach: false
     container_name: pgadmin-medalert
     restart: always
     ports:
