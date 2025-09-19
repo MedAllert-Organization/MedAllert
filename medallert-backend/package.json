@@ -3,7 +3,7 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "gen": "rm -rf src/infra/prisma/generate && prisma generate --schema=./src/infra/prisma/schema.prisma",
+    "gen": "rm -rf src/infra/prisma/generate && prisma generate --no-hints --schema=./src/infra/prisma/schema.prisma",
     "dev": "npm run gen && tsx watch src/index.ts",
     "build": "tsc -p tsconfig.json",
     "start": "node dist/index.js",
@@ -21,7 +21,6 @@
     "install": "0.13.0",
     "resend": "6.0.1",
     "try": "1.0.0-beta.10",
-    "twilio": "5.8.0",
     "zod": "3.25.76",
     "zod-openapi": "4.2.4"
   },

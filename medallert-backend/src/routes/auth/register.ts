@@ -1,13 +1,13 @@
 import { Hono } from "hono";
 import { describeRoute } from "hono-openapi";
 import { validator } from "hono-openapi/zod";
-import { defaultEmailTransport } from "../../common/email-transport.js";
 import { defaultUsersRepository } from "../../repositories/users.js";
 import { defaultCodeRepository } from "../../repositories/verification-code.js";
 import {
   CreateUserRequest,
   RegisterService,
 } from "../../services/register-service.js";
+import { defaultEmailTransport } from "../../infra/email/default.js";
 
 export const register = new Hono();
 

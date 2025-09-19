@@ -8,7 +8,7 @@ export interface EmailTransport {
   sendEmail(config: EmailPayload): Promise<void>;
 }
 
-class DevelopmentEmailTransport implements EmailTransport {
+export class DevelopmentEmailTransport implements EmailTransport {
   async sendEmail({ to, subject, body }: EmailPayload): Promise<void> {
     console.log(`
 Development Email Transport:
@@ -19,5 +19,3 @@ Body: ${body}
 =========================`);
   }
 }
-
-export const defaultEmailTransport = new DevelopmentEmailTransport();
