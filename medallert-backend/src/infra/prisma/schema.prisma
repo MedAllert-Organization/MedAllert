@@ -26,10 +26,11 @@ model Users {
   accountConfirmedAt DateTime? @default(now()) @map("account_confirmed_at")
   createdAt          DateTime  @default(now()) @map("created_at")
   updatedAt          DateTime  @updatedAt @map("updated_at")
-
   verificationCodes VerificationCodes[]
   medications       Medications[]
   treatments         Treatments[] 
+  treatments         Treatments[] 
+
   @@map("users")
 }
 
@@ -51,7 +52,6 @@ model Medications {
   medicationId       String      @id @default(cuid()) @map("medication_id")
   treatmentId        String?     @map("treatment_id")
   treatment          Treatments? @relation(fields: [treatmentId], references: [treatmentId])
-
   userId             String      @map("user_id")
   user               Users       @relation(fields: [userId], references: [userId])
 
@@ -66,7 +66,6 @@ model Medications {
   endTreatmentAt     DateTime?   @default(now()) @map("end_treatment_at")
   createdAt          DateTime    @default(now()) @map("created_at")
   updatedAt          DateTime    @updatedAt @map("updated_at")
-
   notifications Notifications[]
   annotations   Annotations[]
   @@map("medications")
@@ -76,14 +75,11 @@ model Treatments {
   treatmentId   String   @id @default(cuid()) @map("treatment_id")
   userId        String   @map("user_id")
   user          Users    @relation(fields: [userId], references: [userId])
-
   name          String  
   description   String? 
   startAt       DateTime @default(now()) @map("start_at")
   endAt         DateTime? @map("end_at")
-
   medications   Medications[] 
-
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime @updatedAt @map("updated_at")
 
@@ -119,7 +115,6 @@ model VisualTypes {
   visual    String
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
-
   medications Medications[]
 
   @@map("visual_types")
