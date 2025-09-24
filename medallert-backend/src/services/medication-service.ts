@@ -5,11 +5,13 @@ import type { UsersRepository } from "../repositories/users.js";
 import { error, ok, t } from "try";
 import type { VisualTypesRepository } from "../repositories/visual_types.js";
 import type { SoundTypesRepository } from "../repositories/sound_types.js";
+import type { TreatmentRepository } from "../repositories/treatments.js";
 
 export const MedicationSchema = z.object({
     name: z.string(),
     dose: z.string().nullable().optional(),
     description: z.string().nullable().optional(),
+    treatmentId: z.string().nullable().optional(),
     visualTypeId: z.string(),
     soundTypeId: z.string(),
     alertPeriodInHours: z.number(),
@@ -29,6 +31,7 @@ export class MedicationService {
     constructor(
         private readonly usersRepository: UsersRepository,
         private readonly medicationRepository: MedicationRepository,
+        private readonly treatmentRepository: TreatmentRepository,
         private readonly visualTypesRepository: VisualTypesRepository,
         private readonly soundTypesRepository: SoundTypesRepository
     ) { }
@@ -50,6 +53,7 @@ export class MedicationService {
         name,
         dose,
         description,
+        treatmentId,
         visualTypeId,
         soundTypeId,
         alertPeriodInHours,
@@ -57,6 +61,11 @@ export class MedicationService {
     }: MedicationType): PromiseResult<Medication> {
         const user = await this.usersRepository.findUser(userId);
         if (!user) return error("User not found!");
+
+        if (treatmentId) {
+            const treatment = await this.treatmentRepository.findTreatment(treatmentId);
+            if (!treatment) return error("Treatment not found");
+        }
 
         const visualType = await this.visualTypesRepository.findVisualType(visualTypeId);
         if (!visualType) return error("Visual type not found");
@@ -89,6 +98,11 @@ export class MedicationService {
         const medication = await this.medicationRepository.findMedication(medicationId);
         if (!medication) return error("Medication not found");
 
+        if (updateData.treatmentId) {
+            const treatment = await this.treatmentRepository.findTreatment(updateData.treatmentId);
+            if (!treatment) return error("Treatment not found");
+        }
+
         if (updateData.visualTypeId) {
             const visualType = await this.visualTypesRepository.findVisualType(updateData.visualTypeId);
             if (!visualType) return error("Visual type not found");
@@ -104,7 +118,6 @@ export class MedicationService {
         );
 
         if (!updatedOk || !updatedMedication) return error("Failed to update medication");
-        
 
         return ok(updatedMedication);
     }
@@ -118,7 +131,7 @@ export class MedicationService {
         );
 
         if (!deletedOk || !deletedMedication) return error("Failed to delete medication");
-        
+
 
         return ok(deletedMedication);
     }

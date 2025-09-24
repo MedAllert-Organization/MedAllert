@@ -4,6 +4,7 @@ import type { PrismaClient } from "../infra/prisma/generated/prisma/index.js";
 export type Medication = {
     medicationId: string;
     userId: string;
+    treatmentId: string | null;
     name: string;
     dose: string | null;
     description: string | null;
@@ -18,6 +19,7 @@ export interface MedicationRepository {
     findAllMedications(userId: string): Promise<Medication[]>;
     addMedication(newMedication: {
         userId: string;
+        treatmentId?: string | null;
         name: string;
         dose: string | null;
         description: string | null;
@@ -28,6 +30,7 @@ export interface MedicationRepository {
     }): Promise<Medication | null>;
     updateMedication(id: string, 
         updateMedication: {
+        treatmentId?: string | null;
         name?: string | null;
         dose?: string | null;
         description?: string | null;
@@ -59,6 +62,7 @@ class PrismaMedicationRepository implements MedicationRepository {
     }
 
     async addMedication(newMedication: {
+        treatmentId?: string | null;
         userId: string;
         name: string;
         dose: string | null;
@@ -76,6 +80,7 @@ class PrismaMedicationRepository implements MedicationRepository {
     }
 
     async updateMedication(id: string, updateMedication: {
+        treatmentId?: string | null;
         name?: string | null;
         dose?: string | null;
         description?: string | null;

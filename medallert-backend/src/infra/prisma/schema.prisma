@@ -26,11 +26,9 @@ model Users {
   accountConfirmedAt DateTime? @default(now()) @map("account_confirmed_at")
   createdAt          DateTime  @default(now()) @map("created_at")
   updatedAt          DateTime  @updatedAt @map("updated_at")
-
   verificationCodes VerificationCodes[]
   medications       Medications[]
-  patientSharings   Sharings[]          @relation("PatientSharings")
-  caretakerSharings Sharings[]          @relation("CaretakerSharings")
+  treatments         Treatments[] 
 
   @@map("users")
 }
@@ -51,6 +49,8 @@ model VerificationCodes {
 
 model Medications {
   medicationId       String      @id @default(cuid()) @map("medication_id")
+  treatmentId        String?     @map("treatment_id")
+  treatment          Treatments? @relation(fields: [treatmentId], references: [treatmentId])
   userId             String      @map("user_id")
   user               Users       @relation(fields: [userId], references: [userId])
   name               String
@@ -64,11 +64,25 @@ model Medications {
   endTreatmentAt     DateTime?   @default(now()) @map("end_treatment_at")
   createdAt          DateTime    @default(now()) @map("created_at")
   updatedAt          DateTime    @updatedAt @map("updated_at")
-
   notifications Notifications[]
   annotations   Annotations[]
 
   @@map("medications")
+}
+
+model Treatments {
+  treatmentId   String   @id @default(cuid()) @map("treatment_id")
+  userId        String   @map("user_id")
+  user          Users    @relation(fields: [userId], references: [userId])
+  name          String  
+  description   String? 
+  startAt       DateTime @default(now()) @map("start_at")
+  endAt         DateTime? @map("end_at")
+  medications   Medications[] 
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  @@map("treatments")
 }
 
 model Notifications {
@@ -95,26 +109,11 @@ model Annotations {
   @@map("annotations")
 }
 
-model Sharings {
-  sharingId   String @id @default(cuid())
-  patientId   String @map("patient_id")
-  caretakerId String @map("caretaker_id")
-
-  patient   Users @relation("PatientSharings", fields: [patientId], references: [userId])
-  caretaker Users @relation("CaretakerSharings", fields: [caretakerId], references: [userId])
-
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  @@map("sharings")
-}
-
 model VisualTypes {
   visualId  String   @id @default(cuid()) @map("visual_id")
   visual    String
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
-
   medications Medications[]
 
   @@map("visual_types")
@@ -125,7 +124,6 @@ model SoundTypes {
   sound     String
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
-
   medications Medications[]
 
   @@map("sound_types")
