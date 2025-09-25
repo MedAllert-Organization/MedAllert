@@ -28,8 +28,7 @@ model Users {
   updatedAt          DateTime  @updatedAt @map("updated_at")
   verificationCodes VerificationCodes[]
   medications       Medications[]
-  treatments         Treatments[] 
-  treatments         Treatments[] 
+  treatments         Treatments[]  
 
   @@map("users")
 }
