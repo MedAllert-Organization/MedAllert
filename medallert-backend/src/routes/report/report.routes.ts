@@ -21,3 +21,4 @@ reportRoute.get("/:period/:userId",async (c)=> {
         return c.json({error: "Erro interno na tentativa de gerar relatório"},500);
     }
 });
+export default reportRoute;
