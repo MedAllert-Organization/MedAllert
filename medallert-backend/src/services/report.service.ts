@@ -1,90 +1,103 @@
-import PDFDocument, { end, moveDown } from "pdfkit";
+import PDFDocument from "pdfkit";
 import { prisma } from "../infra/prisma/client.js";
-import { treatment } from "../routes/medications/treatment.js";
-import { medication } from "../routes/medications/medication.js";
 import fs from "fs";
 import path from "path";
 
-export class reportService{
-  static generateReport: any;
-  async generateReport(userId: string,period: "Weakly"|"Mouthly"): Promise<string>{
+export class ReportService {
+  static async generateReport(userId: string, period: "Weekly" | "Monthly"): Promise<string> {
     const now = new Date();
     const startDate = new Date();
     const doc = new PDFDocument();
 
-    if(period ==="Weakly"){
-      startDate.setDate(now.getDate()-7);
-    }else if(period === "Mouthly"){
-      startDate.setDate(now.getDate()-1);
+    // Fixed period calculations
+    if (period === "Weekly") {
+      startDate.setDate(now.getDate() - 7);
+    } else if (period === "Monthly") {
+      startDate.setMonth(now.getMonth() - 1); // Fixed: was setDate(now.getDate()-1)
     }
 
-    // View in DataBase
+    // Fetch treatments from database
     const treatments = await prisma.treatments.findMany({
-      where:{
+      where: {
         userId,
-        OR:[
-          {startAt:{lte: now},endAt:{gte: startDate}},
-          {startAt:{gte: startDate,lte: now}}
+        OR: [
+          { startAt: { lte: now }, endAt: { gte: startDate } },
+          { startAt: { gte: startDate, lte: now } }
         ]
       },
-      include:{
-        medication: true
+      include: {
+        medications: true
       },
     });
-    const medicationIds = treatments.flapMap(t => t.medications.map(m=>m.medicationIds));
-    const notifications = await prisma.notifications({
-      where:{
-        medicationId: {in: medicationIds},
-        alertAt:{
+
+    // Fixed: Get medication IDs correctly
+    const medicationIds = treatments.flatMap((t: any) => 
+      t.medications.map((m: any) => m.medicationId) // Fixed: was medicationIds
+    );
+
+    const notifications = await prisma.notifications.findMany({
+      where: {
+        medicationId: { in: medicationIds },
+        alertAt: {
           gte: startDate,
           lte: now
         },
       },
-      orderBy: {alertAt: "asc"},
+      orderBy: { alertAt: "asc" },
     });
 
-    // Document
+    // Document setup
     const reportsDir = path.resolve("reports");
-    if(!fs.existsSync(reportsDir)){
-      fs.mkdirSync(reportsDir);
+    if (!fs.existsSync(reportsDir)) {
+      fs.mkdirSync(reportsDir, { recursive: true });
     }
-    const filePath = path.join(reportsDir,`treatment-report-${userId}-${period}.pdf`);
+    const filePath = path.join(reportsDir, `treatment-report-${userId}-${period}.pdf`);
 
     doc.pipe(fs.createWriteStream(filePath));
 
-    doc.fontSize(20).text("Relatório do Tratamento", {align: "center"});
-    doc.moveDown()
+    doc.fontSize(20).text("Relatório do Tratamento", { align: "center" });
+    doc.moveDown();
 
     doc.fontSize(14).text(`Usuário: ${userId}`);
     doc.text(`Período: ${startDate.toLocaleDateString()} - ${now.toLocaleDateString()}`);
     doc.moveDown();
 
-    treatments.forEach((treatment) => {
-        doc.fontSize(14).text(`Tratamento: ${treatment.treatmentId}`);
-        doc.fontSize(12).text(`Início: ${treatment.startAt}`);
-        doc.text(`Fim: ${treatment.endAt}`);
-        doc.text(`Status: ${treatment.isActive ? "Ativo" : "Finalizado"}`);
-        doc.moveDown();
+    // Fixed: Calculate isActive and use proper typing
+    treatments.forEach((treatment: any) => {
+      // Calculate isActive based on endAt or endTreatmentAt
+      const isActive = !treatment.endAt || new Date(treatment.endAt) > new Date();
+      
+      doc.fontSize(14).text(`Tratamento: ${treatment.id}`); // Fixed: use treatment.id instead of treatmentId
+      doc.fontSize(12).text(`Início: ${treatment.startAt.toLocaleDateString()}`);
+      doc.text(`Fim: ${treatment.endAt ? treatment.endAt.toLocaleDateString() : 'Em andamento'}`);
+      doc.text(`Status: ${isActive ? "Ativo" : "Finalizado"}`);
+      doc.moveDown();
 
-        treatment.medications.forEach((med) => {
-          doc.fontSize(12).text(`- Medicamento: ${med.name}`);
-          doc.text(`  Dose: ${med.dose ?? "Não informado"}`);
-          doc.text(`  Descrição: ${med.description ?? "Não informada"}`);
+      treatment.medications.forEach((med: any) => {
+        doc.fontSize(12).text(`- Medicamento: ${med.name}`);
+        doc.text(`  Dose: ${med.dose ?? "Não informado"}`);
+        doc.text(`  Descrição: ${med.description ?? "Não informada"}`);
 
-          const medNotifications = notifications.filter(n => n.medicationId === med.medicationId);
-          if (medNotifications.length > 0) {
-            doc.moveDown(0.5).text("  Ocorrências:");
-            medNotifications.forEach(n => {
-              doc.text(`   • ${new Date(n.alertAt).toLocaleString()}`);
-            });
-          }
-
-          doc.moveDown();
-        });
+        const medNotifications = notifications.filter((n: any) => n.medicationId === med.medicationId);
+        if (medNotifications.length > 0) {
+          doc.moveDown(0.5).text("  Ocorrências:");
+          medNotifications.forEach((n: any) => {
+            doc.text(`   • ${new Date(n.alertAt).toLocaleString()}`);
+          });
+        }
 
         doc.moveDown();
       });
+
+      doc.moveDown();
+    });
+
     doc.end();
-    return filePath;
+    
+    // Wait for the PDF to be fully written
+    return new Promise((resolve, reject) => {
+      doc.on('end', () => resolve(filePath));
+      doc.on('error', reject);
+    });
   }
 }

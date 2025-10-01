@@ -1,17 +1,17 @@
 import { Hono } from "hono";
-import { reportService } from "../../services/report.service.js";
+import { ReportService } from "../../services/report.service.js";
 import { file } from "pdfkit";
 
 const reportRoute = new Hono();
-const ReportService = new reportService();
+const reportService = new ReportService();
 
 reportRoute.get("/:period/:userId",async (c)=> {
     try{
         const {period,userId} = c.req.param();
-        if(period !== "weekly" && period !== "mouthly"){
+        if(period !== "Weekly" && period !== "Monthly"){
             return c.json({error: "Período inválido! Use 'weekly' ou 'mouthly'. "},400);
         }
-        const filePath = await reportService.generateReport(userId,period);
+        const filePath = await ReportService.generateReport(userId,period);
         return c.json({
             message: "relatório gerado com sucesso!",
             file: filePath
