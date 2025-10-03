@@ -7,11 +7,12 @@ import { defaultTreatmentRepository } from "../../repositories/treatments.js";
 const reportRoute = new Hono();
 const reportService = new ReportService(defaultTreatmentRepository);
 
-reportRoute.get("/:period/:userId", async (c) => {
+reportRoute.get("/:period", async (c) => {
     
     try {
-        const { period, userId } = c.req.param();
-        
+        const { period } = c.req.param();
+        const userId = c.get("userId" as any);
+
         if (period !== "Weekly" && period !== "Monthly") {
             return c.json({ 
                 error: "Período inválido! Use 'Weekly' ou 'Monthly'." 
