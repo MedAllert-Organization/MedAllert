@@ -10,21 +10,11 @@ import { error, ok, t } from "try";
 export const TreatmentSchema = z.object({
   name: z.string(),
   description: z.string().nullable().optional(),
-  startAt: z
-    .string()
-    .refine((s) => !Number.isNaN(Date.parse(s)), {
-      message: "Invalid ISO date",
-    })
-    .transform((s) => new Date(s)),
-  endAt: z
-    .string()
-    .refine((s) => !Number.isNaN(Date.parse(s)), {
-      message: "Invalid ISO date",
-    })
-    .transform((s) => new Date(s))
-    .nullable()
-    .optional(),
+  startAt: z.string().transform(s => new Date(s)),
+  endAt: z.string().transform(s => new Date(s)).nullable().optional(),
+  medicationIds: z.array(z.string()).min(1, "Um tratamento precisa ter pelo menos um medicamento"),
 });
+
 
 export const TreatmentIdParamSchema = z.object({
   id: z.string().min(1, "ID is required"),
@@ -38,7 +28,7 @@ export class TreatmentService {
   constructor(
     private readonly usersRepository: UsersRepository,
     private readonly treatmentRepository: TreatmentRepository,
-  ) {}
+  ) { }
 
   async getAll(userId: string): PromiseResult<Treatment[]> {
     const treatments = await this.treatmentRepository.findAllTreatments(userId);
@@ -54,10 +44,12 @@ export class TreatmentService {
 
   async create(
     userId: string,
-    { name, description, startAt, endAt }: TreatmentType,
+    { name, description, startAt, endAt, medicationIds }: TreatmentType & { medicationIds: string[] }
   ): PromiseResult<Treatment> {
     const user = await this.usersRepository.findUser(userId);
     if (!user) return error("User not found!");
+
+    if (!medicationIds || medicationIds.length === 0) return error("Um tratamento precisa ter pelo menos um medicamento.");
 
     const [createdOk, _, createdTreatment] = await t(
       this.treatmentRepository.addTreatment({
@@ -66,14 +58,15 @@ export class TreatmentService {
         description: description ?? null,
         startAt,
         endAt: endAt ?? null,
+        medicationIds,
       }),
     );
 
-    if (!createdOk || !createdTreatment)
-      return error("Failed to create treatment");
+    if (!createdOk || !createdTreatment) return error("Failed to create treatment");
 
     return ok(createdTreatment);
   }
+
 
   async update(
     treatmentId: string,

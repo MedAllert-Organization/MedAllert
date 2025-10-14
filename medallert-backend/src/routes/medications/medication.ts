@@ -13,7 +13,6 @@ export const medication = new Hono();
 const medicationService = new MedicationService(
     defaultUsersRepository,
     defaultMedicationRepository,
-    defaultTreatmentRepository,
     defaultVisualTypesRepository,
     defaultSoundTypesRepository
 );
@@ -68,6 +67,28 @@ medication.get(
         }
         return c.json({ success: true, medications }, 200);
     }
+);
+
+medication.get(
+  '/today',
+  describeRoute({
+    tags: ["Medication"],
+    description: "Get medications that need to be taken today",
+    responses: {
+      200: { description: "Successful getting today's medications" },
+      400: { description: "Failed to get today's medications" },
+    },
+  }),
+  async (c) => {
+    const userId = c.get("userId" as any);
+    const [ok, error, medications] = await medicationService.getTodayMedications(userId);
+
+    if (!ok) {
+      return c.json({ success: false, error }, 400);
+    }
+
+    return c.json({ success: true, medications }, 200);
+  }
 );
 
 medication.get(

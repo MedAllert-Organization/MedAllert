@@ -47,29 +47,6 @@ model VerificationCodes {
   @@map("verification_codes")
 }
 
-model Medications {
-  medicationId       String          @id @default(cuid()) @map("medication_id")
-  treatmentId        String?         @map("treatment_id")
-  treatment          Treatments?     @relation(fields: [treatmentId], references: [treatmentId])
-  userId             String          @map("user_id")
-  user               Users           @relation(fields: [userId], references: [userId])
-  name               String
-  dose               String?
-  description        String?
-  visualTypeId       String?         @map("visual_type_id")
-  visualType         VisualTypes?    @relation(fields: [visualTypeId], references: [visualId])
-  soundTypeId        String?         @map("sound_type_id")
-  soundType          SoundTypes?     @relation(fields: [soundTypeId], references: [soundId])
-  alertPeriodInHours Int             @map("alert_period_in_hours")
-  endTreatmentAt     DateTime?       @default(now()) @map("end_treatment_at")
-  createdAt          DateTime        @default(now()) @map("created_at")
-  updatedAt          DateTime        @updatedAt @map("updated_at")
-  notifications      Notifications[]
-  annotations        Annotations[]
-
-  @@map("medications")
-}
-
 model Treatments {
   treatmentId String        @id @default(cuid()) @map("treatment_id")
   userId      String        @map("user_id")
@@ -78,11 +55,28 @@ model Treatments {
   description String?
   startAt     DateTime      @default(now()) @map("start_at")
   endAt       DateTime?     @map("end_at")
-  medications Medications[]
+  medications Medications[] @relation("TreatmentMedications")
   createdAt   DateTime      @default(now()) @map("created_at")
   updatedAt   DateTime      @updatedAt @map("updated_at")
+}
 
-  @@map("treatments")
+model Medications {
+  medicationId       String        @id @default(cuid()) @map("medication_id")
+  userId             String        @map("user_id")
+  user               Users         @relation(fields: [userId], references: [userId])
+  name               String
+  dose               String?
+  description        String?
+  visualTypeId       String?       @map("visual_type_id")
+  visualType         VisualTypes?  @relation(fields: [visualTypeId], references: [visualId])
+  soundTypeId        String?       @map("sound_type_id")
+  soundType          SoundTypes?   @relation(fields: [soundTypeId], references: [soundId])
+  alertPeriodInHours Int           @map("alert_period_in_hours")
+  treatments         Treatments[]  @relation("TreatmentMedications")
+  createdAt          DateTime      @default(now()) @map("created_at")
+  updatedAt          DateTime      @updatedAt @map("updated_at")
+  notifications      Notifications[]
+  annotations        Annotations[]
 }
 
 model Notifications {
