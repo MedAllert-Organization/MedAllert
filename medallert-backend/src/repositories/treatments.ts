@@ -2,13 +2,19 @@ import { prisma } from "../infra/prisma/client.js";
 import type { PrismaClient } from "../infra/prisma/generated/prisma/index.js";
 
 export type Treatment = {
-    treatmentId: string;
-    userId: string;
+  treatmentId: string;
+  userId: string;
+  name: string;
+  description: string | null;
+  startAt: Date;
+  endAt: Date | null;
+  medications?: {
+    medicationId: string;
     name: string;
-    description: string | null;
-    startAt: Date;
-    endAt: Date | null;
-}
+    dose: string | null;
+  }[];
+};
+
 
 export interface TreatmentRepository {
     findTreatment(id: string): Promise<Treatment | null>;

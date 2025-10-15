@@ -15,6 +15,7 @@ export type Medication = {
 };
 
 export interface MedicationRepository {
+  findMedications(medicationIds: string[]):  Promise<Medication[]> ;
   findMedication(id: string): Promise<Medication | null>;
   findAllMedications(userId: string): Promise<Medication[]>;
   addMedication(newMedication: {
@@ -42,7 +43,13 @@ export interface MedicationRepository {
 }
 
 class PrismaMedicationRepository implements MedicationRepository {
-  constructor(private readonly prisma: PrismaClient) {}
+  constructor(private readonly prisma: PrismaClient) { }
+
+  findMedications(medicationIds: string[]): Promise<Medication[]>  {
+    return this.prisma.medications.findMany({
+      where: { medicationId: { in: medicationIds } },
+    });
+  }
 
   async findMedication(id: string): Promise<Medication | null> {
     return this.prisma.medications.findUnique({
