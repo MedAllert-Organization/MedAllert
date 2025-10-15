@@ -1,0 +1,1 @@
+import type { Annotation } from "../repositories/annotations.js";
