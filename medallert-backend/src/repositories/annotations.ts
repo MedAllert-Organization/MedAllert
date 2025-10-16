@@ -5,49 +5,87 @@ export type Annotation = {
     annotationId: string;
     medicationId: string;
     content: string | null;
-    alertAt: Date
+    alertAt: Date;
 }
 
 export interface AnnotationRepository{
     createAnnotation(newAnnotation: {
         medicationId: string,
         content: string,
-        alertAt: Date
+        alertAt: Date;
     }): Promise<Annotation|null>;
+    
     deleteAnnotation(id: string): Promise<Annotation|null>;
-    updateAnnotation(id: string,updateAnnotation:{
-        content: string | null;
+    
+    updateAnnotation(id: string, updateAnnotation: {
+        content?: string | null;
+        alertAt?: Date;
     }): Promise<Annotation|null>;
 }
 
 export class PrismaAnnotationRepository implements AnnotationRepository{
     constructor(private readonly prisma: PrismaClient){}
 
-    createAnnotation(newAnnotation: { medicationId: string; content: string; alertAt: Date; }): Promise<Annotation | null> {
-        return this.prisma.annotations.create({
-            data:{
-                ...newAnnotation
+    async createAnnotation(newAnnotation: { 
+        medicationId: string; 
+        content: string; 
+        alertAt: Date;
+    }): Promise<Annotation | null> {
+        return this.prisma.annotation.create({
+            data: {
+                medicationId: newAnnotation.medicationId,
+                content: newAnnotation.content,
+                alertAt: newAnnotation.alertAt,
             }
-        })
+        });
     }
 
-    deleteAnnotation(id: string): Promise<Annotation | null> {
-        return this.prisma.annotations.delete({
-            where:{ annotationId: id }
-        })
+    async deleteAnnotation(id: string): Promise<Annotation | null> {
+        try {
+            return await this.prisma.annotation.delete({
+                where: { annotationId: id }
+            });
+        } catch (error) {
+            console.error("Erro ao deletar anotação:", error);
+            return null;
+        }
     }
 
-    updateAnnotation(id: string, updateAnnotation: { content: string | null; }): Promise<Annotation | null> {
-        const { ...data } = updateAnnotation;
-        const updateData = Object.fromEntries(
-            Object.entries(data)
-        );
+    async updateAnnotation(id: string, updateAnnotation: { 
+        content?: string | null;
+        alertAt?: Date;
+    }): Promise<Annotation | null> {
+        try {
+            const dataToUpdate: any = {};
+            
+            if (updateAnnotation.content !== undefined) {
+                dataToUpdate.content = updateAnnotation.content;
+            }
+            
+            if (updateAnnotation.alertAt !== undefined) {
+                dataToUpdate.alertAt = updateAnnotation.alertAt;
+            }
 
-        return this.prisma.annotations.update({
-            where: { annotationId: id },
-            data: updateData
+            return await this.prisma.annotation.update({
+                where: { annotationId: id },
+                data: dataToUpdate
+            });
+        } catch (error) {
+            console.error("Erro ao atualizar anotação:", error);
+            return null;
+        }
+    }
+
+    async findById(id: string): Promise<Annotation | null> {
+        return this.prisma.annotation.findUnique({
+            where: { annotationId: id }
+        });
+    }
+
+    async findByMedicationId(medicationId: string): Promise<Annotation[]> {
+        return this.prisma.annotation.findMany({
+            where: { medicationId }
         });
     }
 }
-
 export const defaultAnnotationRepository = new PrismaAnnotationRepository(prisma);
