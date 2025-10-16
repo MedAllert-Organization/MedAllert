@@ -8,24 +8,15 @@ import type { UsersRepository } from "../repositories/users.js";
 import { error, ok, t } from "try";
 import type { VisualTypesRepository } from "../repositories/visual_types.js";
 import type { SoundTypesRepository } from "../repositories/sound_types.js";
-import type { TreatmentRepository } from "../repositories/treatments.js";
+import { startOfDay, endOfDay, addHours, isWithinInterval } from "date-fns";
 
 export const MedicationSchema = z.object({
   name: z.string(),
   dose: z.string().nullable().optional(),
   description: z.string().nullable().optional(),
-  treatmentId: z.string().nullable().optional(),
   visualTypeId: z.string().nullable().optional(),
   soundTypeId: z.string().nullable().optional(),
   alertPeriodInHours: z.number(),
-  endTreatmentAt: z
-    .string()
-    .refine((s) => !Number.isNaN(Date.parse(s)), {
-      message: "Invalid ISO date",
-    })
-    .transform((s) => new Date(s))
-    .nullable()
-    .optional(),
 });
 
 export const MedicationIdParamSchema = z.object({
@@ -40,23 +31,23 @@ export class MedicationService {
   constructor(
     private readonly usersRepository: UsersRepository,
     private readonly medicationRepository: MedicationRepository,
-    private readonly treatmentRepository: TreatmentRepository,
     private readonly visualTypesRepository: VisualTypesRepository,
     private readonly soundTypesRepository: SoundTypesRepository,
-  ) {}
+  ) { }
 
   async getAll(userId: string): PromiseResult<Medication[]> {
-    const medications =
-      await this.medicationRepository.findAllMedications(userId);
+    const medications = await this.medicationRepository.findAllMedications(userId);
+    return ok(medications);
+  }
 
+  async getTodayMedications(userId: string): PromiseResult<Medication[]> {
+    const medications = await this.medicationRepository.findTodayMedication(userId);
     return ok(medications);
   }
 
   async get(medicationId: string): PromiseResult<Medication> {
-    const medication =
-      await this.medicationRepository.findMedication(medicationId);
+    const medication = await this.medicationRepository.findMedication(medicationId);
     if (!medication) return error("Medication not found");
-
     return ok(medication);
   }
 
@@ -66,31 +57,22 @@ export class MedicationService {
       name,
       dose,
       description,
-      treatmentId,
       visualTypeId,
       soundTypeId,
       alertPeriodInHours,
-      endTreatmentAt,
     }: MedicationType,
   ): PromiseResult<Medication> {
     const user = await this.usersRepository.findUser(userId);
     if (!user) return error("User not found!");
 
-    if (treatmentId) {
-      const treatment =
-        await this.treatmentRepository.findTreatment(treatmentId);
-      if (!treatment) return error("Treatment not found");
-    }
-
-    let visualType = null;
     if (visualTypeId) {
-      visualType =
-        await this.visualTypesRepository.findVisualType(visualTypeId);
+      const visualType = await this.visualTypesRepository.findVisualType(visualTypeId);
+      if (!visualType) return error("Visual type not found");
     }
 
-    let soundType = null;
     if (soundTypeId) {
-      soundType = await this.soundTypesRepository.findSoundType(soundTypeId);
+      const soundType = await this.soundTypesRepository.findSoundType(soundTypeId);
+      if (!soundType) return error("Sound type not found");
     }
 
     type OptionalId = string;
@@ -101,15 +83,14 @@ export class MedicationService {
         name,
         dose: dose ?? null,
         description: description ?? null,
-        visualTypeId: visualTypeId as OptionalId,
-        soundTypeId: soundTypeId as OptionalId,
+        visualTypeId: visualTypeId as OptionalId | null,
+        soundTypeId: soundTypeId as OptionalId | null,
         alertPeriodInHours,
-        endTreatmentAt: endTreatmentAt ?? null,
       }),
     );
 
     if (!createdOk || !createdMedication)
-      return error("failed to create medication");
+      return error("Failed to create medication");
 
     return ok(createdMedication);
   }
@@ -118,28 +99,16 @@ export class MedicationService {
     medicationId: string,
     updateData: Partial<MedicationType>,
   ): PromiseResult<Medication> {
-    const medication =
-      await this.medicationRepository.findMedication(medicationId);
+    const medication = await this.medicationRepository.findMedication(medicationId);
     if (!medication) return error("Medication not found");
 
-    if (updateData.treatmentId) {
-      const treatment = await this.treatmentRepository.findTreatment(
-        updateData.treatmentId,
-      );
-      if (!treatment) return error("Treatment not found");
-    }
-
     if (updateData.visualTypeId) {
-      const visualType = await this.visualTypesRepository.findVisualType(
-        updateData.visualTypeId,
-      );
+      const visualType = await this.visualTypesRepository.findVisualType(updateData.visualTypeId);
       if (!visualType) return error("Visual type not found");
     }
 
     if (updateData.soundTypeId) {
-      const soundType = await this.soundTypesRepository.findSoundType(
-        updateData.soundTypeId,
-      );
+      const soundType = await this.soundTypesRepository.findSoundType(updateData.soundTypeId);
       if (!soundType) return error("Sound type not found");
     }
 
@@ -156,8 +125,7 @@ export class MedicationService {
   }
 
   async delete(medicationId: string): PromiseResult<Medication> {
-    const medication =
-      await this.medicationRepository.findMedication(medicationId);
+    const medication = await this.medicationRepository.findMedication(medicationId);
     if (!medication) return error("Medication not found");
 
     const [deletedOk, _, deletedMedication] = await t(

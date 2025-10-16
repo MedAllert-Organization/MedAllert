@@ -2,13 +2,19 @@ import { prisma } from "../infra/prisma/client.js";
 import type { PrismaClient } from "../infra/prisma/generated/prisma/index.js";
 
 export type Treatment = {
-    treatmentId: string;
-    userId: string;
+  treatmentId: string;
+  userId: string;
+  name: string;
+  description: string | null;
+  startAt: Date;
+  endAt: Date | null;
+  medications?: {
+    medicationId: string;
     name: string;
-    description: string | null;
-    startAt: Date;
-    endAt: Date | null;
-}
+    dose: string | null;
+  }[];
+};
+
 
 export interface TreatmentRepository {
     findTreatment(id: string): Promise<Treatment | null>;
@@ -19,6 +25,7 @@ export interface TreatmentRepository {
         description: string | null;
         startAt: Date;
         endAt: Date | null;
+        medicationIds: string[]; 
     }): Promise<Treatment | null>;
     updateTreatment(id: string, updateTreatment: {
         name?: string | null;
@@ -29,8 +36,9 @@ export interface TreatmentRepository {
     deleteTreatment(id: string): Promise<Treatment | null>;
 }
 
+
 class PrismaTreatmentRepository implements TreatmentRepository {
-    constructor(private readonly prisma: PrismaClient) {}
+    constructor(private readonly prisma: PrismaClient) { }
 
     async findTreatment(id: string): Promise<Treatment | null> {
         return this.prisma.treatments.findUnique({
@@ -50,11 +58,27 @@ class PrismaTreatmentRepository implements TreatmentRepository {
         description: string | null;
         startAt: Date;
         endAt: Date | null;
+        medicationIds: string[]; 
     }): Promise<Treatment | null> {
+        if (!newTreatment.medicationIds || newTreatment.medicationIds.length === 0) {
+            throw new Error("Um tratamento precisa ter pelo menos um medicamento.");
+        }
+
         return this.prisma.treatments.create({
-            data: { ...newTreatment },
+            data: {
+                userId: newTreatment.userId,
+                name: newTreatment.name,
+                description: newTreatment.description,
+                startAt: newTreatment.startAt,
+                endAt: newTreatment.endAt,
+                medications: {
+                    connect: newTreatment.medicationIds.map(id => ({ medicationId: id })),
+                },
+            },
+            include: { medications: true },
         });
     }
+
 
     async updateTreatment(id: string, updateTreatment: {
         name?: string | null;

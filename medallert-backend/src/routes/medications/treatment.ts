@@ -4,11 +4,13 @@ import { validator } from "hono-openapi/zod";
 import { defaultTreatmentRepository } from "../../repositories/treatments.js";
 import { defaultUsersRepository } from "../../repositories/users.js";
 import { TreatmentIdParamSchema, TreatmentSchema, TreatmentService, TreatmentUpdateSchema } from "../../services/treatment-serivce.js";
+import { defaultMedicationRepository } from "../../repositories/medications.js";
 export const treatment = new Hono();
 
 const treatmentService = new TreatmentService(
     defaultUsersRepository,
-    defaultTreatmentRepository
+    defaultTreatmentRepository,
+    defaultMedicationRepository
 );
 
 treatment.post(
