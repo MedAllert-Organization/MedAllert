@@ -1,3 +1,4 @@
+import { endOfDay, startOfDay } from "date-fns";
 import { prisma } from "../infra/prisma/client.js";
 import type { PrismaClient } from "../infra/prisma/generated/prisma/index.js";
 
@@ -15,8 +16,9 @@ export type Medication = {
 };
 
 export interface MedicationRepository {
-  findMedications(medicationIds: string[]):  Promise<Medication[]> ;
+  findMedications(medicationIds: string[]): Promise<Medication[]>;
   findMedication(id: string): Promise<Medication | null>;
+  findTodayMedication(id: string): Promise<Medication[]>;
   findAllMedications(userId: string): Promise<Medication[]>;
   addMedication(newMedication: {
     userId: string;
@@ -45,7 +47,33 @@ export interface MedicationRepository {
 class PrismaMedicationRepository implements MedicationRepository {
   constructor(private readonly prisma: PrismaClient) { }
 
-  findMedications(medicationIds: string[]): Promise<Medication[]>  {
+  async findTodayMedication(userId: string): Promise<Medication[]> {
+    const todayStart = startOfDay(new Date());
+    const todayEnd = endOfDay(new Date());
+
+    const medications = await this.prisma.medications.findMany({
+      where: {
+        userId,
+        treatments: {
+          some: {
+            startAt: { lte: todayEnd },
+            OR: [
+              { endAt: null },
+              { endAt: { gte: todayStart } },
+            ],
+          },
+        },
+      },
+      orderBy: { name: "asc" },
+      include: {
+        treatments: true,
+      },
+    });
+
+    return medications;
+  }
+
+  findMedications(medicationIds: string[]): Promise<Medication[]> {
     return this.prisma.medications.findMany({
       where: { medicationId: { in: medicationIds } },
     });

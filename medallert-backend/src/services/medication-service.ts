@@ -33,7 +33,7 @@ export class MedicationService {
     private readonly medicationRepository: MedicationRepository,
     private readonly visualTypesRepository: VisualTypesRepository,
     private readonly soundTypesRepository: SoundTypesRepository,
-  ) {}
+  ) { }
 
   async getAll(userId: string): PromiseResult<Medication[]> {
     const medications = await this.medicationRepository.findAllMedications(userId);
@@ -41,31 +41,8 @@ export class MedicationService {
   }
 
   async getTodayMedications(userId: string): PromiseResult<Medication[]> {
-    const now = new Date();
-    const start = startOfDay(now);
-    const end = endOfDay(now);
-
-    if (!start || !end) return ok([]);
-
-    const medications = await this.medicationRepository.findAllMedications(userId);
-
-    const medsToday = medications.filter((med) => {
-      if (!med.alertPeriodInHours) return true; 
-
-      let next = med.createdAt ? new Date(med.createdAt) : null;
-      const last = end;
-
-      if (!next) return false;
-
-      while (next <= last && next <= end) {
-        if (isWithinInterval(next, { start, end })) return true;
-        next = addHours(next, med.alertPeriodInHours);
-      }
-
-      return false;
-    });
-
-    return ok(medsToday);
+    const medications = await this.medicationRepository.findTodayMedication(userId);
+    return ok(medications);
   }
 
   async get(medicationId: string): PromiseResult<Medication> {
