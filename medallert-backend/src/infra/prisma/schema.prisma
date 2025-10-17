@@ -58,6 +58,7 @@ model Treatments {
   medications Medications[] @relation("TreatmentMedications")
   createdAt   DateTime      @default(now()) @map("created_at")
   updatedAt   DateTime      @updatedAt @map("updated_at")
+  @@map("treatments")
 }
 
 model Medications {
@@ -77,6 +78,7 @@ model Medications {
   updatedAt          DateTime      @updatedAt @map("updated_at")
   notifications      Notifications[]
   annotations        Annotations[]
+  @@map("medications")
 }
 
 model Notifications {
