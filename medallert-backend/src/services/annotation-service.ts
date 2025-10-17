@@ -3,24 +3,21 @@ import type { Annotation, AnnotationRepository } from "../repositories/annotatio
 
 const createAnnotationSchema = z.object({
     content: z.string().min(1, "Conteúdo é obrigatório"),
-    alertAt: z.coerce.date({ message: "alertAt é obrigatório e deve ser uma data válida" }),
 });
 
 const updateAnnotationSchema = z.object({
     content: z.string().min(1, "Conteúdo é obrigatório").optional(),
-    alertAt: z.coerce.date({ message: "alertAt deve ser uma data válida" }).optional(),
 });
 
 export class AnnotationService {
     constructor(
         private readonly annotationRepository: AnnotationRepository
-    ){}
+    ) {}
 
     async create_annotation(
         medicationId: string,
         data: {
             content: string;
-            alertAt: Date;
         }
     ): Promise<Annotation> {
         if (!medicationId) {
@@ -32,7 +29,6 @@ export class AnnotationService {
         const annotation = await this.annotationRepository.createAnnotation({
             medicationId,
             content: validatedData.content,
-            alertAt: validatedData.alertAt,
         });
 
         if (!annotation) {
@@ -48,7 +44,7 @@ export class AnnotationService {
         }
 
         const deleted = await this.annotationRepository.deleteAnnotation(id);
-        
+
         if (!deleted) {
             throw new Error("Anotação não encontrada para exclusão");
         }
@@ -57,10 +53,9 @@ export class AnnotationService {
     }
 
     async update_annotation(
-        id: string, 
+        id: string,
         data: {
             content?: string;
-            alertAt?: Date;
         }
     ): Promise<Annotation> {
         if (!id) {
@@ -70,7 +65,7 @@ export class AnnotationService {
         const validatedData = updateAnnotationSchema.parse(data);
 
         const updatedAnnotation = await this.annotationRepository.updateAnnotation(
-            id, 
+            id,
             validatedData
         );
 
@@ -80,7 +75,7 @@ export class AnnotationService {
 
         return updatedAnnotation;
     }
-    
+
     async get_annotation_by_id(id: string): Promise<Annotation> {
         if (!id) {
             throw new Error("ID da anotação é obrigatório");
