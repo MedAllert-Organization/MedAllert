@@ -5,13 +5,14 @@
     "strict": true,
     "verbatimModuleSyntax": true,
     "skipLibCheck": true,
-    "types": ["node"],
+    "types": ["node", "jest"],
     "jsx": "react-jsx",
     "jsxImportSource": "hono/jsx",
     "outDir": "./dist",
     "rootDir": "./src",
     "moduleResolution": "NodeNext",
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "isolatedModules": true
   },
   "include": ["src"],
   "exclude": ["node_modules"]
