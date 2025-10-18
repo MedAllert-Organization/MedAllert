@@ -4,7 +4,7 @@ import type { PrismaClient } from "@prisma/client";
 export type Annotation = {
   annotationId: string;
   medicationId: string;
-  content: string | null;
+  content: string;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -13,13 +13,17 @@ export interface AnnotationRepository {
   createAnnotation(newAnnotation: {
     medicationId: string;
     content: string;
-  }): Promise<Annotation | null>;
+  }): Promise<Annotation|null>;
 
   deleteAnnotation(id: string): Promise<Annotation | null>;
 
-  updateAnnotation(id: string, updateAnnotation: {
-    content?: string | null;
+  updateAnnotation(updateAnnotation: {
+    id: string, 
+    content: string;
   }): Promise<Annotation | null>;
+
+  findById(id: string): Promise<Annotation | null>;
+  findByMedicationId(medicationId: string): Promise<Annotation[]>;
 }
 
 export class PrismaAnnotationRepository implements AnnotationRepository {
@@ -28,11 +32,10 @@ export class PrismaAnnotationRepository implements AnnotationRepository {
   async createAnnotation(newAnnotation: {
     medicationId: string;
     content: string;
-  }): Promise<Annotation | null> {
+  }): Promise<Annotation|null> {
     return this.prisma.annotations.create({
       data: {
-        medicationId: newAnnotation.medicationId,
-        content: newAnnotation.content,
+        ...newAnnotation
       },
     });
   }
@@ -48,19 +51,18 @@ export class PrismaAnnotationRepository implements AnnotationRepository {
     }
   }
 
-  async updateAnnotation(id: string, updateAnnotation: {
-    content?: string | null;
+  async updateAnnotation(updateAnnotation: {
+    id: string; 
+    content?: string;
   }): Promise<Annotation | null> {
     try {
-      const dataToUpdate: any = {};
-
-      if (updateAnnotation.content !== undefined) {
-        dataToUpdate.content = updateAnnotation.content;
-      }
-
       return await this.prisma.annotations.update({
-        where: { annotationId: id },
-        data: dataToUpdate,
+        where: { 
+          annotationId: updateAnnotation.id
+        },
+        data: {
+          content: updateAnnotation.content
+        }
       });
     } catch (error) {
       console.error("Erro ao atualizar anotação:", error);
