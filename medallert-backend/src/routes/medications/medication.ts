@@ -6,7 +6,6 @@ import { defaultSoundTypesRepository } from "../../repositories/sound_types.js";
 import { defaultUsersRepository } from "../../repositories/users.js";
 import { defaultVisualTypesRepository } from "../../repositories/visual_types.js";
 import { MedicationService, MedicationSchema, MedicationIdParamSchema, MedicationUpdateSchema } from "../../services/medication-service.js";
-import { defaultTreatmentRepository } from "../../repositories/treatments.js";
 
 export const medication = new Hono();
 
