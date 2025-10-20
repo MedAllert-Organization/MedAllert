@@ -1,8 +1,8 @@
-import { Hono } from "hono";
-import { ReportService } from "../../services/report-service.js";
 import fs from "fs";
-import { defaultTreatmentRepository } from "../../repositories/treatments.js";
+import { Hono } from "hono";
 import { describeRoute } from "hono-openapi";
+import { defaultTreatmentRepository } from "../../repositories/treatments.js";
+import { ReportService } from "../../services/report-service.js";
 
 const reportRoute = new Hono();
 const reportService = new ReportService(defaultTreatmentRepository);

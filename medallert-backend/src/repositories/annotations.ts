@@ -1,5 +1,5 @@
-import { prisma } from "../infra/prisma/client.js";
 import type { PrismaClient } from "@prisma/client";
+import { prisma } from "../infra/prisma/client.js";
 
 export type Annotation = {
   annotationId: string;
@@ -13,12 +13,12 @@ export interface AnnotationRepository {
   createAnnotation(newAnnotation: {
     medicationId: string;
     content: string;
-  }): Promise<Annotation|null>;
+  }): Promise<Annotation | null>;
 
   deleteAnnotation(id: string): Promise<Annotation | null>;
 
   updateAnnotation(updateAnnotation: {
-    id: string, 
+    id: string;
     content: string;
   }): Promise<Annotation | null>;
 
@@ -32,10 +32,10 @@ export class PrismaAnnotationRepository implements AnnotationRepository {
   async createAnnotation(newAnnotation: {
     medicationId: string;
     content: string;
-  }): Promise<Annotation|null> {
+  }): Promise<Annotation | null> {
     return this.prisma.annotations.create({
       data: {
-        ...newAnnotation
+        ...newAnnotation,
       },
     });
   }
@@ -52,17 +52,17 @@ export class PrismaAnnotationRepository implements AnnotationRepository {
   }
 
   async updateAnnotation(updateAnnotation: {
-    id: string; 
+    id: string;
     content?: string;
   }): Promise<Annotation | null> {
     try {
       return await this.prisma.annotations.update({
-        where: { 
-          annotationId: updateAnnotation.id
+        where: {
+          annotationId: updateAnnotation.id,
         },
         data: {
-          content: updateAnnotation.content
-        }
+          content: updateAnnotation.content,
+        },
       });
     } catch (error) {
       console.error("Erro ao atualizar anotação:", error);
@@ -82,4 +82,6 @@ export class PrismaAnnotationRepository implements AnnotationRepository {
     });
   }
 }
-export const defaultAnnotationRepository = new PrismaAnnotationRepository(prisma);
+export const defaultAnnotationRepository = new PrismaAnnotationRepository(
+  prisma,
+);

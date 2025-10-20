@@ -2,8 +2,8 @@ import { Hono } from "hono";
 import { describeRoute } from "hono-openapi";
 import { validator } from "hono-openapi/zod";
 import { z } from "zod";
-import { sharingService } from "../../services/sharing-service.js";
 import type { Env } from "../../common/type-helpers.js";
+import { sharingService } from "../../services/sharing-service.js";
 
 export const sharing = new Hono<Env>();
 
@@ -46,14 +46,17 @@ sharing.post(
 
     const { medicationId } = c.req.valid("param");
     const { email } = c.req.valid("json");
-    const [ok, error] = await sharingService.shareMedication(
+    const result = await sharingService.shareMedication(
       userId,
       medicationId,
       email,
     );
 
-    if (!ok) {
-      return c.json({ success: false, error }, 400);
+    if (!result.ok) {
+      return c.json(
+        { success: false, error: (result.error as Error).message },
+        400,
+      );
     }
     return c.body(null, 204);
   },
@@ -85,14 +88,17 @@ sharing.delete(
     }
     const { medicationId } = c.req.valid("param");
     const { userId } = c.req.valid("json");
-    const [ok, error] = await sharingService.removeSharing(
+    const result = await sharingService.removeSharing(
       ownerId,
       medicationId,
       userId,
     );
 
-    if (!ok) {
-      return c.json({ success: false, error }, 400);
+    if (!result.ok) {
+      return c.json(
+        { success: false, error: (result.error as Error).message },
+        400,
+      );
     }
     return c.body(null, 204);
   },
@@ -123,15 +129,15 @@ sharing.get(
     }
 
     const { medicationId } = c.req.valid("param");
-    const [ok, error, users] = await sharingService.listSharedUsers(
-      userId,
-      medicationId,
-    );
+    const result = await sharingService.listSharedUsers(userId, medicationId);
 
-    if (!ok) {
-      return c.json({ success: false, error }, 400);
+    if (!result.ok) {
+      return c.json(
+        { success: false, error: (result.error as Error).message },
+        400,
+      );
     }
-    return c.json({ success: true, users }, 200);
+    return c.json({ success: true, users: result.value }, 200);
   },
 );
 
@@ -155,12 +161,14 @@ sharing.get(
       return c.json({ success: false }, 400);
     }
 
-    const [ok, error, medications] =
-      await sharingService.listSharedMedications(userId);
+    const result = await sharingService.listSharedMedications(userId);
 
-    if (!ok) {
-      return c.json({ success: false, error }, 400);
+    if (!result.ok) {
+      return c.json(
+        { success: false, error: (result.error as Error).message },
+        400,
+      );
     }
-    return c.json({ success: true, medications }, 200);
+    return c.json({ success: true, medications: result.value }, 200);
   },
 );

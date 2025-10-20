@@ -1,13 +1,13 @@
-import { z } from "zod";
 import { Hono } from "hono";
-import { validator } from "hono-openapi/zod";
 import { describeRoute } from "hono-openapi";
+import { validator } from "hono-openapi/zod";
+import { z } from "zod";
+import { defaultAnnotationRepository } from "../../repositories/annotations.js";
 import {
+  AnnotationIdParamSchema,
   AnnotationService,
   MedicationIdParamSchema,
-  AnnotationIdParamSchema,
 } from "../../services/annotation-service.js";
-import { defaultAnnotationRepository } from "../../repositories/annotations.js";
 
 export const annotation = new Hono();
 const annotationService = new AnnotationService(defaultAnnotationRepository);

@@ -1,9 +1,9 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { auth } from "./routes/auth/index.js";
+import { medicationIndex } from "./routes/medications/index.js";
 import { authMiddleware } from "./routes/middleware/auth-middleware.js";
 import { configureOpenAPIDocs } from "./routes/open-api.js";
-import { medicationIndex } from "./routes/medications/index.js";
 
 export const app = new Hono();
 

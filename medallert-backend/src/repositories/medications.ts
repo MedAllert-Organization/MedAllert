@@ -45,7 +45,7 @@ export interface MedicationRepository {
 }
 
 class PrismaMedicationRepository implements MedicationRepository {
-  constructor(private readonly prisma: PrismaClient) { }
+  constructor(private readonly prisma: PrismaClient) {}
 
   async findTodayMedication(userId: string): Promise<Medication[]> {
     const todayStart = startOfDay(new Date());
@@ -57,10 +57,7 @@ class PrismaMedicationRepository implements MedicationRepository {
         treatments: {
           some: {
             startAt: { lte: todayEnd },
-            OR: [
-              { endAt: null },
-              { endAt: { gte: todayStart } },
-            ],
+            OR: [{ endAt: null }, { endAt: { gte: todayStart } }],
           },
         },
       },
@@ -119,7 +116,7 @@ class PrismaMedicationRepository implements MedicationRepository {
     },
   ): Promise<Medication | null> {
     const updateData = Object.fromEntries(
-      Object.entries(updateMedication).filter(([_, v]) => v !== undefined)
+      Object.entries(updateMedication).filter(([_, v]) => v !== undefined),
     );
 
     return this.prisma.medications.update({
@@ -135,4 +132,6 @@ class PrismaMedicationRepository implements MedicationRepository {
   }
 }
 
-export const defaultMedicationRepository = new PrismaMedicationRepository(prisma);
+export const defaultMedicationRepository = new PrismaMedicationRepository(
+  prisma,
+);

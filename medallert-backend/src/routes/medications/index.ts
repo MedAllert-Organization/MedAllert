@@ -1,12 +1,12 @@
 import { Hono } from "hono";
-import { notification } from "./notification.js";
-import { medication } from "./medication.js";
-import { soundTypes } from "./sound-types.js";
-import { visualTypes } from "./visual-types.js";
-import { treatment } from "./treatment.js";
-import reportRoute from "./report-routes.js";
 import annotation from "./annotation-routes.js";
+import { medication } from "./medication.js";
+import { notification } from "./notification.js";
+import reportRoute from "./report-routes.js";
 import { sharing } from "./sharing.js";
+import { soundTypes } from "./sound-types.js";
+import { treatment } from "./treatment.js";
+import { visualTypes } from "./visual-types.js";
 
 export const medicationIndex = new Hono();
 medicationIndex.route("/soundTypes", soundTypes);
