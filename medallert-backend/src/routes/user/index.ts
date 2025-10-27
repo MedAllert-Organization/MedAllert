@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { describeRoute } from "hono-openapi";
+import { t } from "try";
 import type { Env } from "../../common/type-helpers.d.js";
 import { defaultUserService } from "../../services/user-service.js";
 
@@ -18,11 +19,23 @@ user.delete(
       401: {
         description: "Unauthorized",
       },
+      404: {
+        description: "User not found",
+      },
+      500: {
+        description: "Internal server error",
+      },
     },
   }),
   async (c) => {
     const userId = c.get("userId") as string;
-    await defaultUserService.deleteUser(userId);
+    const [ok, error] = await t(defaultUserService.deleteUser(userId));
+    if (!ok) {
+      if ((error as Error).message?.includes("not found")) {
+        return c.json({ message: "User not found" }, 404);
+      }
+      return c.json({ message: "Internal server error" }, 500);
+    }
     return c.newResponse(null, 204);
   },
 );
