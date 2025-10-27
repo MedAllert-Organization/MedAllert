@@ -1,13 +1,13 @@
-import { z } from "zod";
 import { Hono } from "hono";
-import { validator } from "hono-openapi/zod";
 import { describeRoute } from "hono-openapi";
-import { 
-  AnnotationService, 
-  MedicationIdParamSchema, 
-  AnnotationIdParamSchema 
-} from "../../services/annotation-service.js";
+import { validator } from "hono-openapi/zod";
+import { z } from "zod";
 import { defaultAnnotationRepository } from "../../repositories/annotations.js";
+import {
+  AnnotationIdParamSchema,
+  AnnotationService,
+  MedicationIdParamSchema,
+} from "../../services/annotation-service.js";
 
 export const annotation = new Hono();
 const annotationService = new AnnotationService(defaultAnnotationRepository);
@@ -25,6 +25,10 @@ const updateAnnotationSchema = z.object({
 annotation.post(
   "/",
   validator("json", createAnnotationSchema),
+  describeRoute({
+    tags: ["Annotations"],
+    summary: "Criar uma nova anotação",
+  }),
   async (c) => {
     const data = c.req.valid("json");
     try {
@@ -33,7 +37,7 @@ annotation.post(
     } catch (error) {
       return c.json({ error: (error as Error).message }, 400);
     }
-  }
+  },
 );
 
 annotation.put(
@@ -44,14 +48,14 @@ annotation.put(
     summary: "Atualizar anotação existente",
   }),
   async (c) => {
-    const data = c.req.valid("json"); 
+    const data = c.req.valid("json");
     try {
       const updatedAnnotation = await annotationService.update_annotation(data);
       return c.json(updatedAnnotation);
     } catch (error) {
       return c.json({ error: (error as Error).message }, 400);
     }
-  }
+  },
 );
 
 annotation.get(
@@ -65,12 +69,13 @@ annotation.get(
     const { medicationId } = c.req.valid("param");
 
     try {
-      const annotations = await annotationService.get_annotations_by_medication(medicationId);
+      const annotations =
+        await annotationService.get_annotations_by_medication(medicationId);
       return c.json(annotations);
     } catch (error) {
       return c.json({ error: (error as Error).message }, 400);
     }
-  }
+  },
 );
 
 annotation.get(
@@ -89,7 +94,7 @@ annotation.get(
     } catch (error) {
       return c.json({ error: (error as Error).message }, 404);
     }
-  }
+  },
 );
 
 annotation.delete(
@@ -108,6 +113,6 @@ annotation.delete(
     } catch (error) {
       return c.json({ error: (error as Error).message }, 404);
     }
-  }
+  },
 );
 export default annotation;

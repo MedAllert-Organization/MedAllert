@@ -1,9 +1,8 @@
-import { Hono } from "hono";
-import { ReportService } from "../../services/report-service.js";
 import fs from "fs";
-import path from "path";
-import { defaultTreatmentRepository } from "../../repositories/treatments.js";
+import { Hono } from "hono";
 import { describeRoute } from "hono-openapi";
+import { defaultTreatmentRepository } from "../../repositories/treatments.js";
+import { ReportService } from "../../services/report-service.js";
 
 const reportRoute = new Hono();
 const reportService = new ReportService(defaultTreatmentRepository);
@@ -13,14 +12,16 @@ reportRoute.get(
   describeRoute({
     tags: ["Report"],
     summary: "Gera relatório em PDF dos tratamentos de um usuário",
-    description: "Gera um relatório em PDF com base no período solicitado (Weekly ou Monthly) para um usuário específico.",
+    description:
+      "Gera um relatório em PDF com base no período solicitado (Weekly ou Monthly) para um usuário específico.",
     parameters: [
       {
         name: "period",
         in: "path",
         required: true,
         schema: { type: "string", enum: ["Weekly", "Monthly"] },
-        description: "Período do relatório: 'Weekly' para semanal ou 'Monthly' para mensal",
+        description:
+          "Período do relatório: 'Weekly' para semanal ou 'Monthly' para mensal",
       },
     ],
     responses: {
@@ -39,7 +40,10 @@ reportRoute.get(
             schema: {
               type: "object",
               properties: {
-                error: { type: "string", example: "Período inválido! Use 'Weekly' ou 'Monthly'." },
+                error: {
+                  type: "string",
+                  example: "Período inválido! Use 'Weekly' ou 'Monthly'.",
+                },
               },
             },
           },
@@ -52,7 +56,10 @@ reportRoute.get(
             schema: {
               type: "object",
               properties: {
-                error: { type: "string", example: "Erro interno na tentativa de gerar relatório" },
+                error: {
+                  type: "string",
+                  example: "Erro interno na tentativa de gerar relatório",
+                },
               },
             },
           },
@@ -61,15 +68,15 @@ reportRoute.get(
     },
   }),
   async (c) => {
-
     try {
       const { period } = c.req.param();
       const userId = c.get("userId" as any);
 
       if (period !== "Weekly" && period !== "Monthly") {
-        return c.json({
-          error: "Período inválido! Use 'Weekly' ou 'Monthly'."
-        }, 400);
+        return c.json(
+          { error: "Período inválido! Use 'Weekly' ou 'Monthly'." },
+          400,
+        );
       }
 
       const filePath = await reportService.generateReport(userId, period);
@@ -84,15 +91,17 @@ reportRoute.get(
       const uint8Array = new Uint8Array(fileBuffer);
 
       return c.body(uint8Array, 200, {
-        'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="${fileName}"`,
-        'Content-Length': fileBuffer.length.toString()
+        "Content-Type": "application/pdf",
+        "Content-Disposition": `attachment; filename="${fileName}"`,
+        "Content-Length": fileBuffer.length.toString(),
       });
     } catch (error) {
       console.error("Erro ao gerar relatório:", error);
-      return c.json({
-        error: "Erro interno na tentativa de gerar relatório"
-      }, 500);
+      return c.json(
+        { error: "Erro interno na tentativa de gerar relatório" },
+        500,
+      );
     }
-  });
+  },
+);
 export default reportRoute;
