@@ -52,29 +52,29 @@ export class TreatmentService {
     if (!user) return error("User not found!");
 
 
-  const meds = await this.medicationRepository.findMedications(medicationIds)
+    const meds = await this.medicationRepository.findMedications(medicationIds)
 
-if (meds.length !== medicationIds.length) {
-  return error("Um ou mais medicamentos não foram encontrados.");
-}
+    if (meds.length !== medicationIds.length) {
+      return error("Um ou mais medicamentos não foram encontrados.");
+    }
 
     if (!medicationIds || medicationIds.length === 0) return error("Um tratamento precisa ter pelo menos um medicamento.");
 
     const [createdOk, createdErr, createdTreatment] = await t(
-  this.treatmentRepository.addTreatment({
-    userId,
-    name,
-    description: description ?? null,
-    startAt,
-    endAt: endAt ?? null,
-    medicationIds,
-  }),
-);
+      this.treatmentRepository.addTreatment({
+        userId,
+        name,
+        description: description ?? null,
+        startAt,
+        endAt: endAt ?? null,
+        medicationIds,
+      }),
+    );
 
-if (!createdOk || !createdTreatment) {
-  console.error("Erro Prisma:", createdErr);
-  return error("Failed to create treatment");
-}
+    if (!createdOk || !createdTreatment) {
+      console.error("Erro Prisma:", createdErr);
+      return error("Failed to create treatment");
+    }
 
 
     return ok(createdTreatment);

@@ -1,18 +1,19 @@
 import { prisma } from "../infra/prisma/client.js";
 import type { PrismaClient } from "../infra/prisma/generated/prisma/index.js";
+import { medication } from "../routes/medications/medication.js";
 
 export type Treatment = {
-  treatmentId: string;
-  userId: string;
-  name: string;
-  description: string | null;
-  startAt: Date;
-  endAt: Date | null;
-  medications?: {
-    medicationId: string;
+    treatmentId: string;
+    userId: string;
     name: string;
-    dose: string | null;
-  }[];
+    description: string | null;
+    startAt: Date;
+    endAt: Date | null;
+    medications?: {
+        medicationId: string;
+        name: string;
+        dose: string | null;
+    }[];
 };
 
 
@@ -25,7 +26,7 @@ export interface TreatmentRepository {
         description: string | null;
         startAt: Date;
         endAt: Date | null;
-        medicationIds: string[]; 
+        medicationIds: string[];
     }): Promise<Treatment | null>;
     updateTreatment(id: string, updateTreatment: {
         name?: string | null;
@@ -36,19 +37,20 @@ export interface TreatmentRepository {
     deleteTreatment(id: string): Promise<Treatment | null>;
 }
 
-
 class PrismaTreatmentRepository implements TreatmentRepository {
     constructor(private readonly prisma: PrismaClient) { }
 
     async findTreatment(id: string): Promise<Treatment | null> {
         return this.prisma.treatments.findUnique({
             where: { treatmentId: id },
+            include: { medications: true,} 
         });
     }
 
     async findAllTreatments(userId: string): Promise<Treatment[]> {
         return this.prisma.treatments.findMany({
             where: { userId },
+
         });
     }
 
@@ -58,7 +60,7 @@ class PrismaTreatmentRepository implements TreatmentRepository {
         description: string | null;
         startAt: Date;
         endAt: Date | null;
-        medicationIds: string[]; 
+        medicationIds: string[];
     }): Promise<Treatment | null> {
         if (!newTreatment.medicationIds || newTreatment.medicationIds.length === 0) {
             throw new Error("Um tratamento precisa ter pelo menos um medicamento.");
