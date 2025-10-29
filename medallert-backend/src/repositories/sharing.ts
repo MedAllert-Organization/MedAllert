@@ -55,7 +55,21 @@ export class SharingRepository {
         userId,
       },
       include: {
-        medication: true,
+        medication: {
+          select: {
+            medicationId: true,
+            name: true,
+            dose: true,
+            description: true,
+            alertPeriodInHours: true,
+            user: {
+              select: {
+                userId: true,
+                fullName: true,
+              },
+            },
+          },
+        },
       },
     });
   }
