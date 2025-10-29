@@ -1,5 +1,8 @@
 import { z } from "zod";
-import type { Annotation, AnnotationRepository } from "../repositories/annotations.js";
+import type {
+  Annotation,
+  AnnotationRepository,
+} from "../repositories/annotations.js";
 
 const createAnnotationSchema = z.object({
   medicationId: z.string().min(1, "Id é obrigatório"),
@@ -7,8 +10,8 @@ const createAnnotationSchema = z.object({
 });
 
 const updateAnnotationSchema = z.object({
-    id: z.string().min(1, "ID da anotação é obrigatório"),
-    content: z.string().min(1, "Conteúdo é obrigatório"),
+  id: z.string().min(1, "ID da anotação é obrigatório"),
+  content: z.string().min(1, "Conteúdo é obrigatório"),
 });
 
 export const MedicationIdParamSchema = z.object({
@@ -23,12 +26,13 @@ export class AnnotationService {
   constructor(private readonly annotationRepository: AnnotationRepository) {}
 
   async create_annotation(data: {
-    medicationId: string; 
+    medicationId: string;
     content: string;
   }): Promise<Annotation | null> {
     const validatedData = createAnnotationSchema.parse(data);
-    const annotation = await this.annotationRepository.createAnnotation(validatedData);
-    
+    const annotation =
+      await this.annotationRepository.createAnnotation(validatedData);
+
     if (!annotation) {
       throw new Error("Falha ao criar anotação");
     }
@@ -47,14 +51,15 @@ export class AnnotationService {
     return true;
   }
 
-  async update_annotation(data: { 
+  async update_annotation(data: {
     id: string;
     content: string;
   }): Promise<Annotation | null> {
     const validatedData = updateAnnotationSchema.parse(data);
-    
-    const updatedAnnotation = await this.annotationRepository.updateAnnotation(validatedData);
-    
+
+    const updatedAnnotation =
+      await this.annotationRepository.updateAnnotation(validatedData);
+
     if (!updatedAnnotation) {
       throw new Error("Anotação não encontrada para atualização");
     }
@@ -73,7 +78,9 @@ export class AnnotationService {
     return annotation;
   }
 
-  async get_annotations_by_medication(medicationId: string): Promise<Annotation[]> {
+  async get_annotations_by_medication(
+    medicationId: string,
+  ): Promise<Annotation[]> {
     if (!medicationId) {
       throw new Error("ID da medicação é obrigatório");
     }

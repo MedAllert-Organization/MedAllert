@@ -16,7 +16,6 @@ export type Treatment = {
     }[];
 };
 
-
 export interface TreatmentRepository {
     findTreatment(id: string): Promise<Treatment | null>;
     findAllTreatments(userId: string): Promise<Treatment[]>;
@@ -43,7 +42,7 @@ class PrismaTreatmentRepository implements TreatmentRepository {
     async findTreatment(id: string): Promise<Treatment | null> {
         return this.prisma.treatments.findUnique({
             where: { treatmentId: id },
-            include: { medications: true,} 
+            include: { medications: true, }
         });
     }
 

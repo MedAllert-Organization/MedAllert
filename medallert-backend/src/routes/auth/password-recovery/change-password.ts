@@ -3,13 +3,13 @@ import { describeRoute } from "hono-openapi";
 import { validator } from "hono-openapi/zod";
 import { defaultPasswordHasher } from "../../../common/password-hash.js";
 import type { Env } from "../../../common/type-helpers.js";
+import { defaultEmailTransport } from "../../../infra/email/default.js";
 import { defaultUsersRepository } from "../../../repositories/users.js";
 import { defaultCodeRepository } from "../../../repositories/verification-code.js";
 import {
   ChangePasswordRequest,
   PasswordRecoveryService,
 } from "../../../services/password-recovery.js";
-import { defaultEmailTransport } from "../../../infra/email/default.js";
 
 export const changePassword = new Hono<Env>();
 

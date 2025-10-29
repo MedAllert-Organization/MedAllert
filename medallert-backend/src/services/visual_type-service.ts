@@ -1,85 +1,91 @@
-import z from "zod";
-import type { Medication, MedicationRepository } from "../repositories/medications.js";
-import type { PromiseResult } from "../common/type-helpers.js";
-import type { UsersRepository } from "../repositories/users.js";
 import { error, ok, t } from "try";
-import type { VisualTypes, VisualTypesRepository } from "../repositories/visual_types.js";
+import z from "zod";
+import type { PromiseResult } from "../common/type-helpers.js";
+import type {
+  Medication,
+  MedicationRepository,
+} from "../repositories/medications.js";
+import type { UsersRepository } from "../repositories/users.js";
+import type {
+  VisualTypes,
+  VisualTypesRepository,
+} from "../repositories/visual_types.js";
 
 export const VisualTypesSchema = z.object({
-    visual: z.string(),
-})
+  visual: z.string(),
+});
 
 export const VisualTypesIdParamSchema = z.object({
-    id: z.string().min(1, "ID is required"),
+  id: z.string().min(1, "ID is required"),
 });
 
 export const VisualTypesUpdateSchema = VisualTypesSchema.partial();
 
-export type VisualTypesType = z.infer<typeof VisualTypesSchema>
+export type VisualTypesType = z.infer<typeof VisualTypesSchema>;
 
 export class VisualTypesService {
-    constructor(
-        private readonly visualTypesRepository: VisualTypesRepository,
-    ) { }
+  constructor(private readonly visualTypesRepository: VisualTypesRepository) {}
 
-    async create({
+  async create({ visual }: VisualTypesType): PromiseResult<VisualTypes> {
+    const [createdOk, _, createdMedication] = await t(
+      this.visualTypesRepository.addVisualType({
         visual,
-    }: VisualTypesType): PromiseResult<VisualTypes> {
+      }),
+    );
 
-        const [createdOk, _, createdMedication] = await t(
-            this.visualTypesRepository.addVisualType({
-                visual,
-            })
-        );
-
-        if (!createdOk || !createdMedication) {
-            return error("failed to add visual");
-        }
-
-        return ok(createdMedication);
+    if (!createdOk || !createdMedication) {
+      return error("failed to add visual");
     }
 
-    async getAll() {
-        const [listOk, _, listVisual] = await t(
-            this.visualTypesRepository.findAllVisuals()
-        )
-        if (!listOk || !listVisual) {
-            return error("failed to get visuals");
-        }
+    return ok(createdMedication);
+  }
 
-        return ok(listVisual);
+  async getAll() {
+    const [listOk, _, listVisual] = await t(
+      this.visualTypesRepository.findAllVisuals(),
+    );
+    if (!listOk || !listVisual) {
+      return error("failed to get visuals");
     }
 
-     async get(visualId: string): PromiseResult<VisualTypes> {
-            const visual = await this.visualTypesRepository.findVisualType(visualId);
-            if (!visual) return error("Visual not found");
-    
-            return ok(visual);
-        }
+    return ok(listVisual);
+  }
 
-    async update(visulaId: string, updateData: Partial<VisualTypesType>): PromiseResult<VisualTypes> {
-        const visual = await this.visualTypesRepository.findVisualType(visulaId);
-        if (!visual) return error("visual not found");
+  async get(visualId: string): PromiseResult<VisualTypes> {
+    const visual = await this.visualTypesRepository.findVisualType(visualId);
+    if (!visual) return error("Visual not found");
 
-        const [updatedOk, _, updatedVisual] = await t(
-            this.visualTypesRepository.updateVisualType(visulaId, { ...updateData })
-        );
+    return ok(visual);
+  }
 
-        if (!updatedOk || !updatedVisual) return error("Failed to update visual type");
+  async update(
+    visulaId: string,
+    updateData: Partial<VisualTypesType>,
+  ): PromiseResult<VisualTypes> {
+    const visual = await this.visualTypesRepository.findVisualType(visulaId);
+    if (!visual) return error("visual not found");
 
-        return ok(updatedVisual);
-    }
+    const [updatedOk, _, updatedVisual] = await t(
+      this.visualTypesRepository.updateVisualType(visulaId, { ...updateData }),
+    );
 
-    async delete(visualId: string): PromiseResult<VisualTypes> {
-        const visual = await this.visualTypesRepository.findVisualType(visualId);
-        if (!visual) return error("Visual type not found");
+    if (!updatedOk || !updatedVisual)
+      return error("Failed to update visual type");
 
-        const [deletedOk, _, deletedVisual] = await t(
-            this.visualTypesRepository.deleteVisualType(visualId)
-        );
+    return ok(updatedVisual);
+  }
 
-        if (!deletedOk || !deletedVisual) return error("Failed to delete visula type");
+  async delete(visualId: string): PromiseResult<VisualTypes> {
+    const visual = await this.visualTypesRepository.findVisualType(visualId);
+    if (!visual) return error("Visual type not found");
 
-        return ok(deletedVisual);
-    }
+    const [deletedOk, _, deletedVisual] = await t(
+      this.visualTypesRepository.deleteVisualType(visualId),
+    );
+
+    if (!deletedOk || !deletedVisual)
+      return error("Failed to delete visula type");
+
+    return ok(deletedVisual);
+  }
 }

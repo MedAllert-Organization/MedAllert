@@ -1,14 +1,14 @@
+import { addHours, endOfDay, isWithinInterval, startOfDay } from "date-fns";
+import { error, ok, t } from "try";
 import z from "zod";
+import type { PromiseResult } from "../common/type-helpers.js";
 import type {
   Medication,
   MedicationRepository,
 } from "../repositories/medications.js";
-import type { PromiseResult } from "../common/type-helpers.js";
-import type { UsersRepository } from "../repositories/users.js";
-import { error, ok, t } from "try";
-import type { VisualTypesRepository } from "../repositories/visual_types.js";
 import type { SoundTypesRepository } from "../repositories/sound_types.js";
-import { startOfDay, endOfDay, addHours, isWithinInterval } from "date-fns";
+import type { UsersRepository } from "../repositories/users.js";
+import type { VisualTypesRepository } from "../repositories/visual_types.js";
 
 export const MedicationSchema = z.object({
   name: z.string(),
@@ -33,20 +33,23 @@ export class MedicationService {
     private readonly medicationRepository: MedicationRepository,
     private readonly visualTypesRepository: VisualTypesRepository,
     private readonly soundTypesRepository: SoundTypesRepository,
-  ) { }
+  ) {}
 
   async getAll(userId: string): PromiseResult<Medication[]> {
-    const medications = await this.medicationRepository.findAllMedications(userId);
+    const medications =
+      await this.medicationRepository.findAllMedications(userId);
     return ok(medications);
   }
 
   async getTodayMedications(userId: string): PromiseResult<Medication[]> {
-    const medications = await this.medicationRepository.findTodayMedication(userId);
+    const medications =
+      await this.medicationRepository.findTodayMedication(userId);
     return ok(medications);
   }
 
   async get(medicationId: string): PromiseResult<Medication> {
-    const medication = await this.medicationRepository.findMedication(medicationId);
+    const medication =
+      await this.medicationRepository.findMedication(medicationId);
     if (!medication) return error("Medication not found");
     return ok(medication);
   }
@@ -66,12 +69,14 @@ export class MedicationService {
     if (!user) return error("User not found!");
 
     if (visualTypeId) {
-      const visualType = await this.visualTypesRepository.findVisualType(visualTypeId);
+      const visualType =
+        await this.visualTypesRepository.findVisualType(visualTypeId);
       if (!visualType) return error("Visual type not found");
     }
 
     if (soundTypeId) {
-      const soundType = await this.soundTypesRepository.findSoundType(soundTypeId);
+      const soundType =
+        await this.soundTypesRepository.findSoundType(soundTypeId);
       if (!soundType) return error("Sound type not found");
     }
 
@@ -99,16 +104,21 @@ export class MedicationService {
     medicationId: string,
     updateData: Partial<MedicationType>,
   ): PromiseResult<Medication> {
-    const medication = await this.medicationRepository.findMedication(medicationId);
+    const medication =
+      await this.medicationRepository.findMedication(medicationId);
     if (!medication) return error("Medication not found");
 
     if (updateData.visualTypeId) {
-      const visualType = await this.visualTypesRepository.findVisualType(updateData.visualTypeId);
+      const visualType = await this.visualTypesRepository.findVisualType(
+        updateData.visualTypeId,
+      );
       if (!visualType) return error("Visual type not found");
     }
 
     if (updateData.soundTypeId) {
-      const soundType = await this.soundTypesRepository.findSoundType(updateData.soundTypeId);
+      const soundType = await this.soundTypesRepository.findSoundType(
+        updateData.soundTypeId,
+      );
       if (!soundType) return error("Sound type not found");
     }
 
@@ -125,7 +135,8 @@ export class MedicationService {
   }
 
   async delete(medicationId: string): PromiseResult<Medication> {
-    const medication = await this.medicationRepository.findMedication(medicationId);
+    const medication =
+      await this.medicationRepository.findMedication(medicationId);
     if (!medication) return error("Medication not found");
 
     const [deletedOk, _, deletedMedication] = await t(

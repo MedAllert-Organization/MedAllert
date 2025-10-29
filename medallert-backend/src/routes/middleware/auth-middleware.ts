@@ -15,4 +15,3 @@ export const authMiddleware = createMiddleware(async (c, next) => {
   c.set("userId", verified.sub);
   await next();
 });
-
