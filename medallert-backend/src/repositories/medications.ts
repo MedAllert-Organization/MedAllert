@@ -48,27 +48,29 @@ class PrismaMedicationRepository implements MedicationRepository {
   constructor(private readonly prisma: PrismaClient) {}
 
   async findTodayMedication(userId: string): Promise<Medication[]> {
-    const todayStart = startOfDay(new Date());
-    const todayEnd = endOfDay(new Date());
+  const now = new Date();
+  const todayStart = startOfDay(now);
+  const todayEnd = endOfDay(now);
 
-    const medications = await this.prisma.medications.findMany({
-      where: {
-        userId,
-        treatments: {
-          some: {
-            startAt: { lte: todayEnd },
-            OR: [{ endAt: null }, { endAt: { gte: todayStart } }],
-          },
-        },
-      },
-      orderBy: { name: "asc" },
-      include: {
-        treatments: true,
-      },
-    });
+  const treatments = await this.prisma.treatments.findMany({
+    where: {
+      userId,
+      startAt: { lte: todayEnd },
+      OR: [{ endAt: null }, { endAt: { gte: todayStart } }],
+    },
+    include: { medications: true },
+  });
 
-    return medications;
+  const medicationsMap = new Map<string, Medication>();
+  for (const treatment of treatments) {
+    for (const med of treatment.medications) {
+      medicationsMap.set(med.medicationId, med);
+    }
   }
+
+  return Array.from(medicationsMap.values());
+}
+
 
   findMedications(medicationIds: string[]): Promise<Medication[]> {
     return this.prisma.medications.findMany({
