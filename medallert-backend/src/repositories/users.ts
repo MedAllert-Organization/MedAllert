@@ -24,6 +24,7 @@ export interface UsersRepository {
   }): Promise<User | null>;
   updatePasswordForUser(userId: string, newPassword: string): Promise<void>;
   confirmUserAccount(email: string): Promise<void>;
+  deleteUser(userId: string): Promise<void>;
 }
 
 class PrismaUsersRepository implements UsersRepository {
@@ -35,7 +36,7 @@ class PrismaUsersRepository implements UsersRepository {
     });
   }
 
-  async findConfirmedUserByEmail(email: string): Promise<User | null> {
+  async findConfirmedUserByEmail(email:string): Promise<User | null> {
     return this.prisma.users.findUnique({
       where: { email, accountConfirmedAt: { not: null } },
     });
@@ -68,6 +69,23 @@ class PrismaUsersRepository implements UsersRepository {
       where: { email },
       data: { accountConfirmedAt: new Date() },
     });
+  }
+
+  async deleteUser(userId: string): Promise<void> {
+    const medications = await this.prisma.medications.findMany({
+      where: { userId },
+    });
+    const medicationIds = medications.map((med) => med.medicationId);
+
+    await this.prisma.$transaction([
+      this.prisma.annotations.deleteMany({ where: { medicationId: { in: medicationIds } } }),
+      this.prisma.notifications.deleteMany({ where: { medicationId: { in: medicationIds } } }),
+      this.prisma.medicationShares.deleteMany({ where: { userId } }),
+      this.prisma.medications.deleteMany({ where: { userId } }),
+      this.prisma.treatments.deleteMany({ where: { userId } }),
+      this.prisma.verificationCodes.deleteMany({ where: { userId } }),
+      this.prisma.users.delete({ where: { userId } }),
+    ]);
   }
 }
 

@@ -5,6 +5,8 @@ import { medicationIndex } from "./routes/medications/index.js";
 import { authMiddleware } from "./routes/middleware/auth-middleware.js";
 import { configureOpenAPIDocs } from "./routes/open-api.js";
 
+import { user } from "./routes/user/index.js";
+
 export const app = new Hono();
 
 configureOpenAPIDocs(app);
@@ -15,3 +17,4 @@ app.route("/auth", auth);
 /// Authenticated Routes
 app.use(authMiddleware);
 app.route("/medication", medicationIndex);
+app.route("/user", user);
