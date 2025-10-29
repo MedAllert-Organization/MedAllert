@@ -85,6 +85,12 @@ export class SharingService {
       return await this.sharingRepository.findMedicationsByUser(userId);
     });
   }
+
+  async removeAllSharingsFromOwner(ownerId: string) {
+    return await Try(async () => {
+      await this.sharingRepository.removeAllFromOwner(ownerId);
+    });
+  }
 }
 
 export const sharingService = new SharingService(

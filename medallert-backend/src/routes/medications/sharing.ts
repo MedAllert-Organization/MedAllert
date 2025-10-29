@@ -172,3 +172,36 @@ sharing.get(
     return c.json({ success: true, medications: result.value }, 200);
   },
 );
+
+sharing.delete(
+  "/shared",
+  describeRoute({
+    tags: ["Medication Sharing"],
+    description: "Remove all sharings for all medications of the current user",
+    responses: {
+      204: {
+        description:
+          "All medication sharings from the user removed successfully",
+      },
+      400: {
+        description: "Bad request",
+      },
+    },
+  }),
+  async (c) => {
+    const userId = c.get("userId");
+    if (!userId) {
+      return c.json({ success: false }, 400);
+    }
+
+    const result = await sharingService.removeAllSharingsFromOwner(userId);
+
+    if (!result.ok) {
+      return c.json(
+        { success: false, error: (result.error as Error).message },
+        400,
+      );
+    }
+    return c.body(null, 204);
+  },
+);

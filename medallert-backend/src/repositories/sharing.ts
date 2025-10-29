@@ -73,6 +73,27 @@ export class SharingRepository {
       },
     });
   }
+
+  async removeAllFromOwner(ownerId: string) {
+    const medications = await prisma.medications.findMany({
+      where: { userId: ownerId },
+      select: { medicationId: true },
+    });
+
+    if (medications.length === 0) {
+      return;
+    }
+
+    const medicationIds = medications.map((m) => m.medicationId);
+
+    await prisma.medicationShares.deleteMany({
+      where: {
+        medicationId: {
+          in: medicationIds,
+        },
+      },
+    });
+  }
 }
 
 export const defaultSharingRepository = new SharingRepository();
