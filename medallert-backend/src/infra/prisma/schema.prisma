@@ -49,37 +49,60 @@ model VerificationCodes {
 }
 
 model Treatments {
-  treatmentId String        @id @default(cuid()) @map("treatment_id")
-  userId      String        @map("user_id")
-  user        Users         @relation(fields: [userId], references: [userId])
+  treatmentId String                 @id @default(cuid()) @map("treatment_id")
+  userId      String                 @map("user_id")
+  user        Users                  @relation(fields: [userId], references: [userId])
   name        String
   description String?
-  startAt     DateTime      @default(now()) @map("start_at")
-  endAt       DateTime?     @map("end_at")
-  medications Medications[] @relation("TreatmentMedications")
-  createdAt   DateTime      @default(now()) @map("created_at")
-  updatedAt   DateTime      @updatedAt @map("updated_at")
+  startAt     DateTime               @default(now()) @map("start_at")
+  endAt       DateTime?              @map("end_at")
+  medications TreatmentMedication[] 
+  createdAt   DateTime               @default(now()) @map("created_at")
+  updatedAt   DateTime               @updatedAt @map("updated_at")
+
   @@map("treatments")
 }
 
+
+model TreatmentMedication {
+  id                 String       @id @default(cuid())
+  treatmentId        String       @map("treatment_id")
+  medicationId       String       @map("medication_id")
+  treatment          Treatments   @relation(fields: [treatmentId], references: [treatmentId])
+  medication         Medications  @relation(fields: [medicationId], references: [medicationId])
+
+  dose               String
+  alertPeriodInHours Int
+  lastTaken          DateTime?    @map("last_taken")
+  takenQuantity      Int          @default(0) @map("taken_quantity")
+  totalQuantity  Int          @default(0) @map("total_quantity")
+
+  createdAt          DateTime     @default(now()) @map("created_at")
+  updatedAt          DateTime     @updatedAt @map("updated_at")
+
+  @@unique([treatmentId, medicationId])
+  @@map("treatment_medications")
+}
+
 model Medications {
-  medicationId       String        @id @default(cuid()) @map("medication_id")
-  userId             String        @map("user_id")
-  user               Users         @relation(fields: [userId], references: [userId])
+  medicationId       String                 @id @default(cuid()) @map("medication_id")
+  userId             String                 @map("user_id")
+  user               Users                  @relation(fields: [userId], references: [userId])
   name               String
-  dose               String?
   description        String?
-  visualTypeId       String?       @map("visual_type_id")
-  visualType         VisualTypes?  @relation(fields: [visualTypeId], references: [visualId])
-  soundTypeId        String?       @map("sound_type_id")
-  soundType          SoundTypes?   @relation(fields: [soundTypeId], references: [soundId])
-  alertPeriodInHours Int           @map("alert_period_in_hours")
-  treatments         Treatments[]  @relation("TreatmentMedications")
-  createdAt          DateTime      @default(now()) @map("created_at")
-  updatedAt          DateTime      @updatedAt @map("updated_at")
+  visualTypeId       String?                @map("visual_type_id")
+  visualType         VisualTypes?           @relation(fields: [visualTypeId], references: [visualId])
+  soundTypeId        String?                @map("sound_type_id")
+  soundType          SoundTypes?            @relation(fields: [soundTypeId], references: [soundId])
+
+  treatments         TreatmentMedication[] 
   notifications      Notifications[]
   annotations        Annotations[]
   sharedWith         MedicationShares[]
+
+  createdAt          DateTime               @default(now()) @map("created_at")
+  updatedAt          DateTime               @updatedAt @map("updated_at")
+
   @@map("medications")
 }
 

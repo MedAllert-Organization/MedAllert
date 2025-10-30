@@ -6,11 +6,9 @@ export type Medication = {
   medicationId: string;
   userId: string;
   name: string;
-  dose: string | null;
   description: string | null;
   visualTypeId: string | null;
   soundTypeId: string | null;
-  alertPeriodInHours: number;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -23,21 +21,17 @@ export interface MedicationRepository {
   addMedication(newMedication: {
     userId: string;
     name: string;
-    dose: string | null;
     description: string | null;
     visualTypeId: string | null;
     soundTypeId: string | null;
-    alertPeriodInHours: number;
   }): Promise<Medication | null>;
   updateMedication(
     id: string,
     updateMedication: {
       name?: string | null;
-      dose?: string | null;
       description?: string | null;
       visualTypeId?: string | null;
       soundTypeId?: string | null;
-      alertPeriodInHours?: number | null;
       endTreatmentAt?: Date | null;
     },
   ): Promise<Medication | null>;
@@ -45,31 +39,38 @@ export interface MedicationRepository {
 }
 
 class PrismaMedicationRepository implements MedicationRepository {
-  constructor(private readonly prisma: PrismaClient) {}
+  constructor(private readonly prisma: PrismaClient) { }
 
   async findTodayMedication(userId: string): Promise<Medication[]> {
-  const now = new Date();
-  const todayStart = startOfDay(now);
-  const todayEnd = endOfDay(now);
+    const now = new Date();
+    const todayStart = startOfDay(now);
+    const todayEnd = endOfDay(now);
 
-  const treatments = await this.prisma.treatments.findMany({
-    where: {
-      userId,
-      startAt: { lte: todayEnd },
-      OR: [{ endAt: null }, { endAt: { gte: todayStart } }],
-    },
-    include: { medications: true },
-  });
+    const treatments = await this.prisma.treatments.findMany({
+      where: {
+        userId,
+        startAt: { lte: todayEnd },
+        OR: [{ endAt: null }, { endAt: { gte: todayStart } }],
+      },
+      include: {
+        medications: {
+          include: {
+            medication: true,
+          },
+        },
+      },
+    });
 
-  const medicationsMap = new Map<string, Medication>();
-  for (const treatment of treatments) {
-    for (const med of treatment.medications) {
-      medicationsMap.set(med.medicationId, med);
+    const medicationsMap = new Map<string, Medication>();
+    for (const treatment of treatments) {
+      for (const tm of treatment.medications) {
+        const med = tm.medication;
+        medicationsMap.set(med.medicationId, med);
+      }
     }
-  }
 
-  return Array.from(medicationsMap.values());
-}
+    return Array.from(medicationsMap.values());
+  }
 
 
   findMedications(medicationIds: string[]): Promise<Medication[]> {
@@ -93,11 +94,9 @@ class PrismaMedicationRepository implements MedicationRepository {
   async addMedication(newMedication: {
     userId: string;
     name: string;
-    dose: string | null;
     description: string | null;
     visualTypeId: string | null;
     soundTypeId: string | null;
-    alertPeriodInHours: number;
     endTreatmentAt: Date | null;
   }): Promise<Medication | null> {
     return this.prisma.medications.create({
@@ -109,12 +108,9 @@ class PrismaMedicationRepository implements MedicationRepository {
     id: string,
     updateMedication: {
       name?: string | null;
-      dose?: string | null;
       description?: string | null;
       visualTypeId?: string | null;
       soundTypeId?: string | null;
-      alertPeriodInHours?: number | null;
-      endTreatmentAt?: Date | null;
     },
   ): Promise<Medication | null> {
     const updateData = Object.fromEntries(

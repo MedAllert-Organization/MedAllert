@@ -32,14 +32,19 @@ treatment.post(
   async (c) => {
     const userId = c.get("userId" as any);
     const treatmentCandidate = c.req.valid("json");
-    const [ok, error, treatment] = await treatmentService.create(
-      userId,
-      treatmentCandidate,
-    );
 
-    if (!ok || !treatment) {
-      return c.json({ success: false, error }, 400);
-    }
+const medications = treatmentCandidate.medications.map(m => ({
+  medicationId: m.medicationId,
+  dose: m.dose,
+  alertPeriodInHours: m.alertPeriodInHours,
+      totalQuantity: m.totalQuantity
+}));
+
+const [ok, error, treatment] = await treatmentService.create(userId, {
+  ...treatmentCandidate,
+  medications,
+});
+
     return c.json({ success: true, treatment }, 201);
   },
 );

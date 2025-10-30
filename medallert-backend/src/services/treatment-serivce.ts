@@ -2,23 +2,23 @@ import { error, ok, t } from "try";
 import z from "zod";
 import type { PromiseResult } from "../common/type-helpers.js";
 import type { MedicationRepository } from "../repositories/medications.js";
-import type {
-  Treatment,
-  TreatmentRepository,
-} from "../repositories/treatments.js";
+import type { TreatmentRepository, Treatment } from "../repositories/treatments.js";
 import type { UsersRepository } from "../repositories/users.js";
 
 export const TreatmentSchema = z.object({
   name: z.string(),
   description: z.string().nullable().optional(),
   startAt: z.string().transform((s) => new Date(s)),
-  endAt: z
-    .string()
-    .transform((s) => new Date(s))
-    .nullable()
-    .optional(),
-  medicationIds: z
-    .array(z.string())
+  endAt: z.string().transform((s) => new Date(s)).nullable().optional(),
+  medications: z
+    .array(
+      z.object({
+        medicationId: z.string(),
+        dose: z.string(),
+        alertPeriodInHours: z.number(),
+        totalQuantity: z.number()
+      })
+    )
     .min(1, "Um tratamento precisa ter pelo menos um medicamento"),
 });
 
@@ -34,8 +34,8 @@ export class TreatmentService {
   constructor(
     private readonly usersRepository: UsersRepository,
     private readonly treatmentRepository: TreatmentRepository,
-    private readonly medicationRepository: MedicationRepository,
-  ) {}
+    private readonly medicationRepository: MedicationRepository
+  ) { }
 
   async getAll(userId: string): PromiseResult<Treatment[]> {
     const treatments = await this.treatmentRepository.findAllTreatments(userId);
@@ -56,20 +56,30 @@ export class TreatmentService {
       description,
       startAt,
       endAt,
-      medicationIds,
-    }: TreatmentType & { medicationIds: string[] },
+      medications,
+    }: {
+      name: string;
+      description?: string | null;
+      startAt: Date;
+      endAt?: Date | null;
+      medications: { medicationId: string; dose: string; alertPeriodInHours: number, totalQuantity: number }[];
+    }
   ): PromiseResult<Treatment> {
     const user = await this.usersRepository.findUser(userId);
     if (!user) return error("User not found!");
 
-    const meds = await this.medicationRepository.findMedications(medicationIds);
+    const meds = await this.medicationRepository.findMedications(
+      medications.map((m) => m.medicationId)
+    );
 
-    if (meds.length !== medicationIds.length) {
+    if (meds.length !== medications.length)
       return error("Um ou mais medicamentos não foram encontrados.");
-    }
 
-    if (!medicationIds || medicationIds.length === 0)
-      return error("Um tratamento precisa ter pelo menos um medicamento.");
+    const medsWithDefaults = medications.map((m) => ({
+      ...m,
+      lastTaken: null,
+      takenQuantity: 0,
+    }));
 
     const [createdOk, createdErr, createdTreatment] = await t(
       this.treatmentRepository.addTreatment({
@@ -78,14 +88,9 @@ export class TreatmentService {
         description: description ?? null,
         startAt,
         endAt: endAt ?? null,
-        medicationIds,
-      }),
+        medications: medsWithDefaults,
+      })
     );
-
-    if (!createdOk || !createdTreatment) {
-      console.error("Erro Prisma:", createdErr);
-      return error("Failed to create treatment");
-    }
 
     if (!createdOk || !createdTreatment) {
       console.error("Erro Prisma:", createdErr);
@@ -97,17 +102,16 @@ export class TreatmentService {
 
   async update(
     treatmentId: string,
-    updateData: Partial<TreatmentType>,
+    updateData: Partial<TreatmentType>
   ): PromiseResult<Treatment> {
     const treatment = await this.treatmentRepository.findTreatment(treatmentId);
     if (!treatment) return error("Treatment not found");
 
     const [updatedOk, _, updatedTreatment] = await t(
-      this.treatmentRepository.updateTreatment(treatmentId, { ...updateData }),
+      this.treatmentRepository.updateTreatment(treatmentId, { ...updateData })
     );
 
-    if (!updatedOk || !updatedTreatment)
-      return error("Failed to update treatment");
+    if (!updatedOk || !updatedTreatment) return error("Failed to update treatment");
 
     return ok(updatedTreatment);
   }
@@ -117,11 +121,10 @@ export class TreatmentService {
     if (!treatment) return error("Treatment not found");
 
     const [deletedOk, _, deletedTreatment] = await t(
-      this.treatmentRepository.deleteTreatment(treatmentId),
+      this.treatmentRepository.deleteTreatment(treatmentId)
     );
 
-    if (!deletedOk || !deletedTreatment)
-      return error("Failed to delete treatment");
+    if (!deletedOk || !deletedTreatment) return error("Failed to delete treatment");
 
     return ok(deletedTreatment);
   }

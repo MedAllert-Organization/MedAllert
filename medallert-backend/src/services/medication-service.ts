@@ -12,11 +12,9 @@ import type { VisualTypesRepository } from "../repositories/visual_types.js";
 
 export const MedicationSchema = z.object({
   name: z.string(),
-  dose: z.string().nullable().optional(),
   description: z.string().nullable().optional(),
   visualTypeId: z.string().nullable().optional(),
   soundTypeId: z.string().nullable().optional(),
-  alertPeriodInHours: z.number(),
 });
 
 export const MedicationIdParamSchema = z.object({
@@ -58,11 +56,9 @@ export class MedicationService {
     userId: string,
     {
       name,
-      dose,
       description,
       visualTypeId,
       soundTypeId,
-      alertPeriodInHours,
     }: MedicationType,
   ): PromiseResult<Medication> {
     const user = await this.usersRepository.findUser(userId);
@@ -86,11 +82,9 @@ export class MedicationService {
       this.medicationRepository.addMedication({
         userId,
         name,
-        dose: dose ?? null,
         description: description ?? null,
         visualTypeId: visualTypeId as OptionalId | null,
         soundTypeId: soundTypeId as OptionalId | null,
-        alertPeriodInHours,
       }),
     );
 
