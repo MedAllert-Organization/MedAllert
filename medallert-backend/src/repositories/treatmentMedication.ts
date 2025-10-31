@@ -21,6 +21,10 @@ export interface TreatmentMedicationRepository {
   ): Promise<TreatmentMedication | null>;
   deleteTreatmentMedications(treatmentId: string): Promise<void>;
   deleteTreatmentMedication(treatmentId: string, medicationId: string): Promise<void>;
+  getByMedication(
+  medicationId: string
+): Promise<{ id: string; name: string; description: string | null }[]>;
+
 }
 
 class PrismaTreatmentMedicationRepository implements TreatmentMedicationRepository {
@@ -90,6 +94,28 @@ class PrismaTreatmentMedicationRepository implements TreatmentMedicationReposito
       where: { treatmentId_medicationId: { treatmentId, medicationId } },
     });
   }
+
+  async getByMedication(medicationId: string): Promise<{ id: string; name: string; description: string | null }[]> {
+  const treatments = await this.prisma.treatmentMedication.findMany({
+    where: { medicationId },
+    select: {
+      treatment: {
+        select: {
+          treatmentId: true,
+          name: true,
+          description: true,
+        },
+      },
+    },
+  });
+
+  return treatments.map(t => ({
+    id: t.treatment.treatmentId,
+    name: t.treatment.name,
+    description: t.treatment.description ?? null,
+  }));
+}
+
 }
 
 export const defaultTreatmentMedicationRepository = new PrismaTreatmentMedicationRepository(prisma);

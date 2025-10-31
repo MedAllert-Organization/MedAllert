@@ -9,6 +9,7 @@ import type {
 import type { SoundTypesRepository } from "../repositories/sound_types.js";
 import type { UsersRepository } from "../repositories/users.js";
 import type { VisualTypesRepository } from "../repositories/visual_types.js";
+import type { TreatmentMedicationRepository } from "../repositories/treatmentMedication.js";
 
 export const MedicationSchema = z.object({
   name: z.string(),
@@ -31,6 +32,7 @@ export class MedicationService {
     private readonly medicationRepository: MedicationRepository,
     private readonly visualTypesRepository: VisualTypesRepository,
     private readonly soundTypesRepository: SoundTypesRepository,
+    private readonly treatmentMedication: TreatmentMedicationRepository
   ) {}
 
   async getAll(userId: string): PromiseResult<Medication[]> {
@@ -46,8 +48,7 @@ export class MedicationService {
   }
 
   async get(medicationId: string): PromiseResult<Medication> {
-    const medication =
-      await this.medicationRepository.findMedication(medicationId);
+    const medication = await this.medicationRepository.findMedication(medicationId);
     if (!medication) return error("Medication not found");
     return ok(medication);
   }
@@ -142,4 +143,13 @@ export class MedicationService {
 
     return ok(deletedMedication);
   }
+
+  async getLinkedTreatments(medicationId: string): PromiseResult<
+  { id: string; name: string; description: string | null }[]
+> {
+  const treatments = await this.treatmentMedication.getByMedication(medicationId);
+  if (!treatments.length) return error("No treatments linked to this medication");
+  return ok(treatments);
+}
+
 }

@@ -59,9 +59,9 @@ export class SharingRepository {
           select: {
             medicationId: true,
             name: true,
-            dose: true,
+            // dose: true,
             description: true,
-            alertPeriodInHours: true,
+            // alertPeriodInHours: true,
             user: {
               select: {
                 userId: true,

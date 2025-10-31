@@ -11,6 +11,7 @@ import {
   MedicationService,
   MedicationUpdateSchema,
 } from "../../services/medication-service.js";
+import { defaultTreatmentMedicationRepository } from "../../repositories/treatmentMedication.js";
 
 export const medication = new Hono();
 
@@ -19,6 +20,7 @@ const medicationService = new MedicationService(
   defaultMedicationRepository,
   defaultVisualTypesRepository,
   defaultSoundTypesRepository,
+  defaultTreatmentMedicationRepository
 );
 
 medication.post(
@@ -98,6 +100,34 @@ medication.get(
     return c.json({ success: true, medications }, 200);
   },
 );
+
+
+medication.get(
+  "/linkedTreatments/:id",
+  describeRoute({
+    tags: ["Medication"],
+    description: "Get linked treatments",
+    responses: {
+      201: {
+        description: "Successful getting linked treatments",
+      },
+      400: {
+        description: "failed to get linked treatments",
+      },
+    },
+  }),
+  validator("param", MedicationIdParamSchema),
+  async (c) => {
+    const medicationId = c.req.param("id");
+    const [ok, error, medication] = await medicationService.getLinkedTreatments(medicationId);
+
+    if (!ok || !medication) {
+      return c.json({ success: false, error }, 404);
+    }
+
+    return c.json({ success: true, medication }, 200);
+  },
+)
 
 medication.get(
   "/:id",
