@@ -64,7 +64,6 @@ model Treatments {
   @@map("treatments")
 }
 
-
 model TreatmentMedication {
   id                 String       @id @default(cuid())
   treatmentId        String       @map("treatment_id")
