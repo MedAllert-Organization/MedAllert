@@ -80,7 +80,7 @@ class PrismaUsersRepository implements UsersRepository {
     await this.prisma.$transaction([
       this.prisma.annotations.deleteMany({ where: { medicationId: { in: medicationIds } } }),
       this.prisma.notifications.deleteMany({ where: { medicationId: { in: medicationIds } } }),
-      this.prisma.medicationShares.deleteMany({ where: { userId } }),
+      this.prisma.treatmentShares.deleteMany({ where: { userId } }),
       this.prisma.medications.deleteMany({ where: { userId } }),
       this.prisma.treatments.deleteMany({ where: { userId } }),
       this.prisma.verificationCodes.deleteMany({ where: { userId } }),

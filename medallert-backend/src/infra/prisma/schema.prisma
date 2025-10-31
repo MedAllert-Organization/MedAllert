@@ -29,7 +29,7 @@ model Users {
   verificationCodes  VerificationCodes[]
   medications        Medications[]
   treatments         Treatments[]
-  sharedMedications  MedicationShares[]
+  sharedTreatments  TreatmentShares[]
 
   @@map("users")
 }
@@ -59,6 +59,7 @@ model Treatments {
   medications TreatmentMedication[] 
   createdAt   DateTime               @default(now()) @map("created_at")
   updatedAt   DateTime               @updatedAt @map("updated_at")
+  sharedWith         TreatmentShares[]
 
   @@map("treatments")
 }
@@ -98,7 +99,6 @@ model Medications {
   treatments         TreatmentMedication[] 
   notifications      Notifications[]
   annotations        Annotations[]
-  sharedWith         MedicationShares[]
 
   createdAt          DateTime               @default(now()) @map("created_at")
   updatedAt          DateTime               @updatedAt @map("updated_at")
@@ -150,13 +150,13 @@ model SoundTypes {
   @@map("sound_types")
 }
 
-model MedicationShares {
-  medicationId String      @map("medication_id")
+model TreatmentShares {
+  treatmentId String      @map("treatment_id")
   userId       String      @map("user_id")
   createdAt    DateTime    @default(now()) @map("created_at")
-  medication   Medications @relation(fields: [medicationId], references: [medicationId], onDelete: Cascade)
+  treatment   Treatments @relation(fields: [treatmentId], references: [treatmentId], onDelete: Cascade)
   user         Users       @relation(fields: [userId], references: [userId], onDelete: Cascade)
 
-  @@id([medicationId, userId])
-  @@map("medication_shares")
+  @@id([treatmentId, userId])
+  @@map("treatment_shares")
 }

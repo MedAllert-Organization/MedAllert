@@ -1,21 +1,21 @@
 import { t as Try } from "try";
-import { defaultMedicationRepository } from "../repositories/medications.js";
 import {
   defaultSharingRepository,
   type SharingRepository,
 } from "../repositories/sharing.js";
 import { defaultUsersRepository } from "../repositories/users.js";
+import { defaultTreatmentRepository } from "../repositories/treatments.js";
 
 export class SharingService {
   constructor(
     private readonly sharingRepository: SharingRepository,
     private readonly usersRepository: typeof defaultUsersRepository,
-    private readonly medicationRepository: typeof defaultMedicationRepository,
+    private readonly treatmentRepository: typeof defaultTreatmentRepository,
   ) {}
 
-  async shareMedication(
+  async shareTreatment(
     ownerId: string,
-    medicationId: string,
+    treatmentId: string,
     sharedWithEmail: string,
   ) {
     return await Try(async () => {
@@ -27,62 +27,62 @@ export class SharingService {
       }
 
       if (sharedWithUser.userId === ownerId) {
-        throw new Error("You cannot share a medication with yourself");
+        throw new Error("You cannot share a treatment with yourself");
       }
 
-      const medication =
-        await this.medicationRepository.findMedication(medicationId);
+      const treatment =
+        await this.treatmentRepository.findTreatment(treatmentId);
 
-      if (!medication || medication.userId !== ownerId) {
-        throw new Error("Medication not found or you are not the owner");
+      if (!treatment || treatment.userId !== ownerId) {
+        throw new Error("Treatment not found or you are not the owner");
       }
 
       const existingShare = await this.sharingRepository.find(
-        medicationId,
+        treatmentId,
         sharedWithUser.userId,
       );
 
       if (existingShare) {
-        throw new Error("Medication already shared with this user");
+        throw new Error("Treatment already shared with this user");
       }
 
-      await this.sharingRepository.share(medicationId, sharedWithUser.userId);
+      await this.sharingRepository.share(treatmentId, sharedWithUser.userId);
     });
   }
 
   async removeSharing(
     ownerId: string,
-    medicationId: string,
+    treatmentId: string,
     sharedWithUserId: string,
   ) {
     return await Try(async () => {
-      const medication =
-        await this.medicationRepository.findMedication(medicationId);
+      const treatment =
+        await this.treatmentRepository.findTreatment(treatmentId);
 
-      if (!medication || medication.userId !== ownerId) {
-        throw new Error("Medication not found or you are not the owner");
+      if (!treatment || treatment.userId !== ownerId) {
+        throw new Error("Treatment not found or you are not the owner");
       }
 
-      await this.sharingRepository.remove(medicationId, sharedWithUserId);
+      await this.sharingRepository.remove(treatmentId, sharedWithUserId);
     });
   }
 
-  async listSharedUsers(ownerId: string, medicationId: string) {
+  async listSharedUsers(ownerId: string, treatmentId: string) {
     return await Try(async () => {
-      const medication =
-        await this.medicationRepository.findMedication(medicationId);
+      const treatment =
+        await this.treatmentRepository.findTreatment(treatmentId);
 
-      if (!medication || medication.userId !== ownerId) {
-        throw new Error("Medication not found or you are not the owner");
+      if (!treatment || treatment.userId !== ownerId) {
+        throw new Error("Treatment not found or you are not the owner");
       }
 
-      return await this.sharingRepository.findUsersByMedication(medicationId);
+      return await this.sharingRepository.findUsersByTreatment(treatmentId);
     });
   }
 
-  async listSharedMedications(userId: string) {
+  async listSharedTreatments(userId: string) {
     return await Try(async () => {
-      return await this.sharingRepository.findMedicationsByUser(userId);
+      return await this.sharingRepository.findTreatmentsByUser(userId);
     });
   }
 
@@ -96,5 +96,5 @@ export class SharingService {
 export const sharingService = new SharingService(
   defaultSharingRepository,
   defaultUsersRepository,
-  defaultMedicationRepository,
+  defaultTreatmentRepository,
 );

@@ -1,41 +1,41 @@
 import { prisma } from "../infra/prisma/client.js";
 
 export class SharingRepository {
-  async share(medicationId: string, userId: string) {
-    await prisma.medicationShares.create({
+  async share(treatmentId: string, userId: string) {
+    await prisma.treatmentShares.create({
       data: {
-        medicationId,
+        treatmentId,
         userId,
       },
     });
   }
 
-  async find(medicationId: string, userId: string) {
-    return await prisma.medicationShares.findUnique({
+  async find(treatmentId: string, userId: string) {
+    return await prisma.treatmentShares.findUnique({
       where: {
-        medicationId_userId: {
-          medicationId,
+        treatmentId_userId: {
+          treatmentId,
           userId,
         },
       },
     });
   }
 
-  async remove(medicationId: string, userId: string) {
-    await prisma.medicationShares.delete({
+  async remove(treatmentId: string, userId: string) {
+    await prisma.treatmentShares.delete({
       where: {
-        medicationId_userId: {
-          medicationId,
+        treatmentId_userId: {
+          treatmentId,
           userId,
         },
       },
     });
   }
 
-  async findUsersByMedication(medicationId: string) {
-    return await prisma.medicationShares.findMany({
+  async findUsersByTreatment(treatmentId: string) {
+    return await prisma.treatmentShares.findMany({
       where: {
-        medicationId,
+        treatmentId,
       },
       include: {
         user: {
@@ -49,47 +49,45 @@ export class SharingRepository {
     });
   }
 
-  async findMedicationsByUser(userId: string) {
-    return await prisma.medicationShares.findMany({
+  async findTreatmentsByUser(userId: string) {
+    return await prisma.treatmentShares.findMany({
       where: {
         userId,
       },
       include: {
-        medication: {
+        treatment: {
           select: {
-            medicationId: true,
+            treatmentId: true,
             name: true,
-            // dose: true,
             description: true,
-            // alertPeriodInHours: true,
             user: {
               select: {
                 userId: true,
                 fullName: true,
-              },
-            },
-          },
-        },
+              }
+            }
+          }
+        }
       },
     });
   }
 
   async removeAllFromOwner(ownerId: string) {
-    const medications = await prisma.medications.findMany({
+    const treatments = await prisma.treatments.findMany({
       where: { userId: ownerId },
-      select: { medicationId: true },
+      select: { treatmentId: true },
     });
 
-    if (medications.length === 0) {
+    if (treatments.length === 0) {
       return;
     }
 
-    const medicationIds = medications.map((m) => m.medicationId);
+    const treatmentIds = treatments.map((m) => m.treatmentId);
 
-    await prisma.medicationShares.deleteMany({
+    await prisma.treatmentShares.deleteMany({
       where: {
-        medicationId: {
-          in: medicationIds,
+        treatmentId: {
+          in: treatmentIds,
         },
       },
     });

@@ -7,7 +7,7 @@ import { sharingService } from "../../services/sharing-service.js";
 
 export const sharing = new Hono<Env>();
 
-const ShareMedicationSchema = z.object({
+const ShareTreatmentSchema = z.object({
   email: z.string().email(),
 });
 
@@ -15,40 +15,40 @@ const RemoveShareSchema = z.object({
   userId: z.string(),
 });
 
-const MedicationIdParamSchema = z.object({
-  medicationId: z.string(),
+const TreatmentIdParamSchema = z.object({
+  treatmentId: z.string(),
 });
 
 sharing.post(
-  "/:medicationId/share",
+  "/:treatmentId/share",
   describeRoute({
-    tags: ["Medication Sharing"],
-    description: "Share a medication with another user",
+    tags: ["Treatment Sharing"],
+    description: "Share a treatment with another user",
     responses: {
       204: {
-        description: "Medication shared successfully",
+        description: "Treatment shared successfully",
       },
       400: {
         description: "Bad request",
       },
       404: {
-        description: "Medication not found or user to share with not found",
+        description: "Treatment not found or user to share with not found",
       },
     },
   }),
-  validator("param", MedicationIdParamSchema),
-  validator("json", ShareMedicationSchema),
+  validator("param", TreatmentIdParamSchema),
+  validator("json", ShareTreatmentSchema),
   async (c) => {
     const userId = c.get("userId");
     if (!userId) {
       return c.json({ success: false }, 400);
     }
 
-    const { medicationId } = c.req.valid("param");
+    const { treatmentId } = c.req.valid("param");
     const { email } = c.req.valid("json");
-    const result = await sharingService.shareMedication(
+    const result = await sharingService.shareTreatment(
       userId,
-      medicationId,
+      treatmentId,
       email,
     );
 
@@ -63,34 +63,34 @@ sharing.post(
 );
 
 sharing.delete(
-  "/:medicationId/share",
+  "/:treatmentId/share",
   describeRoute({
-    tags: ["Medication Sharing"],
-    description: "Remove a shared medication from a user",
+    tags: ["Treatment Sharing"],
+    description: "Remove a shared treatment from a user",
     responses: {
       204: {
-        description: "Medication sharing removed successfully",
+        description: "Treatment sharing removed successfully",
       },
       400: {
         description: "Bad request",
       },
       404: {
-        description: "Medication not found",
+        description: "Treatment not found",
       },
     },
   }),
-  validator("param", MedicationIdParamSchema),
+  validator("param", TreatmentIdParamSchema),
   validator("json", RemoveShareSchema),
   async (c) => {
     const ownerId = c.get("userId");
     if (!ownerId) {
       return c.json({ success: false }, 400);
     }
-    const { medicationId } = c.req.valid("param");
+    const { treatmentId } = c.req.valid("param");
     const { userId } = c.req.valid("json");
     const result = await sharingService.removeSharing(
       ownerId,
-      medicationId,
+      treatmentId,
       userId,
     );
 
@@ -105,31 +105,31 @@ sharing.delete(
 );
 
 sharing.get(
-  "/:medicationId/share",
+  "/:treatmentId/share",
   describeRoute({
-    tags: ["Medication Sharing"],
-    description: "List all users a medication is shared with",
+    tags: ["Treatment Sharing"],
+    description: "List all users a treatment is shared with",
     responses: {
       200: {
-        description: "A list of users the medication is shared with",
+        description: "A list of users the treatment is shared with",
       },
       400: {
         description: "Bad request",
       },
       404: {
-        description: "Medication not found",
+        description: "Treatment not found",
       },
     },
   }),
-  validator("param", MedicationIdParamSchema),
+  validator("param", TreatmentIdParamSchema),
   async (c) => {
     const userId = c.get("userId");
     if (!userId) {
       return c.json({ success: false }, 400);
     }
 
-    const { medicationId } = c.req.valid("param");
-    const result = await sharingService.listSharedUsers(userId, medicationId);
+    const { treatmentId } = c.req.valid("param");
+    const result = await sharingService.listSharedUsers(userId, treatmentId);
 
     if (!result.ok) {
       return c.json(
@@ -144,11 +144,11 @@ sharing.get(
 sharing.get(
   "/shared-with-me",
   describeRoute({
-    tags: ["Medication Sharing"],
-    description: "List all medications shared with the current user",
+    tags: ["Treatment Sharing"],
+    description: "List all treatments shared with the current user",
     responses: {
       200: {
-        description: "A list of medications shared with the current user",
+        description: "A list of treatments shared with the current user",
       },
       400: {
         description: "Bad request",
@@ -161,7 +161,7 @@ sharing.get(
       return c.json({ success: false }, 400);
     }
 
-    const result = await sharingService.listSharedMedications(userId);
+    const result = await sharingService.listSharedTreatments(userId);
 
     if (!result.ok) {
       return c.json(
@@ -169,19 +169,19 @@ sharing.get(
         400,
       );
     }
-    return c.json({ success: true, medications: result.value }, 200);
+    return c.json({ success: true, treatments: result.value }, 200);
   },
 );
 
 sharing.delete(
   "/shared",
   describeRoute({
-    tags: ["Medication Sharing"],
-    description: "Remove all sharings for all medications of the current user",
+    tags: ["Treatment Sharing"],
+    description: "Remove all sharings for all treatments of the current user",
     responses: {
       204: {
         description:
-          "All medication sharings from the user removed successfully",
+          "All treatment sharings from the user removed successfully",
       },
       400: {
         description: "Bad request",
