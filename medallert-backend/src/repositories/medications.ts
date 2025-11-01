@@ -41,49 +41,47 @@ export interface MedicationRepository {
 class PrismaMedicationRepository implements MedicationRepository {
   constructor(private readonly prisma: PrismaClient) { }
 
- async findTodayMedication(userId: string): Promise<any[]> {
-  const now = new Date();
-  const todayStart = startOfDay(now);
-  const todayEnd = endOfDay(now);
+  async findTodayMedication(userId: string): Promise<any[]> {
+    const now = new Date();
+    const todayStart = startOfDay(now);
+    const todayEnd = endOfDay(now);
 
-  const treatments = await this.prisma.treatments.findMany({
-    where: {
-      userId,
-      startAt: { lte: todayEnd },
-      OR: [{ endAt: null }, { endAt: { gte: todayStart } }],
-    },
-    include: {
-      medications: {
-        include: {
-          medication: true,
+    const treatments = await this.prisma.treatments.findMany({
+      where: {
+        userId,
+        startAt: { lte: todayEnd },
+        OR: [{ endAt: null }, { endAt: { lte: todayStart } }],
+      },
+      include: {
+        medications: {
+          include: {
+            medication: true,
+          },
         },
       },
-    },
-  });
+    });
 
-  const medications = treatments.flatMap((treatment) =>
-    treatment.medications.map((tm) => ({
-      medicationId: tm.medication.medicationId,
-      treatmentId: tm.treatmentId,
-      userId: tm.medication.userId,
-      name: tm.medication.name,
-      description: tm.medication.description,
-      visualTypeId: tm.medication.visualTypeId,
-      soundTypeId: tm.medication.soundTypeId,
-      dose: tm.dose,
-      alertPeriodInHours: tm.alertPeriodInHours,
-      lastTaken: tm.lastTaken,
-      takenQuantity: tm.takenQuantity,
-      totalQuantity: tm.totalQuantity,
-      createdAt: tm.medication.createdAt,
-      updatedAt: tm.medication.updatedAt,
-    }))
-  );
+    const medications = treatments.flatMap((treatment) =>
+      treatment.medications.map((tm) => ({
+        medicationId: tm.medication.medicationId,
+        treatmentId: tm.treatmentId,
+        userId: tm.medication.userId,
+        name: tm.medication.name,
+        description: tm.medication.description,
+        visualTypeId: tm.medication.visualTypeId,
+        soundTypeId: tm.medication.soundTypeId,
+        dose: tm.dose,
+        alertPeriodInHours: tm.alertPeriodInHours,
+        lastTaken: tm.lastTaken,
+        takenQuantity: tm.takenQuantity,
+        totalQuantity: tm.totalQuantity,
+        createdAt: tm.medication.createdAt,
+        updatedAt: tm.medication.updatedAt,
+      }))
+    );
 
-  return medications;
-}
-
-
+    return medications;
+  }
 
   findMedications(medicationIds: string[]): Promise<Medication[]> {
     return this.prisma.medications.findMany({

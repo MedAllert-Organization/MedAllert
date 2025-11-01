@@ -36,14 +36,12 @@ export class MedicationService {
   ) {}
 
   async getAll(userId: string): PromiseResult<Medication[]> {
-    const medications =
-      await this.medicationRepository.findAllMedications(userId);
+    const medications = await this.medicationRepository.findAllMedications(userId);
     return ok(medications);
   }
 
   async getTodayMedications(userId: string): PromiseResult<Medication[]> {
-    const medications =
-      await this.medicationRepository.findTodayMedication(userId);
+    const medications = await this.medicationRepository.findTodayMedication(userId);
     return ok(medications);
   }
 
