@@ -50,7 +50,7 @@ class PrismaMedicationRepository implements MedicationRepository {
       where: {
         userId,
         startAt: { lte: todayEnd },
-        OR: [{ endAt: null }, { endAt: { lte: todayStart } }],
+        OR: [{ endAt: null }, { endAt: { gte: todayStart } }],
       },
       include: {
         medications: {
