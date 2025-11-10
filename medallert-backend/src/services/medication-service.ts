@@ -40,11 +40,6 @@ export class MedicationService {
     return ok(medications);
   }
 
-  async getTodayMedications(userId: string): PromiseResult<Medication[]> {
-    const medications = await this.medicationRepository.findTodayMedication(userId);
-    return ok(medications);
-  }
-
   async get(medicationId: string): PromiseResult<Medication> {
     const medication = await this.medicationRepository.findMedication(medicationId);
     if (!medication) return error("Medication not found");

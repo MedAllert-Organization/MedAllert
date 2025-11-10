@@ -7,6 +7,7 @@ import { sharing } from "./sharing.js";
 import { soundTypes } from "./sound-types.js";
 import { treatment } from "./treatment.js";
 import { visualTypes } from "./visual-types.js";
+import { treatmentMedication } from "./treatment-medication.js";
 
 export const medicationIndex = new Hono();
 medicationIndex.route("/soundTypes", soundTypes);
@@ -16,4 +17,5 @@ medicationIndex.route("/notification", notification);
 medicationIndex.route("/treatment", treatment);
 medicationIndex.route("/report", reportRoute);
 medicationIndex.route("/annotation", annotation);
+medicationIndex.route("/treatment-medication", treatmentMedication)
 medicationIndex.route("/", sharing);

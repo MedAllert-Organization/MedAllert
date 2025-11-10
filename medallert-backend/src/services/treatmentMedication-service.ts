@@ -14,6 +14,11 @@ export class TreatmentMedicationService {
     }
   }
 
+  async getTodayMedications(userId: string) {
+    const medications = await this.repository.findTodayMedicationsByUser(userId);
+    return ok(medications);
+  }
+
   async addMedications(medications: TreatmentMedication[]) {
     try {
       await this.repository.addTreatmentMedications(medications);
