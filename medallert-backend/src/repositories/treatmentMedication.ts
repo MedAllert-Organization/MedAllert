@@ -13,6 +13,11 @@ export type TreatmentMedication = {
   totalQuantity: number;
 };
 
+export type MedicationProgress = {
+  lastTaken?: Date | null;
+  takenQuantity: number;
+}
+
 export interface TreatmentMedicationRepository {
   findTodayMedicationsByUser(userId: string): Promise<any[]>;
   addTreatmentMedications(data: TreatmentMedication[]): Promise<void>;
@@ -27,7 +32,11 @@ export interface TreatmentMedicationRepository {
   getByMedication(
     medicationId: string
   ): Promise<{ id: string; name: string; description: string | null }[]>;
-
+  updateProgress(
+    treatmentId: string,
+    medicationId: string,
+    progress: MedicationProgress
+  ): Promise<TreatmentMedication | null>;
 }
 
 class PrismaTreatmentMedicationRepository implements TreatmentMedicationRepository {
@@ -92,11 +101,7 @@ class PrismaTreatmentMedicationRepository implements TreatmentMedicationReposito
   async updateProgress(
     treatmentId: string,
     medicationId: string,
-    progress: {
-      lastTaken?: Date | null;
-      takenQuantity: number;
-      totalQuantity: number;
-    }
+    progress: MedicationProgress
   ): Promise<TreatmentMedication | null> {
     const record = await this.prisma.treatmentMedication.findUnique({
       where: { treatmentId_medicationId: { treatmentId, medicationId } },
@@ -163,38 +168,36 @@ class PrismaTreatmentMedicationRepository implements TreatmentMedicationReposito
   }
 
   async findTodayMedicationsByUser(userId: string): Promise<any[]> {
-  const now = new Date();
-  const todayStart = startOfDay(now);
-  const todayEnd = endOfDay(now);
+    const now = new Date();
+    const todayStart = startOfDay(now);
+    const todayEnd = endOfDay(now);
 
-  const treatments = await this.prisma.treatments.findMany({
-    where: {
-      userId,
-      startAt: { lte: todayEnd },
-      OR: [{ endAt: null }, { endAt: { gte: todayStart } }],
-    },
-    include: {
-      medications: {
-        include: { medication: true },
+    const treatments = await this.prisma.treatments.findMany({
+      where: {
+        userId,
+        startAt: { lte: todayEnd },
+        OR: [{ endAt: null }, { endAt: { gte: todayStart } }],
       },
-    },
-  });
+      include: {
+        medications: {
+          include: { medication: true },
+        },
+      },
+    });
 
-  return treatments.flatMap(treatment =>
-    treatment.medications.map(tm => ({
-      treatmentId: tm.treatmentId,
-      medicationId: tm.medicationId,
-      name: tm.medication.name,
-      dose: tm.dose,
-      nextTakeAt: tm.nextTakeAt,
-      lastTaken: tm.lastTaken,
-      totalQuantity: tm.totalQuantity,
-      takenQuantity: tm.takenQuantity,
-    }))
-  );
-}
-
-
+    return treatments.flatMap(treatment =>
+      treatment.medications.map(tm => ({
+        treatmentId: tm.treatmentId,
+        medicationId: tm.medicationId,
+        name: tm.medication.name,
+        dose: tm.dose,
+        nextTakeAt: tm.nextTakeAt,
+        lastTaken: tm.lastTaken,
+        totalQuantity: tm.totalQuantity,
+        takenQuantity: tm.takenQuantity,
+      }))
+    );
+  }
 }
 
 export const defaultTreatmentMedicationRepository = new PrismaTreatmentMedicationRepository(prisma);
