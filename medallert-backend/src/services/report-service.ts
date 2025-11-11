@@ -1,136 +1,128 @@
-import fs from "fs";
-import path from "path";
-import PDFDocument from "pdfkit";
-
-import type {
-  Treatment,
-  TreatmentRepository,
-} from "../repositories/treatments.js";
+cleaimport PDFDocument from "pdfkit";
+import type { TreatmentRepository } from "../repositories/treatments.js";
+import type { TreatmentMedicationRepository } from "../repositories/treatmentMedication.js";
 
 export class ReportService {
-  constructor(private readonly treatmentRepository: TreatmentRepository) {}
+  constructor(
+    private readonly treatmentRepository: TreatmentRepository,
+    private readonly treatmentMedicationRepository: TreatmentMedicationRepository
+  ) {}
 
-  async generateReport(
-    userId: string,
-    period: "Weekly" | "Monthly",
-  ): Promise<string> {
+  async generatePDF(id: string, period: "Weekly" | "Monthly"): Promise<Uint8Array> {
+    const findTreatment = await this.treatmentMedicationRepository.getByTreatment(id);
+    if(!findTreatment){ 
+      throw new Error("Cannot find any treatment")
+    };
+
+    const treatment = await this.treatmentRepository.findTreatment(id);
+    if(!treatment){ 
+      throw new Error("Cannot find treatment")
+    };
+
     const now = new Date();
     const startDate = new Date();
-
-    if (period === "Weekly") {
+    if(period === "Weekly"){ 
       startDate.setDate(now.getDate() - 7);
-    } else if (period === "Monthly") {
-      startDate.setMonth(now.getMonth() - 1);
+    }else if(period === "Monthly"){
+     startDate.setMonth(now.getMonth() - 1);
     }
 
-    const UserTreatment =
-      await this.treatmentRepository.findAllTreatments(userId);
-
-    const treatmentPeriod = UserTreatment.filter((treatment) => {
-      const treatmentStart = treatment.startAt;
-      const treatmentEnd = treatment.endAt || new Date();
-      return treatmentStart <= now && treatmentEnd >= startDate;
+    const findMedication = findTreatment.filter((med) => {
+      const medicationDate = med.lastTaken || med.medicationId;
+      return medicationDate >= startDate && medicationDate <= now;
     });
+    const medicationsToUse = findMedication.length > 0 ? findMedication : findTreatment;
 
-    return this.generatePDF(userId, period, startDate, now, treatmentPeriod);
+    return await this.generateTreatmentDocument(
+      treatment,
+      medicationsToUse,
+      period,
+      startDate,
+      now
+    );
   }
 
-  private async generatePDF(
-    userId: string,
+  private async generateTreatmentDocument(
+    treatment: any,
+    treatmentMedication: any[],
     period: "Weekly" | "Monthly",
     startDate: Date,
-    endDate: Date,
-    treatments: Treatment[],
-  ): Promise<string> {
+    endDate: Date
+  ): Promise<Uint8Array> {
     return new Promise((resolve, reject) => {
       try {
         const doc = new PDFDocument();
-        const reportDir = path.resolve("reports");
+        const chunks: Uint8Array[] = [];
 
-        if (!fs.existsSync(reportDir)) {
-          fs.mkdirSync(reportDir, { recursive: true });
+        doc.on("data", (chunk) => chunks.push(new Uint8Array(chunk)));
+        doc.on("end", () => {
+          const totalLength = chunks.reduce((acc, c) => acc + c.length, 0);
+          const result = new Uint8Array(totalLength);
+          let offset = 0;
+          for (const chunk of chunks) {
+            result.set(chunk, offset);
+            offset += chunk.length;
+          }
+          resolve(result);
+        });
+        doc.on("error", reject);
+
+        doc.fontSize(20).text(`Treatment Report - ${period}`, 100, 100);
+        doc.fontSize(12).text(`Generated on: ${new Date().toLocaleDateString()}`, 100, 130);
+        doc.text(
+          `Period: ${startDate.toLocaleDateString()} to ${endDate.toLocaleDateString()}`,
+          100,
+          150
+        );
+
+        doc.fontSize(16).text(`Treatment: ${treatment.name}`, 100, 180);
+        if (treatment.description)
+          doc.fontSize(12).text(`Description: ${treatment.description}`, 100, 200);
+
+        let y = 240;
+
+        if (treatmentMedication.length === 0) {
+          doc.text("No medications found for this period.", 100, y);
+          doc.end();
+          return;
         }
 
-        const fileName = `treatment_report_${userId}_${period}_${Date.now()}.pdf`;
-        const filePath = path.join(reportDir, fileName);
-        const stream = fs.createWriteStream(filePath);
+        doc.fontSize(14).text("Medications:", 100, y);
+        y += 30;
 
-        doc.pipe(stream);
+        treatmentMedication.forEach((m, i) => {
+          const compliance =
+            m.totalQuantity > 0
+              ? ((m.takenQuantity / m.totalQuantity) * 100).toFixed(1) + "%"
+              : "N/A";
 
-        doc.fontSize(20).text("Relatório de Tratamentos", { align: "center" });
-        doc.moveDown();
-        doc
-          .fontSize(12)
-          .text(`Período: ${period === "Weekly" ? "Semanal" : "Mensal"}`)
-          .text(`De: ${startDate.toLocaleDateString("pt-BR")}`)
-          .text(`Até: ${endDate.toLocaleDateString("pt-BR")}`);
-        doc.moveDown();
-
-        if (treatments.length > 0) {
-          doc.fontSize(16).text("Tratamentos:");
-          doc.moveDown(0.5);
-
-          treatments.forEach((treatment, index) => {
-            doc
-              .fontSize(10)
-              .text(`${index + 1}. ${treatment.name}`)
-              .text(
-                `   Descrição: ${treatment.description || "Nenhuma descrição"}`,
-              )
-              .text(
-                `   Início: ${treatment.startAt.toLocaleDateString("pt-BR")}`,
-              )
-              .text(
-                `   Término: ${treatment.endAt ? treatment.endAt.toLocaleDateString("pt-BR") : "Em andamento"}`,
-              )
-              .text(`   Status: ${this.getTreatmentStatus(treatment)}`);
-            doc.moveDown(0.5);
-          });
-
-          doc.moveDown();
-          doc.fontSize(14).text("Resumo:");
-          doc
-            .fontSize(10)
-            .text(`Total de tratamentos: ${treatments.length}`)
-            .text(
-              `Tratamentos em andamento: ${treatments.filter((t) => !t.endAt).length}`,
-            )
-            .text(
-              `Tratamentos concluídos: ${treatments.filter((t) => t.endAt && t.endAt <= endDate).length}`,
-            );
-        } else {
           doc
             .fontSize(12)
-            .text("Nenhum tratamento encontrado para o período selecionado.");
-        }
+            .text(`${i + 1}. ${m.medication?.name || "Unknown"}`, 120, y)
+            .text(`Dose: ${m.dose}`, 300, y)
+            .text(
+              `Taken: ${m.takenQuantity}/${m.totalQuantity} (${compliance})`,
+              450,
+              y
+            );
 
-        doc.moveDown(2);
-        doc
-          .fontSize(8)
-          .text(`Relatório gerado em: ${new Date().toLocaleString("pt-BR")}`, {
-            align: "center",
-          });
+          y += 25;
 
+          if (m.lastTaken) {
+            doc.text(`Last taken: ${m.lastTaken.toLocaleDateString()}`, 140, y);
+            y += 20;
+          }
+
+          y += 10;
+          if (y > 700) {
+            doc.addPage();
+            y = 100;
+          }
+        });
         doc.end();
-
-        stream.on("finish", () => resolve(filePath));
-        stream.on("error", reject);
-      } catch (error) {
-        reject(error);
+      } catch (err) {
+        reject(err);
       }
     });
-  }
-
-  private getTreatmentStatus(treatment: Treatment): string {
-    const now = new Date();
-
-    if (!treatment.endAt) {
-      return "Em andamento";
-    }
-
-    if (treatment.endAt < now) {
-      return "Concluído";
-    }
-    return "Ativo";
   }
 }

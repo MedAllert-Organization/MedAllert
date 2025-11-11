@@ -2,6 +2,8 @@ import type { PrismaClient } from "../infra/prisma/generated/prisma/index.js";
 import { prisma } from "../infra/prisma/client.js";
 
 export type TreatmentMedication = {
+  updatedAt: Date | null | undefined;
+  createdAt: Date | null | undefined;
   treatmentId: string;
   medicationId: string;
   dose: string;
