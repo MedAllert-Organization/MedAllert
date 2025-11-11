@@ -1,4 +1,4 @@
-cleaimport PDFDocument from "pdfkit";
+import PDFDocument from "pdfkit";
 import type { TreatmentRepository } from "../repositories/treatments.js";
 import type { TreatmentMedicationRepository } from "../repositories/treatmentMedication.js";
 
