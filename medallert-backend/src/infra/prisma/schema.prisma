@@ -74,6 +74,7 @@ model TreatmentMedication {
   dose               String
   alertPeriodInHours Int
   lastTaken          DateTime?    @map("last_taken")
+  nextTakeAt         DateTime?    @map("next_take_at")
   takenQuantity      Int          @default(0) @map("taken_quantity")
   totalQuantity  Int          @default(0) @map("total_quantity")
 
