@@ -36,7 +36,7 @@ treatment.post(
 const medications = treatmentCandidate.medications.map(m => ({
   medicationId: m.medicationId,
   dose: m.dose,
-  alertPeriodInHours: m.alertPeriodInHours,
+  alertPeriodInMinutes: m.alertPeriodInMinutes,
       totalQuantity: m.totalQuantity
 }));
 

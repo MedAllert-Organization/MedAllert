@@ -1,5 +1,5 @@
 import { prisma } from "../infra/prisma/client.js";
-import type { PrismaClient } from "../infra/prisma/generated/prisma/index.js";
+import type { PrismaClient, Timezone } from "../infra/prisma/generated/prisma/index.js";
 
 export type User = {
   userId: string;
@@ -7,6 +7,7 @@ export type User = {
   email: string;
   phone: string;
   hash: string;
+  timezoneId: string | null;
   image: string | null;
   acceptedTosAt: Date;
   accountConfirmedAt: Date | null;
