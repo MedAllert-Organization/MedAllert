@@ -12,7 +12,7 @@ export type Treatment = {
     medicationId: string;
     name: string;
     dose: string;
-    alertPeriodInHours: number;
+    alertPeriodInMinutes: number;
     lastTaken: Date | null;
     takenQuantity: number;
     totalQuantity: number;
@@ -31,7 +31,7 @@ export interface TreatmentRepository {
     medications: {
       medicationId: string;
       dose: string;
-      alertPeriodInHours: number;
+      alertPeriodInMinutes: number;
       lastTaken?: Date | null;
       takenQuantity?: number;
       totalQuantity?: number;
@@ -67,7 +67,7 @@ class PrismaTreatmentRepository implements TreatmentRepository {
           medicationId: tm.medicationId,
           name: tm.medication.name,
           dose: tm.dose,
-          alertPeriodInHours: tm.alertPeriodInHours,
+          alertPeriodInMinutes: tm.alertPeriodInMinutes,
           lastTaken: tm.lastTaken,
           takenQuantity: tm.takenQuantity,
           totalQuantity: tm.totalQuantity,
@@ -88,7 +88,7 @@ class PrismaTreatmentRepository implements TreatmentRepository {
           medicationId: tm.medicationId,
           name: tm.medication.name,
           dose: tm.dose,
-          alertPeriodInHours: tm.alertPeriodInHours,
+          alertPeriodInMinutes: tm.alertPeriodInMinutes,
           lastTaken: tm.lastTaken,
           takenQuantity: tm.takenQuantity,
           totalQuantity: tm.totalQuantity,
@@ -105,7 +105,7 @@ class PrismaTreatmentRepository implements TreatmentRepository {
     medications: {
       medicationId: string;
       dose: string;
-      alertPeriodInHours: number;
+      alertPeriodInMinutes: number;
       lastTaken?: Date | null;
       takenQuantity?: number;
       totalQuantity?: number;
@@ -129,7 +129,7 @@ class PrismaTreatmentRepository implements TreatmentRepository {
       treatmentId: treatment.treatmentId,
       medicationId: med.medicationId,
       dose: med.dose,
-      alertPeriodInHours: med.alertPeriodInHours,
+      alertPeriodInMinutes: med.alertPeriodInMinutes,
       lastTaken: med.lastTaken ?? null,
       takenQuantity: med.takenQuantity ?? 0,
       totalQuantity: med.totalQuantity ?? 0,

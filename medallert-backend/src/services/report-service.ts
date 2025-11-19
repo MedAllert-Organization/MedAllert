@@ -3,126 +3,45 @@ import type { TreatmentRepository } from "../repositories/treatments.js";
 import type { TreatmentMedicationRepository } from "../repositories/treatmentMedication.js";
 
 export class ReportService {
-  constructor(
-    private readonly treatmentRepository: TreatmentRepository,
-    private readonly treatmentMedicationRepository: TreatmentMedicationRepository
-  ) {}
+  constructor(private readonly treatmentRepository: TreatmentRepository) {}
 
-  async generatePDF(id: string, period: "Weekly" | "Monthly"): Promise<Uint8Array> {
-    const findTreatment = await this.treatmentMedicationRepository.getByTreatment(id);
-    if(!findTreatment){ 
-      throw new Error("Cannot find any treatment")
-    };
-
+  async generatePDF(id: string): Promise<Uint8Array> {
     const treatment = await this.treatmentRepository.findTreatment(id);
-    if(!treatment){ 
-      throw new Error("Cannot find treatment")
-    };
-
-    const now = new Date();
-    const startDate = new Date();
-    if(period === "Weekly"){ 
-      startDate.setDate(now.getDate() - 7);
-    }else if(period === "Monthly"){
-     startDate.setMonth(now.getMonth() - 1);
+    if (!treatment) {
+      throw new Error("Tratamento não encontrado");
     }
 
-    const findMedication = findTreatment.filter((med) => {
-      const medicationDate = med.lastTaken || med.medicationId;
-      return medicationDate >= startDate && medicationDate <= now;
-    });
-    const medicationsToUse = findMedication.length > 0 ? findMedication : findTreatment;
+    const doc = new PDFDocument();
+    const buffers: Uint8Array[] = [];
 
-    return await this.generateTreatmentDocument(
-      treatment,
-      medicationsToUse,
-      period,
-      startDate,
-      now
-    );
-  }
+    doc.on("data", (chunk: Uint8Array) => buffers.push(chunk));
+    doc.on("end", () => {});
 
-  private async generateTreatmentDocument(
-    treatment: any,
-    treatmentMedication: any[],
-    period: "Weekly" | "Monthly",
-    startDate: Date,
-    endDate: Date
-  ): Promise<Uint8Array> {
-    return new Promise((resolve, reject) => {
-      try {
-        const doc = new PDFDocument();
-        const chunks: Uint8Array[] = [];
+    doc.fontSize(18).text(`Relatório de Tratamento`, { align: "center" });
+    doc.moveDown();
+    
+    doc.fontSize(14).text(`Nome do Tratamento: ${treatment.name}`);
+    if (treatment.description) doc.text(`Descrição: ${treatment.description}`);
+    doc.text(`Início: ${treatment.startAt.toLocaleDateString("pt-BR")}`);
+    if (treatment.endAt) {
+      doc.text(`Término: ${treatment.endAt.toLocaleDateString("pt-BR")}`);
+    }
 
-        doc.on("data", (chunk) => chunks.push(new Uint8Array(chunk)));
-        doc.on("end", () => {
-          const totalLength = chunks.reduce((acc, c) => acc + c.length, 0);
-          const result = new Uint8Array(totalLength);
-          let offset = 0;
-          for (const chunk of chunks) {
-            result.set(chunk, offset);
-            offset += chunk.length;
-          }
-          resolve(result);
-        });
-        doc.on("error", reject);
+    doc.moveDown().fontSize(16).text("Medicamentos:", { underline: true });
+    doc.moveDown(0.5);
 
-        doc.fontSize(20).text(`Treatment Report - ${period}`, 100, 100);
-        doc.fontSize(12).text(`Generated on: ${new Date().toLocaleDateString()}`, 100, 130);
-        doc.text(
-          `Period: ${startDate.toLocaleDateString()} to ${endDate.toLocaleDateString()}`,
-          100,
-          150
-        );
-
-        doc.fontSize(16).text(`Treatment: ${treatment.name}`, 100, 180);
-        if (treatment.description)
-          doc.fontSize(12).text(`Description: ${treatment.description}`, 100, 200);
-
-        let y = 240;
-
-        if (treatmentMedication.length === 0) {
-          doc.text("No medications found for this period.", 100, y);
-          doc.end();
-          return;
-        }
-
-        doc.fontSize(14).text("Medications:", 100, y);
-        y += 30;
-
-        treatmentMedication.forEach((m, i) => {
-          const compliance =
-            m.totalQuantity > 0
-              ? ((m.takenQuantity / m.totalQuantity) * 100).toFixed(1) + "%"
-              : "N/A";
-
-          doc
-            .fontSize(12)
-            .text(`${i + 1}. ${m.medication?.name || "Unknown"}`, 120, y)
-            .text(`Dose: ${m.dose}`, 300, y)
-            .text(
-              `Taken: ${m.takenQuantity}/${m.totalQuantity} (${compliance})`,
-              450,
-              y
-            );
-
-          y += 25;
-
-          if (m.lastTaken) {
-            doc.text(`Last taken: ${m.lastTaken.toLocaleDateString()}`, 140, y);
-            y += 20;
-          }
-
-          y += 10;
-          if (y > 700) {
-            doc.addPage();
-            y = 100;
-          }
-        });
-        doc.end();
-      } catch (err) {
-        reject(err);
-      }
-    });
+    treatment.medications.forEach((med, index) => {
+      doc.fontSize(14).text(`${index + 1}. ${med.name}`);
+      doc.fontSize(12)
+        .text(`Dose: ${med.dose}`)
+        //.text(`Intervalo entre doses (h): ${med.alertPeriodInHours}`)
+        .text(`Última dose tomada: ${med.lastTaken ? med.lastTaken.toLocaleString("pt-BR") : "Nunca"}`)
+        .text(`Quantidade tomada: ${med.takenQuantity}`)
+        .text(`Total previsto: ${med.totalQuantity}`)
+        .moveDown();
+    })
+    doc.end();
+    const pdfBuffer = Buffer.concat(buffers);
+    return new Uint8Array(pdfBuffer);
   }
 }

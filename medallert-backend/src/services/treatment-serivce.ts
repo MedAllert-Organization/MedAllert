@@ -15,7 +15,7 @@ export const TreatmentSchema = z.object({
       z.object({
         medicationId: z.string(),
         dose: z.string(),
-        alertPeriodInHours: z.number(),
+        alertPeriodInMinutes: z.number(),
         totalQuantity: z.number()
       })
     )
@@ -62,7 +62,7 @@ export class TreatmentService {
       description?: string | null;
       startAt: Date;
       endAt?: Date | null;
-      medications: { medicationId: string; dose: string; alertPeriodInHours: number, totalQuantity: number }[];
+      medications: { medicationId: string; dose: string; alertPeriodInMinutes: number, totalQuantity: number }[];
     }
   ): PromiseResult<Treatment> {
     const user = await this.usersRepository.findUser(userId);

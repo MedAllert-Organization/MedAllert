@@ -12,7 +12,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DB_URL") 
+  url      = env("DB_URL")
 }
 
 model Users {
@@ -22,6 +22,8 @@ model Users {
   phone              String
   hash               String
   image              String?
+  timezoneId         String?
+  timezone           Timezone?           @relation(fields: [timezoneId], references: [id])
   acceptedTosAt      DateTime            @default(now()) @map("accepted_tos_at")
   accountConfirmedAt DateTime?           @default(now()) @map("account_confirmed_at")
   createdAt          DateTime            @default(now()) @map("created_at")
@@ -29,9 +31,17 @@ model Users {
   verificationCodes  VerificationCodes[]
   medications        Medications[]
   treatments         Treatments[]
-  sharedTreatments  TreatmentShares[]
+  sharedTreatments   TreatmentShares[]
 
   @@map("users")
+}
+
+model Timezone {
+  id        String  @id @default(cuid())
+  name      String  @unique
+  label     String
+  utcOffset Int
+  users     Users[]
 }
 
 model VerificationCodes {
@@ -49,59 +59,59 @@ model VerificationCodes {
 }
 
 model Treatments {
-  treatmentId String                 @id @default(cuid()) @map("treatment_id")
-  userId      String                 @map("user_id")
-  user        Users                  @relation(fields: [userId], references: [userId])
+  treatmentId String                @id @default(cuid()) @map("treatment_id")
+  userId      String                @map("user_id")
+  user        Users                 @relation(fields: [userId], references: [userId])
   name        String
   description String?
-  startAt     DateTime               @default(now()) @map("start_at")
-  endAt       DateTime?              @map("end_at")
-  medications TreatmentMedication[] 
-  createdAt   DateTime               @default(now()) @map("created_at")
-  updatedAt   DateTime               @updatedAt @map("updated_at")
-  sharedWith         TreatmentShares[]
+  startAt     DateTime              @default(now()) @map("start_at")
+  endAt       DateTime?             @map("end_at")
+  medications TreatmentMedication[]
+  createdAt   DateTime              @default(now()) @map("created_at")
+  updatedAt   DateTime              @updatedAt @map("updated_at")
+  sharedWith  TreatmentShares[]
 
   @@map("treatments")
 }
 
 model TreatmentMedication {
-  id                 String       @id @default(cuid())
-  treatmentId        String       @map("treatment_id")
-  medicationId       String       @map("medication_id")
-  treatment          Treatments   @relation(fields: [treatmentId], references: [treatmentId])
-  medication         Medications  @relation(fields: [medicationId], references: [medicationId])
+  id           String      @id @default(cuid())
+  treatmentId  String      @map("treatment_id")
+  medicationId String      @map("medication_id")
+  treatment    Treatments  @relation(fields: [treatmentId], references: [treatmentId])
+  medication   Medications @relation(fields: [medicationId], references: [medicationId])
 
-  dose               String
-  alertPeriodInHours Int
-  lastTaken          DateTime?    @map("last_taken")
-  nextTakeAt         DateTime?    @map("next_take_at")
-  takenQuantity      Int          @default(0) @map("taken_quantity")
-  totalQuantity  Int          @default(0) @map("total_quantity")
+  dose                 String
+  alertPeriodInMinutes Int
+  lastTaken            DateTime? @map("last_taken")
+  nextTakeAt           DateTime? @map("next_take_at")
+  takenQuantity        Int       @default(0) @map("taken_quantity")
+  totalQuantity        Int       @default(0) @map("total_quantity")
 
-  createdAt          DateTime     @default(now()) @map("created_at")
-  updatedAt          DateTime     @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@unique([treatmentId, medicationId])
   @@map("treatment_medications")
 }
 
 model Medications {
-  medicationId       String                 @id @default(cuid()) @map("medication_id")
-  userId             String                 @map("user_id")
-  user               Users                  @relation(fields: [userId], references: [userId])
-  name               String
-  description        String?
-  visualTypeId       String?                @map("visual_type_id")
-  visualType         VisualTypes?           @relation(fields: [visualTypeId], references: [visualId])
-  soundTypeId        String?                @map("sound_type_id")
-  soundType          SoundTypes?            @relation(fields: [soundTypeId], references: [soundId])
+  medicationId String       @id @default(cuid()) @map("medication_id")
+  userId       String       @map("user_id")
+  user         Users        @relation(fields: [userId], references: [userId])
+  name         String
+  description  String?
+  visualTypeId String?      @map("visual_type_id")
+  visualType   VisualTypes? @relation(fields: [visualTypeId], references: [visualId])
+  soundTypeId  String?      @map("sound_type_id")
+  soundType    SoundTypes?  @relation(fields: [soundTypeId], references: [soundId])
 
-  treatments         TreatmentMedication[] 
-  notifications      Notifications[]
-  annotations        Annotations[]
+  treatments    TreatmentMedication[]
+  notifications Notifications[]
+  annotations   Annotations[]
 
-  createdAt          DateTime               @default(now()) @map("created_at")
-  updatedAt          DateTime               @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("medications")
 }
@@ -122,7 +132,7 @@ model Notifications {
 model Annotations {
   annotationId String      @id @default(cuid()) @map("annotation_id")
   medicationId String      @map("medication_id")
-  medication   Medications @relation(fields: [medicationId], references: [medicationId])
+  medication   Medications @relation(fields: [medicationId], references: [medicationId], onDelete: Cascade)
   content      String
   createdAt    DateTime    @default(now()) @map("created_at")
   updatedAt    DateTime    @updatedAt @map("updated_at")
@@ -151,11 +161,11 @@ model SoundTypes {
 }
 
 model TreatmentShares {
-  treatmentId String      @map("treatment_id")
-  userId       String      @map("user_id")
-  createdAt    DateTime    @default(now()) @map("created_at")
+  treatmentId String     @map("treatment_id")
+  userId      String     @map("user_id")
+  createdAt   DateTime   @default(now()) @map("created_at")
   treatment   Treatments @relation(fields: [treatmentId], references: [treatmentId], onDelete: Cascade)
-  user         Users       @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  user        Users      @relation(fields: [userId], references: [userId], onDelete: Cascade)
 
   @@id([treatmentId, userId])
   @@map("treatment_shares")

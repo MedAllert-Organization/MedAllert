@@ -1,6 +1,7 @@
 import type { PrismaClient } from "../infra/prisma/generated/prisma/index.js";
 import { prisma } from "../infra/prisma/client.js";
-import { addHours, endOfDay, startOfDay } from "date-fns";
+import { addMinutes, endOfDay, startOfDay } from "date-fns";
+import { defaultUsersRepository, type UsersRepository } from "./users.js";
 
 export type TreatmentMedication = {
   updatedAt: Date | null | undefined;
@@ -8,7 +9,7 @@ export type TreatmentMedication = {
   treatmentId: string;
   medicationId: string;
   dose: string;
-  alertPeriodInHours: number;
+  alertPeriodInMinutes: number;
   lastTaken?: Date | null;
   nextTakeAt?: Date | null;
   takenQuantity: number;
@@ -42,7 +43,7 @@ export interface TreatmentMedicationRepository {
 }
 
 class PrismaTreatmentMedicationRepository implements TreatmentMedicationRepository {
-  constructor(private readonly prisma: PrismaClient) { }
+  constructor(private readonly prisma: PrismaClient, private readonly userRepository: UsersRepository) { }
 
   async addTreatmentMedications(data: TreatmentMedication[]): Promise<void> {
     if (!data.length) return;
@@ -52,7 +53,7 @@ class PrismaTreatmentMedicationRepository implements TreatmentMedicationReposito
         treatmentId: d.treatmentId,
         medicationId: d.medicationId,
         dose: d.dose,
-        alertPeriodInHours: d.alertPeriodInHours,
+        alertPeriodInMinutes: d.alertPeriodInMinutes,
         lastTaken: null,
         nextTakeAt: null,
         takenQuantity: 0,
@@ -70,7 +71,7 @@ class PrismaTreatmentMedicationRepository implements TreatmentMedicationReposito
       treatmentId: r.treatmentId,
       medicationId: r.medicationId,
       dose: r.dose,
-      alertPeriodInHours: r.alertPeriodInHours,
+      alertPeriodInMinutes: r.alertPeriodInMinutes,
       lastTaken: r.lastTaken,
       nextTakeAt: r.nextTakeAt,
       takenQuantity: r.takenQuantity,
@@ -92,7 +93,7 @@ class PrismaTreatmentMedicationRepository implements TreatmentMedicationReposito
       treatmentId: updated.treatmentId,
       medicationId: updated.medicationId,
       dose: updated.dose,
-      alertPeriodInHours: updated.alertPeriodInHours,
+      alertPeriodInMinutes: updated.alertPeriodInMinutes,
       lastTaken: updated.lastTaken,
       nextTakeAt: updated.nextTakeAt,
       takenQuantity: updated.takenQuantity,
@@ -105,6 +106,7 @@ class PrismaTreatmentMedicationRepository implements TreatmentMedicationReposito
     medicationId: string,
     progress: MedicationProgress
   ): Promise<TreatmentMedication | null> {
+
     const record = await this.prisma.treatmentMedication.findUnique({
       where: { treatmentId_medicationId: { treatmentId, medicationId } },
     });
@@ -112,8 +114,8 @@ class PrismaTreatmentMedicationRepository implements TreatmentMedicationReposito
     if (!record) return null;
 
     const nextTakeAt =
-      progress.lastTaken && record.alertPeriodInHours
-        ? addHours(progress.lastTaken, record.alertPeriodInHours)
+      progress.lastTaken && record.alertPeriodInMinutes
+        ? addMinutes(progress.lastTaken, record.alertPeriodInMinutes)
         : record.nextTakeAt;
 
     const updated = await this.prisma.treatmentMedication.update({
@@ -128,7 +130,7 @@ class PrismaTreatmentMedicationRepository implements TreatmentMedicationReposito
       treatmentId: updated.treatmentId,
       medicationId: updated.medicationId,
       dose: updated.dose,
-      alertPeriodInHours: updated.alertPeriodInHours,
+      alertPeriodInMinutes: updated.alertPeriodInMinutes,
       lastTaken: updated.lastTaken,
       nextTakeAt: updated.nextTakeAt,
       takenQuantity: updated.takenQuantity,
@@ -169,7 +171,12 @@ class PrismaTreatmentMedicationRepository implements TreatmentMedicationReposito
     }));
   }
 
-  async findTodayMedicationsByUser(userId: string): Promise<any[]> {
+  async findTodayMedicationsByUser(userId: string): Promise<any> {
+    const user = await this.userRepository.findUser(userId);
+    const timezone = user?.timezoneId
+      ? await this.prisma.timezone.findUnique({ where: { id: user.timezoneId } })
+      : null;
+
     const now = new Date();
     const todayStart = startOfDay(now);
     const todayEnd = endOfDay(now);
@@ -187,7 +194,7 @@ class PrismaTreatmentMedicationRepository implements TreatmentMedicationReposito
       },
     });
 
-    return treatments.flatMap(treatment =>
+    const medications = treatments.flatMap(treatment =>
       treatment.medications.map(tm => ({
         treatmentId: tm.treatmentId,
         medicationId: tm.medicationId,
@@ -199,7 +206,12 @@ class PrismaTreatmentMedicationRepository implements TreatmentMedicationReposito
         takenQuantity: tm.takenQuantity,
       }))
     );
+
+    return {
+      timezone,
+      medications,
+    };
   }
 }
 
-export const defaultTreatmentMedicationRepository = new PrismaTreatmentMedicationRepository(prisma);
+export const defaultTreatmentMedicationRepository = new PrismaTreatmentMedicationRepository(prisma, defaultUsersRepository);
