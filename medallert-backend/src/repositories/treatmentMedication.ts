@@ -2,6 +2,8 @@ import type { PrismaClient } from "../infra/prisma/generated/prisma/index.js";
 import { prisma } from "../infra/prisma/client.js";
 import { addMinutes, endOfDay, startOfDay } from "date-fns";
 import { defaultUsersRepository, type UsersRepository } from "./users.js";
+import { th } from "date-fns/locale";
+import { defaultTreatmentRepository, type TreatmentRepository } from "./treatments.js";
 
 export type TreatmentMedication = {
   treatmentId: string;
@@ -38,10 +40,15 @@ export interface TreatmentMedicationRepository {
     medicationId: string,
     progress: MedicationProgress
   ): Promise<TreatmentMedication | null>;
+  resetAll(treatmentId: string): Promise<void>;
+
 }
 
 class PrismaTreatmentMedicationRepository implements TreatmentMedicationRepository {
-  constructor(private readonly prisma: PrismaClient, private readonly userRepository: UsersRepository) { }
+  constructor(
+    private readonly prisma: PrismaClient,
+    private readonly userRepository: UsersRepository,
+    private readonly treatmentRepository: TreatmentRepository) { }
 
   async addTreatmentMedications(data: TreatmentMedication[]): Promise<void> {
     if (!data.length) return;
@@ -111,6 +118,8 @@ class PrismaTreatmentMedicationRepository implements TreatmentMedicationReposito
 
     if (!record) return null;
 
+    if (progress.takenQuantity > record.totalQuantity) throw new Error("Taken quantity cannot exceed total quantity.");
+
     const nextTakeAt =
       progress.lastTaken && record.alertPeriodInMinutes
         ? addMinutes(progress.lastTaken, record.alertPeriodInMinutes)
@@ -134,6 +143,17 @@ class PrismaTreatmentMedicationRepository implements TreatmentMedicationReposito
       takenQuantity: updated.takenQuantity,
       totalQuantity: updated.totalQuantity,
     };
+  }
+
+  async resetAll(treatmentId: string): Promise<void> {
+    await this.prisma.treatmentMedication.updateMany({
+      where: { treatmentId },
+      data: {
+        lastTaken: null,
+        nextTakeAt: null,
+        takenQuantity: 0,
+      },
+    });
   }
 
   async deleteTreatmentMedications(treatmentId: string): Promise<void> {
@@ -193,16 +213,18 @@ class PrismaTreatmentMedicationRepository implements TreatmentMedicationReposito
     });
 
     const medications = treatments.flatMap(treatment =>
-      treatment.medications.map(tm => ({
-        treatmentId: tm.treatmentId,
-        medicationId: tm.medicationId,
-        name: tm.medication.name,
-        dose: tm.dose,
-        nextTakeAt: tm.nextTakeAt,
-        lastTaken: tm.lastTaken,
-        totalQuantity: tm.totalQuantity,
-        takenQuantity: tm.takenQuantity,
-      }))
+      treatment.medications
+        .filter(tm => tm.takenQuantity <= tm.totalQuantity)
+        .map(tm => ({
+          treatmentId: tm.treatmentId,
+          medicationId: tm.medicationId,
+          name: tm.medication.name,
+          dose: tm.dose,
+          nextTakeAt: tm.nextTakeAt,
+          lastTaken: tm.lastTaken,
+          totalQuantity: tm.totalQuantity,
+          takenQuantity: tm.takenQuantity,
+        }))
     );
 
     return {
@@ -212,4 +234,4 @@ class PrismaTreatmentMedicationRepository implements TreatmentMedicationReposito
   }
 }
 
-export const defaultTreatmentMedicationRepository = new PrismaTreatmentMedicationRepository(prisma, defaultUsersRepository);
+export const defaultTreatmentMedicationRepository = new PrismaTreatmentMedicationRepository(prisma, defaultUsersRepository, defaultTreatmentRepository);

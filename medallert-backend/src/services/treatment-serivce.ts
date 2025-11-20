@@ -4,6 +4,7 @@ import type { PromiseResult } from "../common/type-helpers.js";
 import type { MedicationRepository } from "../repositories/medications.js";
 import type { TreatmentRepository, Treatment } from "../repositories/treatments.js";
 import type { UsersRepository } from "../repositories/users.js";
+import type { TreatmentMedicationRepository } from "../repositories/treatmentMedication.js";
 
 export const TreatmentSchema = z.object({
   name: z.string(),
@@ -34,7 +35,8 @@ export class TreatmentService {
   constructor(
     private readonly usersRepository: UsersRepository,
     private readonly treatmentRepository: TreatmentRepository,
-    private readonly medicationRepository: MedicationRepository
+    private readonly medicationRepository: MedicationRepository,
+    private readonly treatmentMedicationRepository: TreatmentMedicationRepository
   ) { }
 
   async getAll(userId: string): PromiseResult<Treatment[]> {
@@ -114,6 +116,20 @@ export class TreatmentService {
     if (!updatedOk || !updatedTreatment) return error("Failed to update treatment");
 
     return ok(updatedTreatment);
+  }
+
+  async reset(treatmentId: string) {
+    const treatment = await this.treatmentRepository.findTreatment(treatmentId);
+    if (!treatment) return error("Treatment not found");
+
+    const [okReset, errReset] = await t(
+      this.treatmentMedicationRepository.resetAll(treatmentId)
+    );
+
+    if (!okReset) return error("Failed to reset treatment");
+    const updated = await this.treatmentRepository.findTreatment(treatmentId);
+
+    return ok(updated);
   }
 
   async delete(treatmentId: string): PromiseResult<Treatment> {

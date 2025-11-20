@@ -10,12 +10,14 @@ import {
   TreatmentService,
   TreatmentUpdateSchema,
 } from "../../services/treatment-serivce.js";
+import { defaultTreatmentMedicationRepository } from "../../repositories/treatmentMedication.js";
 export const treatment = new Hono();
 
 const treatmentService = new TreatmentService(
   defaultUsersRepository,
   defaultTreatmentRepository,
   defaultMedicationRepository,
+  defaultTreatmentMedicationRepository
 );
 
 treatment.post(
@@ -145,5 +147,30 @@ treatment.delete(
     }
 
     return c.body(null, 204);
+  },
+);
+
+treatment.patch(
+  "/:id/reset",
+  describeRoute({
+    tags: ["Treatment"],
+    description: "Treatment reset to initial state",
+    responses: {
+      200: { description: "Treatment reset successfully" },
+      400: { description: "Failed to reset treatment" },
+      404: { description: "Treatment not found" },
+    },
+  }),
+  validator("param", TreatmentIdParamSchema),
+  async (c) => {
+    const { id } = c.req.valid("param");
+
+    const [ok, error, resetedTreatment] = await treatmentService.reset(id);
+
+    if (!ok || !resetedTreatment) {
+      return c.json({ success: false, error }, 404);
+    }
+
+    return c.json({ success: true, treatment: resetedTreatment }, 200);
   },
 );
