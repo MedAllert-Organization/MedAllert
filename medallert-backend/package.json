@@ -9,7 +9,7 @@
     "start": "node dist/index.js",
     "check": "tsc --noEmit --strict",
     "format": "npx @biomejs/biome check --write",
-    "prepare": "husky",
+    "prepare": "husky install",
     "commit": "git-cz"
   },
   "config": {
