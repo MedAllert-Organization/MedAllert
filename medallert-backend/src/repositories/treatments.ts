@@ -47,6 +47,7 @@ export interface TreatmentRepository {
     }
   ): Promise<Treatment | null>;
   deleteTreatment(id: string): Promise<Treatment | null>;
+  
 }
 
 class PrismaTreatmentRepository implements TreatmentRepository {
