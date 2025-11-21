@@ -2,13 +2,13 @@ import { Hono } from "hono";
 import { describeRoute } from "hono-openapi";
 import { ReportService } from "../../services/report-service.js";
 import { defaultTreatmentRepository } from "../../repositories/treatments.js";
-import * as fs from "fs";
+import { error } from "node:console";
 
 const reportRoute = new Hono();
 const reportService = new ReportService(defaultTreatmentRepository);
 
 reportRoute.get(
-  ":/report",
+  ":id/report",
   describeRoute({
     tags: ["Report"],
     description: "Gerar relatório sobre tratamento",
@@ -23,10 +23,21 @@ reportRoute.get(
   }),
   async(c)=>{
     try{
-      const id = c.get("id" as any);
-      const filePath = await reportService.generatePDF(id);    
-    }catch(Error){
-      console.log("It's not possible to generate pdf file.");
+      const id = c.req.param("id");
+      const pdfStream = await reportService.generatePDF(id);
+      
+      if(!id) return c.json({error:"Invalid or Missing id"},400);
+
+      return new Response(pdfStream as any,{
+        status: 200,
+        headers:{
+          "Content-type":"application/pdf",
+          "Content-Disposition":`attachment; filename="relatorio.pdf"`
+        }
+      });
+    }catch(error){
+      console.error(error);
+      return c.json({error:"It's not possible to generate pdf file"},400);
     }   
   }
 );

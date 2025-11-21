@@ -1,47 +1,37 @@
 import PDFDocument from "pdfkit";
 import type { TreatmentRepository } from "../repositories/treatments.js";
 import type { TreatmentMedicationRepository } from "../repositories/treatmentMedication.js";
+import { resolve } from "node:path";
 
 export class ReportService {
   constructor(private readonly treatmentRepository: TreatmentRepository) {}
 
-  async generatePDF(id: string): Promise<Uint8Array> {
-    const treatment = await this.treatmentRepository.findTreatment(id);
-    if (!treatment) {
-      throw new Error("Tratamento não encontrado");
-    }
-
-    const doc = new PDFDocument();
-    const buffers: Uint8Array[] = [];
-
-    doc.on("data", (chunk: Uint8Array) => buffers.push(chunk));
-    doc.on("end", () => {});
-
-    doc.fontSize(18).text(`Relatório de Tratamento`, { align: "center" });
-    doc.moveDown();
+  async generatePDF(id: string): Promise<PDFKit.PDFDocument> {
     
-    doc.fontSize(14).text(`Nome do Tratamento: ${treatment.name}`);
-    if (treatment.description) doc.text(`Descrição: ${treatment.description}`);
-    doc.text(`Início: ${treatment.startAt.toLocaleDateString("pt-BR")}`);
-    if (treatment.endAt) {
-      doc.text(`Término: ${treatment.endAt.toLocaleDateString("pt-BR")}`);
-    }
+    const doc = new PDFDocument();
+    const treatment_repository = await this.treatmentRepository.findTreatment(id);
+    if(!treatment_repository) throw new Error("It's no possible find treatment");
 
-    doc.moveDown().fontSize(16).text("Medicamentos:", { underline: true });
-    doc.moveDown(0.5);
+    doc.fontSize(20).text("Relatório do Tratamento",{align:"center"});
+    doc.moveDown().text("---------------------------------------------");
 
-    treatment.medications.forEach((med, index) => {
-      doc.fontSize(14).text(`${index + 1}. ${med.name}`);
-      doc.fontSize(12)
-        .text(`Dose: ${med.dose}`)
-        //.text(`Intervalo entre doses (h): ${med.alertPeriodInHours}`)
-        .text(`Última dose tomada: ${med.lastTaken ? med.lastTaken.toLocaleString("pt-BR") : "Nunca"}`)
-        .text(`Quantidade tomada: ${med.takenQuantity}`)
-        .text(`Total previsto: ${med.totalQuantity}`)
-        .moveDown();
-    })
-    doc.end();
-    const pdfBuffer = Buffer.concat(buffers);
-    return new Uint8Array(pdfBuffer);
+    doc.fontSize(14.5).text("Informações: ");
+    doc.moveDown().text("---------------------------------------------")
+    doc.text(`Nome do Tratamento: ${treatment_repository.name}`);
+    if(treatment_repository.description) doc.text(`Descrição do Tratamento: ${treatment_repository.description}`);
+    doc.text(`Inicio do tratamento: ${treatment_repository.startAt.toLocaleDateString()}`);
+    if(treatment_repository.endAt)doc.text(`Fim do Tratamento: ${treatment_repository.endAt.toLocaleDateString()}`);
+    doc.moveDown().text("---------------------------------------------");
+
+    doc.fontSize(14.5).text("Medicações");
+    treatment_repository.medications.forEach((med)=>{
+      doc.text(`Nome: ${med.name}`);
+      doc.text(`Dose: ${med.dose}`);
+      doc.text(`Quantidade tomadas:${med.takenQuantity}`);
+      doc.text(`Quantidade Total prevista:${med.totalQuantity}`);
+      doc.text(`Ultima medicação tomada: ${med.lastTaken}`);
+    });
+    doc.end
+    return doc;    
   }
 }
