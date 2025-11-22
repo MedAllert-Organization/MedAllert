@@ -4,7 +4,7 @@ import { ReportService } from "../../services/report-service.js";
 import { defaultTreatmentRepository } from "../../repositories/treatments.js";
 import { error } from "node:console";
 
-const reportRoute = new Hono();
+export const reportRoute = new Hono();
 const reportService = new ReportService(defaultTreatmentRepository);
 
 reportRoute.get(

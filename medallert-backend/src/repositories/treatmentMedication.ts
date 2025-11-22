@@ -6,8 +6,8 @@ import { th } from "date-fns/locale";
 import { defaultTreatmentRepository, type TreatmentRepository } from "./treatments.js";
 
 export type TreatmentMedication = {
-  updatedAt: Date | null | undefined;
-  createdAt: Date | null | undefined;
+ // updatedAt: Date | null | undefined;
+ // createdAt: Date | null | undefined;
   treatmentId: string;
   medicationId: string;
   dose: string;
