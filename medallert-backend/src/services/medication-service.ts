@@ -8,7 +8,6 @@ import type {
 } from "../repositories/medications.js";
 import type { SoundTypesRepository } from "../repositories/sound_types.js";
 import type { UsersRepository } from "../repositories/users.js";
-import type { VisualTypesRepository } from "../repositories/visual_types.js";
 import type { TreatmentMedicationRepository } from "../repositories/treatmentMedication.js";
 
 export const MedicationSchema = z.object({
@@ -30,7 +29,6 @@ export class MedicationService {
   constructor(
     private readonly usersRepository: UsersRepository,
     private readonly medicationRepository: MedicationRepository,
-    private readonly visualTypesRepository: VisualTypesRepository,
     private readonly soundTypesRepository: SoundTypesRepository,
     private readonly treatmentMedication: TreatmentMedicationRepository
   ) {}
@@ -58,12 +56,6 @@ export class MedicationService {
     const user = await this.usersRepository.findUser(userId);
     if (!user) return error("User not found!");
 
-    if (visualTypeId) {
-      const visualType =
-        await this.visualTypesRepository.findVisualType(visualTypeId);
-      if (!visualType) return error("Visual type not found");
-    }
-
     if (soundTypeId) {
       const soundType =
         await this.soundTypesRepository.findSoundType(soundTypeId);
@@ -77,7 +69,6 @@ export class MedicationService {
         userId,
         name,
         description: description ?? null,
-        visualTypeId: visualTypeId as OptionalId | null,
         soundTypeId: soundTypeId as OptionalId | null,
       }),
     );
@@ -95,13 +86,6 @@ export class MedicationService {
     const medication =
       await this.medicationRepository.findMedication(medicationId);
     if (!medication) return error("Medication not found");
-
-    if (updateData.visualTypeId) {
-      const visualType = await this.visualTypesRepository.findVisualType(
-        updateData.visualTypeId,
-      );
-      if (!visualType) return error("Visual type not found");
-    }
 
     if (updateData.soundTypeId) {
       const soundType = await this.soundTypesRepository.findSoundType(

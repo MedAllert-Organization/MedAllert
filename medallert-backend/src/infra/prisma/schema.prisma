@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider      = "prisma-client-js"
   output        = "./generated/prisma"
@@ -42,6 +36,8 @@ model Timezone {
   label     String
   utcOffset Int
   users     Users[]
+
+  @@map("timezones")
 }
 
 model VerificationCodes {
@@ -78,8 +74,10 @@ model TreatmentMedication {
   id           String      @id @default(cuid())
   treatmentId  String      @map("treatment_id")
   medicationId String      @map("medication_id")
+  visualTypeId String? @unique @map("visual_type_id")
   treatment    Treatments  @relation(fields: [treatmentId], references: [treatmentId])
   medication   Medications @relation(fields: [medicationId], references: [medicationId])
+  visualType   VisualTypes? @relation(fields: [visualTypeId], references: [visualId])
 
   dose                 String
   alertPeriodInMinutes Int
@@ -101,8 +99,6 @@ model Medications {
   user         Users        @relation(fields: [userId], references: [userId])
   name         String
   description  String?
-  visualTypeId String?      @map("visual_type_id")
-  visualType   VisualTypes? @relation(fields: [visualTypeId], references: [visualId])
   soundTypeId  String?      @map("sound_type_id")
   soundType    SoundTypes?  @relation(fields: [soundTypeId], references: [soundId])
 
@@ -142,12 +138,48 @@ model Annotations {
 
 model VisualTypes {
   visualId    String        @id @default(cuid()) @map("visual_id")
-  visual      String
+
+  visualType VisualTypeEnum @default(PILL)
+  size        VisualSizeEnum @default(MEDIUM)
+  color1      String
+  color2      String?
+  pattern     VisualPatternEnum @default(SOLID)
+  rotation    Int?
+  opacity     Float?
+  treatmentMedication TreatmentMedication?
+
   createdAt   DateTime      @default(now()) @map("created_at")
   updatedAt   DateTime      @updatedAt @map("updated_at")
-  medications Medications[]
 
   @@map("visual_types")
+}
+
+enum VisualTypeEnum {
+  CAPSULE
+  PILL
+  TABLET
+  DROP
+  LIQUID
+  INHALER
+  INJECTION
+  OINTMENT
+  PATCH
+}
+
+enum VisualSizeEnum {
+  SMALL
+  MEDIUM
+  LARGE
+}
+
+enum VisualPatternEnum {
+  SOLID
+  STRIPED
+  HALF
+  RING
+  DOTS
+  BAND
+  GRADIENT
 }
 
 model SoundTypes {

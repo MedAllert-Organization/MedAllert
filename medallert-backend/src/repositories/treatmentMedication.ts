@@ -6,6 +6,7 @@ import { th } from "date-fns/locale";
 import { defaultTreatmentRepository, type TreatmentRepository } from "./treatments.js";
 
 export type TreatmentMedication = {
+  id: string;
   treatmentId: string;
   medicationId: string;
   dose: string;
@@ -73,6 +74,7 @@ class PrismaTreatmentMedicationRepository implements TreatmentMedicationReposito
     });
 
     return records.map(r => ({
+      id: r.id,
       treatmentId: r.treatmentId,
       medicationId: r.medicationId,
       dose: r.dose,
@@ -95,6 +97,7 @@ class PrismaTreatmentMedicationRepository implements TreatmentMedicationReposito
     });
 
     return {
+      id: updated.id,
       treatmentId: updated.treatmentId,
       medicationId: updated.medicationId,
       dose: updated.dose,
@@ -134,6 +137,7 @@ class PrismaTreatmentMedicationRepository implements TreatmentMedicationReposito
     });
 
     return {
+      id: updated.id,
       treatmentId: updated.treatmentId,
       medicationId: updated.medicationId,
       dose: updated.dose,
@@ -216,6 +220,7 @@ class PrismaTreatmentMedicationRepository implements TreatmentMedicationReposito
       treatment.medications
         .filter(tm => tm.takenQuantity <= tm.totalQuantity)
         .map(tm => ({
+          id: tm.id,
           treatmentId: tm.treatmentId,
           medicationId: tm.medicationId,
           name: tm.medication.name,

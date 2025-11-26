@@ -1,18 +1,20 @@
 import { error, ok, t } from "try";
 import z from "zod";
 import type { PromiseResult } from "../common/type-helpers.js";
-import type {
-  Medication,
-  MedicationRepository,
-} from "../repositories/medications.js";
-import type { UsersRepository } from "../repositories/users.js";
-import type {
-  VisualTypes,
-  VisualTypesRepository,
-} from "../repositories/visual_types.js";
+import { VisualPatternEnum, VisualSizeEnum, VisualTypeEnum, type UpdateVisualTypeDTO, type VisualTypes, type VisualTypesRepository } from "../repositories/visual_types.js";
+import type { CreateVisualTypeDTO } from "../common/dto/create-visualTypes.dto.js";
+
 
 export const VisualTypesSchema = z.object({
   visual: z.string(),
+  visualType: z.nativeEnum(VisualTypeEnum),
+  size: z.nativeEnum(VisualSizeEnum).optional(),
+  color1: z.string(),
+  color2: z.string().optional(),
+  pattern: z.nativeEnum(VisualPatternEnum).optional(),
+  rotation: z.number().optional(),
+  opacity: z.number().optional(),
+  treatmentMedicationId: z.string().optional(),
 });
 
 export const VisualTypesIdParamSchema = z.object({
@@ -21,16 +23,13 @@ export const VisualTypesIdParamSchema = z.object({
 
 export const VisualTypesUpdateSchema = VisualTypesSchema.partial();
 
-export type VisualTypesType = z.infer<typeof VisualTypesSchema>;
 
 export class VisualTypesService {
   constructor(private readonly visualTypesRepository: VisualTypesRepository) {}
 
-  async create({ visual }: VisualTypesType): PromiseResult<VisualTypes> {
+  async create(newVisual: CreateVisualTypeDTO): PromiseResult<VisualTypes> {
     const [createdOk, _, createdMedication] = await t(
-      this.visualTypesRepository.addVisualType({
-        visual,
-      }),
+      this.visualTypesRepository.addVisualType(newVisual),
     );
 
     if (!createdOk || !createdMedication) {
@@ -60,7 +59,7 @@ export class VisualTypesService {
 
   async update(
     visulaId: string,
-    updateData: Partial<VisualTypesType>,
+    updateData: Partial<UpdateVisualTypeDTO>,
   ): PromiseResult<VisualTypes> {
     const visual = await this.visualTypesRepository.findVisualType(visulaId);
     if (!visual) return error("visual not found");
