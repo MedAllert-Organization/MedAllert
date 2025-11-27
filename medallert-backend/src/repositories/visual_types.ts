@@ -114,5 +114,3 @@ class PrismaVisualTypesRepository implements VisualTypesRepository {
 export const defaultVisualTypesRepository = new PrismaVisualTypesRepository(
   prisma, defaultTreatmentMedicationRepository
 );
-
-
