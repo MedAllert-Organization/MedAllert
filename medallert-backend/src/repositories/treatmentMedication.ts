@@ -2,7 +2,6 @@ import type { PrismaClient } from "../infra/prisma/generated/prisma/index.js";
 import { prisma } from "../infra/prisma/client.js";
 import { addMinutes, endOfDay, startOfDay } from "date-fns";
 import { defaultUsersRepository, type UsersRepository } from "./users.js";
-import { th } from "date-fns/locale";
 import { defaultTreatmentRepository, type TreatmentRepository } from "./treatments.js";
 
 export type TreatmentMedication = {
@@ -15,6 +14,7 @@ export type TreatmentMedication = {
   nextTakeAt?: Date | null;
   takenQuantity: number;
   totalQuantity: number;
+  visualTypeId?: string | null;
 };
 
 export type MedicationProgress = {
@@ -27,8 +27,7 @@ export interface TreatmentMedicationRepository {
   addTreatmentMedications(data: TreatmentMedication[]): Promise<void>;
   getByTreatment(treatmentId: string): Promise<TreatmentMedication[]>;
   updateTreatmentMedication(
-    treatmentId: string,
-    medicationId: string,
+    treatmentMedicationId: string,
     updateData: Partial<Omit<TreatmentMedication, "treatmentId" | "medicationId">>
   ): Promise<TreatmentMedication | null>;
   deleteTreatmentMedications(treatmentId: string): Promise<void>;
@@ -42,14 +41,13 @@ export interface TreatmentMedicationRepository {
     progress: MedicationProgress
   ): Promise<TreatmentMedication | null>;
   resetAll(treatmentId: string): Promise<void>;
-
 }
 
 class PrismaTreatmentMedicationRepository implements TreatmentMedicationRepository {
   constructor(
     private readonly prisma: PrismaClient,
     private readonly userRepository: UsersRepository,
-    private readonly treatmentRepository: TreatmentRepository) { }
+  ) { }
 
   async addTreatmentMedications(data: TreatmentMedication[]): Promise<void> {
     if (!data.length) return;
@@ -87,12 +85,11 @@ class PrismaTreatmentMedicationRepository implements TreatmentMedicationReposito
   }
 
   async updateTreatmentMedication(
-    treatmentId: string,
-    medicationId: string,
+    treatmentMedicationId: string,
     updateData: Partial<Omit<TreatmentMedication, "treatmentId" | "medicationId">>
   ): Promise<TreatmentMedication | null> {
     const updated = await this.prisma.treatmentMedication.update({
-      where: { treatmentId_medicationId: { treatmentId, medicationId } },
+      where: { id: treatmentMedicationId },
       data: updateData,
     });
 
@@ -211,7 +208,7 @@ class PrismaTreatmentMedicationRepository implements TreatmentMedicationReposito
       },
       include: {
         medications: {
-          include: { medication: true },
+          include: { medication: true, visualType: true },
         },
       },
     });
@@ -229,6 +226,7 @@ class PrismaTreatmentMedicationRepository implements TreatmentMedicationReposito
           lastTaken: tm.lastTaken,
           totalQuantity: tm.totalQuantity,
           takenQuantity: tm.takenQuantity,
+          visualType: tm.visualType,
         }))
     );
 
@@ -239,4 +237,4 @@ class PrismaTreatmentMedicationRepository implements TreatmentMedicationReposito
   }
 }
 
-export const defaultTreatmentMedicationRepository = new PrismaTreatmentMedicationRepository(prisma, defaultUsersRepository, defaultTreatmentRepository);
+export const defaultTreatmentMedicationRepository = new PrismaTreatmentMedicationRepository(prisma, defaultUsersRepository);

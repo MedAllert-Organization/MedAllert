@@ -1,7 +1,7 @@
 import type { CreateVisualTypeDTO } from "../common/dto/create-visualTypes.dto.js";
 import { prisma } from "../infra/prisma/client.js";
 import type { PrismaClient } from "../infra/prisma/generated/prisma/index.js";
-import type { TreatmentMedication } from "./treatmentMedication.js";
+import { defaultTreatmentMedicationRepository, type TreatmentMedication, type TreatmentMedicationRepository } from "./treatmentMedication.js";
 
 export type VisualTypes = {
   visualId: string,
@@ -47,7 +47,7 @@ export enum VisualPatternEnum {
   GRADIENT = 'GRADIENT'
 }
 
-export type UpdateVisualTypeDTO = Partial<CreateVisualTypeDTO>;
+export type UpdateVisualTypeDTO = Partial<Omit<CreateVisualTypeDTO, "visualId" | "createdAt" | "updatedAt" | "treatmentMedication">>;
 
 export interface VisualTypesRepository {
   findVisualType(id: string): Promise<VisualTypes | null>;
@@ -58,7 +58,10 @@ export interface VisualTypesRepository {
 }
 
 class PrismaVisualTypesRepository implements VisualTypesRepository {
-  constructor(private readonly prisma: PrismaClient) {}
+  constructor(
+    private readonly prisma: PrismaClient,
+    private readonly treatmentMedicationRepository: TreatmentMedicationRepository,
+  ) {}
 
   async findVisualType(id: string): Promise<VisualTypes | null> {
     return await this.prisma.visualTypes.findUnique({
@@ -71,7 +74,7 @@ class PrismaVisualTypesRepository implements VisualTypesRepository {
   }
 
     async addVisualType(data: CreateVisualTypeDTO): Promise<VisualTypes | null> {
-    return this.prisma.visualTypes.create({
+    const visualType = await this.prisma.visualTypes.create({
       data: {
         visualType: data.visualType,
         size: data.size,
@@ -80,14 +83,12 @@ class PrismaVisualTypesRepository implements VisualTypesRepository {
         pattern: data.pattern,
         rotation: data.rotation,
         opacity: data.opacity,
-
-        treatmentMedication: data.treatmentMedicationId
-          ? {
-            connect: { id: data.treatmentMedicationId },
-          }
-          : undefined,
       },
     }) as unknown as VisualTypes | null;
+
+    await this.treatmentMedicationRepository.updateTreatmentMedication(data.treatmentMedicationId, { visualTypeId: visualType?.visualId });
+
+    return visualType;
   }
 
   async deleteVisualType(id: string): Promise<VisualTypes | null> {
@@ -101,24 +102,17 @@ class PrismaVisualTypesRepository implements VisualTypesRepository {
       Object.entries(data).filter(([_, v]) => v !== undefined)
     );
 
-    return this.prisma.visualTypes.update({
+    return await this.prisma.visualTypes.update({
       where: { visualId: id },
       data: {
         ...cleanData,
-
-        treatmentMedication: data.treatmentMedicationId
-          ? {
-              connect: { id: data.treatmentMedicationId },
-            }
-          : undefined,
-      },
-      include: { treatmentMedication: true },
+      }
     }) as unknown as VisualTypes | null;
   }
 }
 
 export const defaultVisualTypesRepository = new PrismaVisualTypesRepository(
-  prisma,
+  prisma, defaultTreatmentMedicationRepository
 );
 
 

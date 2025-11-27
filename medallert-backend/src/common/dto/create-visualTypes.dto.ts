@@ -8,5 +8,5 @@ export interface CreateVisualTypeDTO {
   pattern?: VisualPatternEnum;
   rotation?: number;
   opacity?: number;
-  treatmentMedicationId?: string;
+  treatmentMedicationId: string;
 }

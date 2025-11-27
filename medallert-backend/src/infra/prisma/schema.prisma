@@ -71,12 +71,12 @@ model Treatments {
 }
 
 model TreatmentMedication {
-  id           String      @id @default(cuid())
-  treatmentId  String      @map("treatment_id")
-  medicationId String      @map("medication_id")
-  visualTypeId String? @unique @map("visual_type_id")
-  treatment    Treatments  @relation(fields: [treatmentId], references: [treatmentId])
-  medication   Medications @relation(fields: [medicationId], references: [medicationId])
+  id           String       @id @default(cuid())
+  treatmentId  String       @map("treatment_id")
+  medicationId String       @map("medication_id")
+  visualTypeId String?      @unique @map("visual_type_id")
+  treatment    Treatments   @relation(fields: [treatmentId], references: [treatmentId])
+  medication   Medications  @relation(fields: [medicationId], references: [medicationId])
   visualType   VisualTypes? @relation(fields: [visualTypeId], references: [visualId])
 
   dose                 String
@@ -94,13 +94,13 @@ model TreatmentMedication {
 }
 
 model Medications {
-  medicationId String       @id @default(cuid()) @map("medication_id")
-  userId       String       @map("user_id")
-  user         Users        @relation(fields: [userId], references: [userId])
+  medicationId String      @id @default(cuid()) @map("medication_id")
+  userId       String      @map("user_id")
+  user         Users       @relation(fields: [userId], references: [userId])
   name         String
   description  String?
-  soundTypeId  String?      @map("sound_type_id")
-  soundType    SoundTypes?  @relation(fields: [soundTypeId], references: [soundId])
+  soundTypeId  String?     @map("sound_type_id")
+  soundType    SoundTypes? @relation(fields: [soundTypeId], references: [soundId])
 
   treatments    TreatmentMedication[]
   notifications Notifications[]
@@ -137,19 +137,19 @@ model Annotations {
 }
 
 model VisualTypes {
-  visualId    String        @id @default(cuid()) @map("visual_id")
+  visualId String @id @default(cuid()) @map("visual_id")
 
-  visualType VisualTypeEnum @default(PILL)
-  size        VisualSizeEnum @default(MEDIUM)
-  color1      String
-  color2      String?
-  pattern     VisualPatternEnum @default(SOLID)
-  rotation    Int?
-  opacity     Float?
+  visualType          VisualTypeEnum       @default(PILL)
+  size                VisualSizeEnum       @default(MEDIUM)
+  color1              String
+  color2              String?
+  pattern             VisualPatternEnum    @default(SOLID)
+  rotation            Int?
+  opacity             Float?
   treatmentMedication TreatmentMedication?
 
-  createdAt   DateTime      @default(now()) @map("created_at")
-  updatedAt   DateTime      @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("visual_types")
 }
