@@ -2,23 +2,40 @@ import { error, ok, t } from "try";
 import z from "zod";
 import type { PromiseResult } from "../common/type-helpers.js";
 import type { MedicationRepository } from "../repositories/medications.js";
-import type { TreatmentRepository, Treatment } from "../repositories/treatments.js";
+import type {
+  TreatmentRepository,
+  Treatment,
+} from "../repositories/treatments.js";
 import type { UsersRepository } from "../repositories/users.js";
 import type { TreatmentMedicationRepository } from "../repositories/treatmentMedication.js";
+import { size } from "zod/v4";
 
 export const TreatmentSchema = z.object({
   name: z.string(),
   description: z.string().nullable().optional(),
   startAt: z.string().transform((s) => new Date(s)),
-  endAt: z.string().transform((s) => new Date(s)).nullable().optional(),
+  endAt: z
+    .string()
+    .transform((s) => new Date(s))
+    .nullable()
+    .optional(),
   medications: z
     .array(
       z.object({
         medicationId: z.string(),
         dose: z.string(),
         alertPeriodInMinutes: z.number(),
-        totalQuantity: z.number()
-      })
+        totalQuantity: z.number(),
+        visualType: z
+          .object({
+            visualType: z.string(),
+            size: z.string(),
+            color1: z.string(),
+            color2: z.string().optional(),
+            pattern: z.string(),
+          })
+          .nullable(),
+      }),
     )
     .min(1, "Um tratamento precisa ter pelo menos um medicamento"),
 });
@@ -36,8 +53,8 @@ export class TreatmentService {
     private readonly usersRepository: UsersRepository,
     private readonly treatmentRepository: TreatmentRepository,
     private readonly medicationRepository: MedicationRepository,
-    private readonly treatmentMedicationRepository: TreatmentMedicationRepository
-  ) { }
+    private readonly treatmentMedicationRepository: TreatmentMedicationRepository,
+  ) {}
 
   async getAll(userId: string): PromiseResult<Treatment[]> {
     const treatments = await this.treatmentRepository.findAllTreatments(userId);
@@ -64,14 +81,26 @@ export class TreatmentService {
       description?: string | null;
       startAt: Date;
       endAt?: Date | null;
-      medications: { medicationId: string; dose: string; alertPeriodInMinutes: number, totalQuantity: number }[];
-    }
+      medications: {
+        medicationId: string;
+        dose: string;
+        alertPeriodInMinutes: number;
+        totalQuantity: number;
+        visualType: {
+          visualType: string;
+          size: string;
+          color1: string;
+          color2?: string;
+          pattern: string;
+        } | null;
+      }[];
+    },
   ): PromiseResult<Treatment> {
     const user = await this.usersRepository.findUser(userId);
     if (!user) return error("User not found!");
 
     const meds = await this.medicationRepository.findMedications(
-      medications.map((m) => m.medicationId)
+      medications.map((m) => m.medicationId),
     );
 
     if (meds.length !== medications.length)
@@ -91,7 +120,7 @@ export class TreatmentService {
         startAt,
         endAt: endAt ?? null,
         medications: medsWithDefaults,
-      })
+      }),
     );
 
     if (!createdOk || !createdTreatment) {
@@ -104,16 +133,17 @@ export class TreatmentService {
 
   async update(
     treatmentId: string,
-    updateData: Partial<TreatmentType>
+    updateData: Partial<TreatmentType>,
   ): PromiseResult<Treatment> {
     const treatment = await this.treatmentRepository.findTreatment(treatmentId);
     if (!treatment) return error("Treatment not found");
 
     const [updatedOk, _, updatedTreatment] = await t(
-      this.treatmentRepository.updateTreatment(treatmentId, { ...updateData })
+      this.treatmentRepository.updateTreatment(treatmentId, { ...updateData }),
     );
 
-    if (!updatedOk || !updatedTreatment) return error("Failed to update treatment");
+    if (!updatedOk || !updatedTreatment)
+      return error("Failed to update treatment");
 
     return ok(updatedTreatment);
   }
@@ -123,7 +153,7 @@ export class TreatmentService {
     if (!treatment) return error("Treatment not found");
 
     const [okReset, errReset] = await t(
-      this.treatmentMedicationRepository.resetAll(treatmentId)
+      this.treatmentMedicationRepository.resetAll(treatmentId),
     );
 
     if (!okReset) return error("Failed to reset treatment");
@@ -137,10 +167,11 @@ export class TreatmentService {
     if (!treatment) return error("Treatment not found");
 
     const [deletedOk, _, deletedTreatment] = await t(
-      this.treatmentRepository.deleteTreatment(treatmentId)
+      this.treatmentRepository.deleteTreatment(treatmentId),
     );
 
-    if (!deletedOk || !deletedTreatment) return error("Failed to delete treatment");
+    if (!deletedOk || !deletedTreatment)
+      return error("Failed to delete treatment");
 
     return ok(deletedTreatment);
   }
