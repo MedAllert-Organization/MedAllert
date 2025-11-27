@@ -1,6 +1,7 @@
 import { endOfDay, startOfDay } from "date-fns";
 import { prisma } from "../infra/prisma/client.js";
 import type { PrismaClient } from "../infra/prisma/generated/prisma/index.js";
+import type { VisualTypes } from "./visual_types.js";
 
 export type Medication = {
   medicationId: string;
@@ -8,6 +9,7 @@ export type Medication = {
   name: string;
   description: string | null;
   visualTypeId: string | null;
+  visualType: VisualTypes | null;
   soundTypeId: string | null;
   createdAt: Date;
   updatedAt: Date;
@@ -38,7 +40,7 @@ export interface MedicationRepository {
 }
 
 class PrismaMedicationRepository implements MedicationRepository {
-  constructor(private readonly prisma: PrismaClient) { }
+  constructor(private readonly prisma: PrismaClient) {}
 
   findMedications(medicationIds: string[]): Promise<Medication[]> {
     return this.prisma.medications.findMany({
@@ -55,6 +57,7 @@ class PrismaMedicationRepository implements MedicationRepository {
   async findAllMedications(userId: string): Promise<Medication[]> {
     return this.prisma.medications.findMany({
       where: { userId },
+      include: { visualType: true },
     });
   }
 

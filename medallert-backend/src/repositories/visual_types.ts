@@ -2,6 +2,7 @@ import { prisma } from "../infra/prisma/client.js";
 import type { PrismaClient } from "../infra/prisma/generated/prisma/index.js";
 
 export type VisualTypes = {
+  visualId: string;
   visual: string;
 };
 

@@ -11,7 +11,7 @@ services:
     volumes:
       - ./:/home/node:cached
       - /home/node/node_modules
-    command: sh -c "npx prisma migrate deploy && npm run dev"
+    command: sh -c "npm run db:seed && npm run dev"
     environment:
       - NODE_ENV=development
     depends_on:
