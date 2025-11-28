@@ -14,7 +14,7 @@ export const VisualTypesSchema = z.object({
   pattern: z.nativeEnum(VisualPatternEnum).optional(),
   rotation: z.number().optional(),
   opacity: z.number().optional(),
-  treatmentMedicationId: z.string().optional(),
+  treatmentMedicationId: z.string(),
 });
 
 export const VisualTypesIdParamSchema = z.object({
