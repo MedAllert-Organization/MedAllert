@@ -2,23 +2,21 @@ import { error, ok, t } from "try";
 import z from "zod";
 import type { PromiseResult } from "../common/type-helpers.js";
 import type { MedicationRepository } from "../repositories/medications.js";
-import type {
-  TreatmentRepository,
-  Treatment,
-} from "../repositories/treatments.js";
+import type {TreatmentRepository,Treatment} from "../repositories/treatments.js";
 import type { UsersRepository } from "../repositories/users.js";
 import type { TreatmentMedicationRepository } from "../repositories/treatmentMedication.js";
-import { size } from "zod/v4";
+import { VisualPatternEnum, VisualSizeEnum, VisualTypeEnum } from "../repositories/visual_types.ts";
+
+
+export const VisualTypeEnumZod = z.nativeEnum(VisualTypeEnum);
+export const VisualSizeEnumZod = z.nativeEnum(VisualSizeEnum);
+export const VisualPatternEnumZod = z.nativeEnum(VisualPatternEnum);
 
 export const TreatmentSchema = z.object({
   name: z.string(),
   description: z.string().nullable().optional(),
   startAt: z.string().transform((s) => new Date(s)),
-  endAt: z
-    .string()
-    .transform((s) => new Date(s))
-    .nullable()
-    .optional(),
+  endAt: z.string().transform((s) => new Date(s)).nullable().optional(),
   medications: z
     .array(
       z.object({
@@ -28,17 +26,18 @@ export const TreatmentSchema = z.object({
         totalQuantity: z.number(),
         visualType: z
           .object({
-            visualType: z.string(),
-            size: z.string(),
+            visualType: VisualTypeEnumZod,
+            size: VisualSizeEnumZod,
             color1: z.string(),
             color2: z.string().optional(),
-            pattern: z.string(),
+            pattern: VisualPatternEnumZod,
           })
           .nullable(),
-      }),
+      })
     )
     .min(1, "Um tratamento precisa ter pelo menos um medicamento"),
 });
+
 
 export const TreatmentIdParamSchema = z.object({
   id: z.string().min(1, "ID is required"),
@@ -54,7 +53,7 @@ export class TreatmentService {
     private readonly treatmentRepository: TreatmentRepository,
     private readonly medicationRepository: MedicationRepository,
     private readonly treatmentMedicationRepository: TreatmentMedicationRepository,
-  ) {}
+  ) { }
 
   async getAll(userId: string): PromiseResult<Treatment[]> {
     const treatments = await this.treatmentRepository.findAllTreatments(userId);
@@ -68,68 +67,71 @@ export class TreatmentService {
     return ok(treatment);
   }
 
-  async create(
-    userId: string,
-    {
+ async create(
+  userId: string,
+  {
+    name,
+    description,
+    startAt,
+    endAt,
+    medications,
+  }: {
+    name: string;
+    description?: string | null;
+    startAt: Date;
+    endAt?: Date | null;
+    medications: {
+      medicationId: string;
+      dose: string;
+      alertPeriodInMinutes: number;
+      totalQuantity: number;
+      visualType: {
+        visualType: string;
+        size: string;
+        color1: string;
+        color2?: string;
+        pattern: string;
+      } | null;
+    }[];
+  },
+) {
+  const user = await this.usersRepository.findUser(userId);
+  if (!user) return error("User not found!");
+
+  const meds = await this.medicationRepository.findMedications(
+    medications.map((m) => m.medicationId),
+  );
+
+  if (meds.length !== medications.length)
+    return error("Um ou mais medicamentos não foram encontrados.");
+
+  const medsWithDefaults = medications.map((m) => ({
+    ...m,
+    lastTaken: null,
+    takenQuantity: 0,
+  }));
+
+  try {
+    const createdTreatment = await this.treatmentRepository.addTreatment({
+      userId,
       name,
-      description,
+      description: description ?? null,
       startAt,
-      endAt,
-      medications,
-    }: {
-      name: string;
-      description?: string | null;
-      startAt: Date;
-      endAt?: Date | null;
-      medications: {
-        medicationId: string;
-        dose: string;
-        alertPeriodInMinutes: number;
-        totalQuantity: number;
-        visualType: {
-          visualType: string;
-          size: string;
-          color1: string;
-          color2?: string;
-          pattern: string;
-        } | null;
-      }[];
-    },
-  ): PromiseResult<Treatment> {
-    const user = await this.usersRepository.findUser(userId);
-    if (!user) return error("User not found!");
+      endAt: endAt ?? null,
+      medications: medsWithDefaults,
+    });
 
-    const meds = await this.medicationRepository.findMedications(
-      medications.map((m) => m.medicationId),
-    );
-
-    if (meds.length !== medications.length)
-      return error("Um ou mais medicamentos não foram encontrados.");
-
-    const medsWithDefaults = medications.map((m) => ({
-      ...m,
-      lastTaken: null,
-      takenQuantity: 0,
-    }));
-
-    const [createdOk, createdErr, createdTreatment] = await t(
-      this.treatmentRepository.addTreatment({
-        userId,
-        name,
-        description: description ?? null,
-        startAt,
-        endAt: endAt ?? null,
-        medications: medsWithDefaults,
-      }),
-    );
-
-    if (!createdOk || !createdTreatment) {
-      console.error("Erro Prisma:", createdErr);
+    if (!createdTreatment) {
       return error("Failed to create treatment");
     }
 
     return ok(createdTreatment);
+  } catch (err: any) {
+    // Aqui você pode mapear erros específicos do Prisma se quiser
+    console.error("Erro Prisma:", err);
+    return error(err.message || "Failed to create treatment");
   }
+}
 
   async update(
     treatmentId: string,

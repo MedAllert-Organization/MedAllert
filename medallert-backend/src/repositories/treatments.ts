@@ -1,6 +1,6 @@
 import { prisma } from "../infra/prisma/client.js";
-import type { PrismaClient } from "../infra/prisma/generated/prisma/index.js";
-import type { VisualTypes } from "./visual_types.js";
+import type { PrismaClient, VisualPatternEnum, VisualSizeEnum } from "../infra/prisma/generated/prisma/index.js";
+import type { VisualTypeEnum, VisualTypes } from "./visual_types.js";
 
 export type Treatment = {
   treatmentId: string;
@@ -84,7 +84,7 @@ class PrismaTreatmentRepository implements TreatmentRepository {
           totalQuantity: tm.totalQuantity,
           visualType: tm.visualType,
         })) ?? [],
-    };
+    } as Treatment;
   }
 
   async findAllTreatments(userId: string): Promise<Treatment[]> {
@@ -108,7 +108,7 @@ class PrismaTreatmentRepository implements TreatmentRepository {
           totalQuantity: tm.totalQuantity,
           visualType: tm.visualType,
         })) ?? [],
-    }));
+    })) as Treatment[];
   }
 
   async addTreatment(newTreatment: {
@@ -125,18 +125,14 @@ class PrismaTreatmentRepository implements TreatmentRepository {
       takenQuantity?: number;
       totalQuantity?: number;
       visualType: {
-        visualType: string;
-        size: string;
+        visualType: VisualTypeEnum;
+        size: VisualSizeEnum;
         color1: string;
         color2?: string;
-        pattern: string;
+        pattern: VisualPatternEnum;
       } | null;
     }[];
   }): Promise<Treatment | null> {
-    if (!newTreatment.medications || newTreatment.medications.length === 0) {
-      throw new Error("Um tratamento precisa ter pelo menos um medicamento.");
-    }
-
     const treatmentId = await this.prisma.$transaction(async (tx) => {
       const treatment = await tx.treatments.create({
         data: {
@@ -153,11 +149,11 @@ class PrismaTreatmentRepository implements TreatmentRepository {
         if (med.visualType) {
           const newVisualType = await tx.visualTypes.create({
             data: {
-              visualType: med.visualType.visualType as any,
-              size: med.visualType.size as any,
+              visualType: med.visualType.visualType,
+              size: med.visualType.size,
               color1: med.visualType.color1,
               color2: med.visualType.color2,
-              pattern: med.visualType.pattern as any,
+              pattern: med.visualType.pattern,
             },
           });
           visualTypeId = newVisualType.visualId;
@@ -172,14 +168,12 @@ class PrismaTreatmentRepository implements TreatmentRepository {
             lastTaken: med.lastTaken ?? null,
             takenQuantity: med.takenQuantity ?? 0,
             totalQuantity: med.totalQuantity ?? 0,
-            visualTypeId: visualTypeId,
-          },
+            
+          }, include: { visualType: true }
         });
       }
       return treatment.treatmentId;
     });
-
-    if (!treatmentId) return null;
 
     return this.findTreatment(treatmentId);
   }
