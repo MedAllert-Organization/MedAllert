@@ -65,11 +65,10 @@ export class TreatmentMedicationService {
 
   async updateMedication(
     treatmentId: string,
-    medicationId: string,
     updateData: Partial<Omit<TreatmentMedication, "treatmentId" | "medicationId">>
   ) {
     try {
-      const updated = await this.repository.updateTreatmentMedication(treatmentId, medicationId, updateData);
+      const updated = await this.repository.updateTreatmentMedication(treatmentId, updateData);
       if (!updated) return error("Medication not found");
       return ok(updated);
     } catch (err) {

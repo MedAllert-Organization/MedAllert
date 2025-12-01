@@ -14,7 +14,7 @@ export const VisualTypesSchema = z.object({
   pattern: z.nativeEnum(VisualPatternEnum).optional(),
   rotation: z.number().optional(),
   opacity: z.number().optional(),
-  treatmentMedicationId: z.string().optional(),
+  treatmentMedicationId: z.string(),
 });
 
 export const VisualTypesIdParamSchema = z.object({
@@ -25,7 +25,7 @@ export const VisualTypesUpdateSchema = VisualTypesSchema.partial();
 
 
 export class VisualTypesService {
-  constructor(private readonly visualTypesRepository: VisualTypesRepository) {}
+  constructor(private readonly visualTypesRepository: VisualTypesRepository) { }
 
   async create(newVisual: CreateVisualTypeDTO): PromiseResult<VisualTypes> {
     const [createdOk, _, createdMedication] = await t(
@@ -58,18 +58,18 @@ export class VisualTypesService {
   }
 
   async update(
-    visulaId: string,
+    visualId: string,
     updateData: Partial<UpdateVisualTypeDTO>,
   ): PromiseResult<VisualTypes> {
-    const visual = await this.visualTypesRepository.findVisualType(visulaId);
+    console.log("updateData", updateData);
+    const visual = await this.visualTypesRepository.findVisualType(visualId);
     if (!visual) return error("visual not found");
 
     const [updatedOk, _, updatedVisual] = await t(
-      this.visualTypesRepository.updateVisualType(visulaId, { ...updateData }),
+      this.visualTypesRepository.updateVisualType(visualId, { ...updateData }),
     );
 
-    if (!updatedOk || !updatedVisual)
-      return error("Failed to update visual type");
+    if (!updatedOk || !updatedVisual) return error("Failed to update visual type");
 
     return ok(updatedVisual);
   }

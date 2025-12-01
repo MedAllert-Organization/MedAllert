@@ -17,7 +17,7 @@ const treatmentService = new TreatmentService(
   defaultUsersRepository,
   defaultTreatmentRepository,
   defaultMedicationRepository,
-  defaultTreatmentMedicationRepository
+  defaultTreatmentMedicationRepository,
 );
 
 treatment.post(
@@ -35,17 +35,16 @@ treatment.post(
     const userId = c.get("userId" as any);
     const treatmentCandidate = c.req.valid("json");
 
-const medications = treatmentCandidate.medications.map(m => ({
-  medicationId: m.medicationId,
-  dose: m.dose,
-  alertPeriodInMinutes: m.alertPeriodInMinutes,
-      totalQuantity: m.totalQuantity
-}));
-
-const [ok, error, treatment] = await treatmentService.create(userId, {
-  ...treatmentCandidate,
-  medications,
-});
+    const [ok, error, treatment] = await treatmentService.create(userId, {
+      name: treatmentCandidate.name,
+      description: treatmentCandidate.description,
+      startAt: treatmentCandidate.startAt,
+      endAt: treatmentCandidate.endAt,
+      medications: treatmentCandidate.medications.map((med) => ({
+        ...med,
+        visualType: med.visualType || null,
+      })),
+    });
 
     return c.json({ success: true, treatment }, 201);
   },
