@@ -2,6 +2,8 @@ import Sound from "react-native-sound";
 import type { SoundTypes, SoundTypesRepository } from "../repositories/sound_types.js";
 import { resolve } from "node:path";
 import { rejects } from "node:assert";
+import { error } from "node:console";
+import { success } from "zod/v4";
 
 type playAlarmParams = {
     soundTypeId: string;
@@ -19,7 +21,23 @@ export class alarmService{
 
         const soundFile = soundType.sound;
         return new Promise<void>((resolve,rejects)=>{
+            
+            // Create sound object
+            const sound = new Sound(soundFile);
+            
+            // Audio controls
+            sound.setVolume(volume);
+            sound.setPan(1);
+            sound.setNumberOfLoops(loop ?-1:0);
 
+            // Control what Sound do
+            sound.play((success)=>{
+                if(!success){
+                    rejects(new Error("Falha ao tocar o som"));
+                }
+                this.currentSound = sound;
+                resolve();
+            }); // Android: raw IOS: Buddle
         });
     }
 }
