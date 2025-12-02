@@ -61,7 +61,6 @@ export class VisualTypesService {
     visualId: string,
     updateData: Partial<UpdateVisualTypeDTO>,
   ): PromiseResult<VisualTypes> {
-    console.log("updateData", updateData);
     const visual = await this.visualTypesRepository.findVisualType(visualId);
     if (!visual) return error("visual not found");
 
