@@ -71,13 +71,15 @@ model Treatments {
 }
 
 model TreatmentMedication {
-  id           String       @id @default(cuid())
-  treatmentId  String       @map("treatment_id")
-  medicationId String       @map("medication_id")
+  id           String @id @default(cuid())
+  treatmentId  String @map("treatment_id")
+  medicationId String @map("medication_id")
+
   visualTypeId String?      @unique @map("visual_type_id")
-  treatment    Treatments   @relation(fields: [treatmentId], references: [treatmentId])
-  medication   Medications  @relation(fields: [medicationId], references: [medicationId])
-  visualType   VisualTypes? @relation(fields: [visualTypeId], references: [visualId])
+  visualType   VisualTypes? @relation(fields: [visualTypeId], references: [visualId], onDelete: Cascade)
+
+  treatment  Treatments  @relation(fields: [treatmentId], references: [treatmentId])
+  medication Medications @relation(fields: [medicationId], references: [medicationId])
 
   dose                 String
   alertPeriodInMinutes Int
@@ -137,21 +139,19 @@ model Annotations {
 }
 
 model VisualTypes {
-  visualId String @id @default(cuid()) @map("visual_id")
+  visualId  String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  visualType          VisualTypeEnum       @default(PILL)
-  size                VisualSizeEnum       @default(MEDIUM)
-  color1              String
-  color2              String?
-  pattern             VisualPatternEnum    @default(SOLID)
-  rotation            Int?
-  opacity             Float?
+  visualType VisualTypeEnum @default(PILL)
+  size       VisualSizeEnum @default(MEDIUM)
+  color1     String
+  color2     String?
+  pattern    VisualPatternEnum @default(SOLID)
+  opacity    Float?
+  rotation   Int?
+
   treatmentMedication TreatmentMedication?
-
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  @@map("visual_types")
 }
 
 enum VisualTypeEnum {

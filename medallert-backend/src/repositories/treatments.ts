@@ -59,7 +59,7 @@ export interface TreatmentRepository {
 }
 
 class PrismaTreatmentRepository implements TreatmentRepository {
-  constructor(private readonly prisma: PrismaClient) {}
+  constructor(private readonly prisma: PrismaClient) { }
 
   async findTreatment(id: string): Promise<Treatment | null> {
     const treatment = await this.prisma.treatments.findUnique({
@@ -111,72 +111,77 @@ class PrismaTreatmentRepository implements TreatmentRepository {
     })) as Treatment[];
   }
 
-  async addTreatment(newTreatment: {
-    userId: string;
-    name: string;
-    description: string | null;
-    startAt: Date;
-    endAt: Date | null;
-    medications: {
-      medicationId: string;
-      dose: string;
-      alertPeriodInMinutes: number;
-      lastTaken?: Date | null;
-      takenQuantity?: number;
-      totalQuantity?: number;
-      visualType: {
-        visualType: VisualTypeEnum;
-        size: VisualSizeEnum;
-        color1: string;
-        color2?: string;
-        pattern: VisualPatternEnum;
-      } | null;
-    }[];
-  }): Promise<Treatment | null> {
-    const treatmentId = await this.prisma.$transaction(async (tx) => {
-      const treatment = await tx.treatments.create({
-        data: {
-          userId: newTreatment.userId,
-          name: newTreatment.name,
-          description: newTreatment.description,
-          startAt: newTreatment.startAt,
-          endAt: newTreatment.endAt,
-        },
-      });
-
-      for (const med of newTreatment.medications) {
-        let visualTypeId: string | undefined = undefined;
-        if (med.visualType) {
-          const newVisualType = await tx.visualTypes.create({
-            data: {
-              visualType: med.visualType.visualType,
-              size: med.visualType.size,
-              color1: med.visualType.color1,
-              color2: med.visualType.color2,
-              pattern: med.visualType.pattern,
-            },
-          });
-          visualTypeId = newVisualType.visualId;
-        }
-
-        await tx.treatmentMedication.create({
-          data: {
-            treatmentId: treatment.treatmentId,
-            medicationId: med.medicationId,
-            dose: med.dose,
-            alertPeriodInMinutes: med.alertPeriodInMinutes,
-            lastTaken: med.lastTaken ?? null,
-            takenQuantity: med.takenQuantity ?? 0,
-            totalQuantity: med.totalQuantity ?? 0,
-            
-          }, include: { visualType: true }
-        });
-      }
-      return treatment.treatmentId;
+ async addTreatment(newTreatment: {
+  userId: string;
+  name: string;
+  description: string | null;
+  startAt: Date;
+  endAt: Date | null;
+  medications: {
+    medicationId: string;
+    dose: string;
+    alertPeriodInMinutes: number;
+    lastTaken?: Date | null;
+    takenQuantity?: number;
+    totalQuantity?: number;
+    visualType: {
+      visualType: VisualTypeEnum;
+      size: VisualSizeEnum;
+      color1: string;
+      color2?: string;
+      pattern: VisualPatternEnum;
+    } | null;
+  }[];
+}): Promise<Treatment | null> {
+  const treatmentId = await this.prisma.$transaction(async (tx) => {
+    const treatment = await tx.treatments.create({
+      data: {
+        userId: newTreatment.userId,
+        name: newTreatment.name,
+        description: newTreatment.description,
+        startAt: newTreatment.startAt,
+        endAt: newTreatment.endAt,
+      },
     });
 
-    return this.findTreatment(treatmentId);
-  }
+    for (const med of newTreatment.medications) {
+      let visualTypeId: string | undefined = undefined;
+
+      if (med.visualType) {
+        const newVisualType = await tx.visualTypes.create({
+          data: {
+            visualType: med.visualType.visualType,
+            size: med.visualType.size,
+            color1: med.visualType.color1,
+            color2: med.visualType.color2,
+            pattern: med.visualType.pattern,
+          },
+        });
+
+        visualTypeId = newVisualType.visualId;
+      }
+
+      await tx.treatmentMedication.create({
+        data: {
+          treatmentId: treatment.treatmentId,
+          medicationId: med.medicationId,
+          dose: med.dose,
+          alertPeriodInMinutes: med.alertPeriodInMinutes,
+          lastTaken: med.lastTaken ?? null,
+          takenQuantity: med.takenQuantity ?? 0,
+          totalQuantity: med.totalQuantity ?? 0,
+          visualTypeId: visualTypeId ?? null,
+        },
+      });
+    }
+
+    return treatment.treatmentId;
+  });
+
+  return this.findTreatment(treatmentId);
+}
+
+
 
   async updateTreatment(
     id: string,
