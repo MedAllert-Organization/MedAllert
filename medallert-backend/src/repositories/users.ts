@@ -28,7 +28,7 @@ export interface UsersRepository {
   deleteUser(userId: string): Promise<void>;
 }
 
-class PrismaUsersRepository implements UsersRepository {
+export class PrismaUsersRepository implements UsersRepository {
   constructor(private readonly prisma: PrismaClient) {}
 
   async findAnyUserByEmail(email: string): Promise<User | null> {
