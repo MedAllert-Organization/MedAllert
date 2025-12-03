@@ -2,27 +2,7 @@ import { describe, test, expect, beforeEach } from "@jest/globals";
 import { Hono } from "hono";
 import { authMiddlewareFactory } from "../../routes/middleware/auth-middleware.js";
 import type { Env } from "../../common/type-helpers.js";
-import type { JWTProvider } from "../../common/jwt.js";
-
-class MockJWTProvider implements JWTProvider {
-  private payload: unknown = null;
-  public lastToken: string | null = null;
-
-  async createToken(_: string): Promise<string> {
-    return "mock-token";
-  }
-  async validateToken(token: string): Promise<unknown> {
-    this.lastToken = token;
-    if (this.payload) {
-      return Promise.resolve(this.payload);
-    }
-    return Promise.reject("Invalid token");
-  }
-
-  setTokenPayload(payload: unknown) {
-    this.payload = payload;
-  }
-}
+import { MockJWTProvider } from "../_mocks/mock-jwt-provider.js";
 
 describe("authMiddleware", () => {
   let app: Hono<Env>;
