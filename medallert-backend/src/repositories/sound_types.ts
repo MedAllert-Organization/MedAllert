@@ -4,7 +4,7 @@ import type { PrismaClient } from "../infra/prisma/generated/prisma/index.js";
 export type SoundTypes = {
   soundId: string;
   name: string;
-  duration: number;
+  duration: number ;
   format: string;
   sound: string;
 };

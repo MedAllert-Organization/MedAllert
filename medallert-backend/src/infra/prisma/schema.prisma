@@ -176,7 +176,7 @@ enum VisualPatternEnum {
   SOLID
   STRIPED
   HALF
-  RINGA
+  RING
   DOTS
   BAND
   GRADIENT
