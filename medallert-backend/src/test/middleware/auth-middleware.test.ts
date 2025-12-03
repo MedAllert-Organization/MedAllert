@@ -13,7 +13,7 @@ describe("authMiddleware", () => {
     mockTokenProvider = new MockJWTProvider();
     const authMiddleware = authMiddlewareFactory(mockTokenProvider);
     app.use("*", authMiddleware);
-    app.get("/test", (c) => c.json({ userId: c.get("userId") }));
+    app.get("/test", (c) => c.json({ userId: (c as any).get("userId") }));
   });
 
   test("should set userId for a valid token", async () => {

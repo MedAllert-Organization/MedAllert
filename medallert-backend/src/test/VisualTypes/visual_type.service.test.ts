@@ -23,10 +23,7 @@ describe("VisualTypesService", () => {
     test("should return ok with the created visual type", async () => {
       const newVisual = {
         treatmentMedicationId: "tm-123",
-        visualType: VisualTypeEnum.CAPSULE,
-        size: VisualSizeEnum.LARGE,
-        color1: "#111",
-        pattern: VisualPatternEnum.SOLID,
+        ...visualSample
       };
       const created = {
         visualId: "vt-1",
@@ -155,3 +152,16 @@ describe("VisualTypesService", () => {
     });
   });
 });
+
+const visualSample = {
+  visualType: VisualTypeEnum.CAPSULE,
+  size: VisualSizeEnum.LARGE,
+  color1: "#111",
+  pattern: VisualPatternEnum.SOLID,
+  color2: "#222",
+  rotation: 0,
+  opacity: 1,
+  createdAt: new Date(),
+  updatedAt: new Date(),
+  visualId: "vt-1",
+}
