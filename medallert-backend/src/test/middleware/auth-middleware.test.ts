@@ -8,7 +8,7 @@ class MockJWTProvider implements JWTProvider {
   private payload: unknown = null;
   public lastToken: string | null = null;
 
-  async createToken(userId: string): Promise<string> {
+  async createToken(_: string): Promise<string> {
     return "mock-token";
   }
   async validateToken(token: string): Promise<unknown> {
