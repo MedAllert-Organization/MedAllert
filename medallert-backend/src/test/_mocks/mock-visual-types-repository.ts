@@ -13,20 +13,25 @@ export class MockVisualTypesRepository implements VisualTypesRepository {
   deleteVisualTypeCalledWith: string | null = null;
   findVisualTypeCalledWith: string | null = null;
   findAllVisualsCalled = false;
+  private shouldFailAddVisualType = false;
+
+  mockAddVisualTypeFailure(fail: boolean) {
+    this.shouldFailAddVisualType = fail;
+  }
 
   async addVisualType(data: CreateVisualTypeDTO): Promise<VisualTypes | null> {
     this.addVisualTypeCalledWith = data;
-    if (this.visuals.length > 0) {
-      const newVisual = {
-        visualId: `vt-${this.visuals.length + 1}`,
-        ...data,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-      this.visuals.push(newVisual);
-      return newVisual;
+    if (this.shouldFailAddVisualType) {
+      return null;
     }
-    return null;
+    const newVisual = {
+      visualId: `vt-${this.visuals.length + 1}`,
+      ...data,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.visuals.push(newVisual);
+    return newVisual;
   }
 
   async findAllVisuals(): Promise<VisualTypes[] | null> {
@@ -70,5 +75,6 @@ export class MockVisualTypesRepository implements VisualTypesRepository {
     this.deleteVisualTypeCalledWith = null;
     this.findVisualTypeCalledWith = null;
     this.findAllVisualsCalled = false;
+    this.shouldFailAddVisualType = false;
   }
 }

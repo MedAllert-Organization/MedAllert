@@ -23,15 +23,15 @@ describe("VisualTypesService", () => {
     test("should return ok with the created visual type", async () => {
       const newVisual = {
         treatmentMedicationId: "tm-123",
-        ...visualSample
+        ...visualSampleInput
       };
       const created = {
         visualId: "vt-1",
         ...newVisual,
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        createdAt: expect.any(Date),
+        updatedAt: expect.any(Date),
       };
-      repository.visuals.push(created);
+
 
       const result = await service.create(newVisual);
 
@@ -43,6 +43,7 @@ describe("VisualTypesService", () => {
     });
 
     test("should return an error if creation fails", async () => {
+      repository.mockAddVisualTypeFailure(true);
       const result = await service.create({} as any);
       expect(result).toEqual(error("failed to add visual"));
     });
@@ -153,7 +154,7 @@ describe("VisualTypesService", () => {
   });
 });
 
-const visualSample = {
+const visualSampleInput = {
   visualType: VisualTypeEnum.CAPSULE,
   size: VisualSizeEnum.LARGE,
   color1: "#111",
@@ -161,7 +162,4 @@ const visualSample = {
   color2: "#222",
   rotation: 0,
   opacity: 1,
-  createdAt: new Date(),
-  updatedAt: new Date(),
-  visualId: "vt-1",
 }
