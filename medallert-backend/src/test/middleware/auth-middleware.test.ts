@@ -12,13 +12,16 @@ import { defaultTokenProvider } from "../../common/jwt.js";
 
 describe("authMiddleware", () => {
   let app: Hono;
-  let validateTokenSpy: jest.SpyInstance;
+  
+  let validateTokenSpy: jest.SpiedFunction<
+    typeof defaultTokenProvider.validateToken
+  >;
 
   beforeEach(() => {
     app = new Hono();
     validateTokenSpy = jest.spyOn(defaultTokenProvider, "validateToken");
     app.use("*", authMiddleware);
-    app.get("/test", (c) => c.json({ userId: c.get("userId") }));
+    app.get("/test", (c) => c.json({ userId: (c as any).get("userId") }));
   });
 
   afterEach(() => {
