@@ -4,10 +4,12 @@ import {
   VisualPatternEnum,
   VisualSizeEnum,
   VisualTypeEnum,
+  type VisualTypes,
+  type VisualTypesRepository,
 } from "../../repositories/visual_types.js";
 import { VisualTypesService } from "../../services/visual_type-service.js";
 
-const mockVisualTypesRepository = {
+const mockVisualTypesRepository: jest.Mocked<VisualTypesRepository> = {
   addVisualType: jest.fn(),
   findAllVisuals: jest.fn(),
   findVisualType: jest.fn(),
@@ -27,12 +29,9 @@ describe("VisualTypesService", () => {
     test("should return ok with the created visual type", async () => {
       const newVisual = {
         treatmentMedicationId: "tm-123",
-        visualType: VisualTypeEnum.CAPSULE,
-        size: VisualSizeEnum.LARGE,
-        color1: "#111",
-        pattern: VisualPatternEnum.SOLID,
+        ...visualSample
       };
-      const created = { visualId: "vt-1", ...newVisual };
+      const created = { ...newVisual };
       mockVisualTypesRepository.addVisualType.mockResolvedValue(created);
 
       const result = await service.create(newVisual);
@@ -52,7 +51,9 @@ describe("VisualTypesService", () => {
 
   describe("getAll", () => {
     test("should return ok with a list of visual types", async () => {
-      const visuals = [{ visualId: "1" }, { visualId: "2" }];
+      const visuals: VisualTypes[] = [
+        visualSample
+      ];
       mockVisualTypesRepository.findAllVisuals.mockResolvedValue(visuals);
 
       const result = await service.getAll();
@@ -69,7 +70,7 @@ describe("VisualTypesService", () => {
 
   describe("get", () => {
     test("should return ok with the found visual type", async () => {
-      const visual = { visualId: "vt-1" };
+      const visual = visualSample
       mockVisualTypesRepository.findVisualType.mockResolvedValue(visual);
 
       const result = await service.get("vt-1");
@@ -91,8 +92,8 @@ describe("VisualTypesService", () => {
     test("should return ok with the updated visual type", async () => {
       const visualId = "vt-1";
       const updateData = { color1: "#FFF" };
-      const existingVisual = { visualId, color1: "#000" };
-      const updatedVisual = { visualId, ...updateData };
+      const existingVisual = visualSample;
+      const updatedVisual = { ...existingVisual, ...updateData };
 
       mockVisualTypesRepository.findVisualType.mockResolvedValue(
         existingVisual,
@@ -121,7 +122,7 @@ describe("VisualTypesService", () => {
 
     test("should return an error if update fails", async () => {
       const visualId = "vt-1";
-      const existingVisual = { visualId, color1: "#000" };
+      const existingVisual = visualSample;
       mockVisualTypesRepository.findVisualType.mockResolvedValue(
         existingVisual,
       );
@@ -136,7 +137,7 @@ describe("VisualTypesService", () => {
   describe("delete", () => {
     test("should return ok with the deleted visual type", async () => {
       const visualId = "vt-1";
-      const visual = { visualId };
+      const visual = visualSample;
       mockVisualTypesRepository.findVisualType.mockResolvedValue(visual);
       mockVisualTypesRepository.deleteVisualType.mockResolvedValue(visual);
 
@@ -159,7 +160,7 @@ describe("VisualTypesService", () => {
 
     test("should return an error if delete fails", async () => {
       const visualId = "vt-1";
-      const visual = { visualId };
+      const visual = visualSample;
       mockVisualTypesRepository.findVisualType.mockResolvedValue(visual);
       mockVisualTypesRepository.deleteVisualType.mockResolvedValue(null);
 
@@ -169,3 +170,16 @@ describe("VisualTypesService", () => {
     });
   });
 });
+
+const visualSample = {
+  visualType: VisualTypeEnum.CAPSULE,
+  size: VisualSizeEnum.LARGE,
+  color1: "#111",
+  pattern: VisualPatternEnum.SOLID,
+  color2: "#222",
+  rotation: 0,
+  opacity: 1,
+  createdAt: new Date(),
+  updatedAt: new Date(),
+  visualId: "vt-1",
+}

@@ -3,31 +3,28 @@ import { UserService } from '../../services/user-service.js';
 import { PrismaUsersRepository } from '../../repositories/users.js';
 import { PrismaClient } from '../../infra/prisma/generated/prisma/index.js';
 
-const mockPrisma = {
-  $transaction: jest.fn((operations) => Promise.all(operations)),
-  users: {
-    delete: jest.fn(),
-  },
-  medications: {
-    findMany: jest.fn(),
-    deleteMany: jest.fn(),
-  },
-  annotations: {
-    deleteMany: jest.fn(),
-  },
-  notifications: {
-    deleteMany: jest.fn(),
-  },
-  treatmentShares: {
-    deleteMany: jest.fn(),
-  },
-  treatments: {
-    deleteMany: jest.fn(),
-  },
-  verificationCodes: {
-    deleteMany: jest.fn(),
-  },
-} as unknown as PrismaClient;
+interface PrismaMock {
+  $transaction: jest.Mock;
+  users: { delete: jest.Mock };
+  medications: { findMany: jest.Mock; deleteMany: jest.Mock };
+  annotations: { deleteMany: jest.Mock };
+  notifications: { deleteMany: jest.Mock };
+  treatmentShares: { deleteMany: jest.Mock };
+  treatments: { deleteMany: jest.Mock };
+  verificationCodes: { deleteMany: jest.Mock };
+}
+
+const mockPrisma: PrismaMock = {
+  $transaction: jest.fn((ops) => Promise.all(ops as any[])),
+  users: { delete: jest.fn() },
+  medications: { findMany: jest.fn(), deleteMany: jest.fn() },
+  annotations: { deleteMany: jest.fn() },
+  notifications: { deleteMany: jest.fn() },
+  treatmentShares: { deleteMany: jest.fn() },
+  treatments: { deleteMany: jest.fn() },
+  verificationCodes: { deleteMany: jest.fn() },
+};
+
 
 jest.mock('../../infra/prisma/client.js', () => ({
   prisma: mockPrisma,
@@ -39,21 +36,20 @@ describe('UserService - deleteUser', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    usersRepository = new PrismaUsersRepository(mockPrisma);
+    usersRepository = new PrismaUsersRepository(mockPrisma as any);
     service = new UserService(usersRepository);
   });
 
   test('should delete user successfully', async () => {
     const userId = 'user-123';
     
-    mockPrisma.users.delete.mockResolvedValue(undefined);
-    mockPrisma.medications.findMany.mockResolvedValue([]);
-    mockPrisma.annotations.deleteMany.mockResolvedValue({ count: 0 });
-    mockPrisma.notifications.deleteMany.mockResolvedValue({ count: 0 });
-    mockPrisma.treatmentShares.deleteMany.mockResolvedValue({ count: 0 });
-    mockPrisma.treatments.deleteMany.mockResolvedValue({ count: 0 });
-    mockPrisma.verificationCodes.deleteMany.mockResolvedValue({ count: 0 });
-
+    mockPrisma.users.delete.mockResolvedValue(undefined as never);
+    mockPrisma.medications.findMany.mockResolvedValue([] as never);
+    mockPrisma.annotations.deleteMany.mockResolvedValue({ count: 0 } as never);
+    mockPrisma.notifications.deleteMany.mockResolvedValue({ count: 0 } as never);
+    mockPrisma.treatmentShares.deleteMany.mockResolvedValue({ count: 0 } as never);
+    mockPrisma.treatments.deleteMany.mockResolvedValue({ count: 0 } as never);
+    mockPrisma.verificationCodes.deleteMany.mockResolvedValue({ count: 0 } as never);
     await expect(service.deleteUser(userId)).resolves.toBeUndefined();
     expect(mockPrisma.users.delete).toHaveBeenCalledWith({ where: { userId } });
     expect(mockPrisma.users.delete).toHaveBeenCalledTimes(1);
@@ -70,7 +66,7 @@ describe('UserService - deleteUser', () => {
   test('should throw an error if user does not exist during direct user deletion', async () => {
     const userId = 'non-existing-user';
     const errorMessage = 'User not found';
-    mockPrisma.users.delete.mockRejectedValue(new Error(errorMessage));
+    mockPrisma.users.delete.mockRejectedValue(new Error(errorMessage) as never);
 
     await expect(service.deleteUser(userId)).rejects.toThrow(errorMessage);
     expect(mockPrisma.users.delete).toHaveBeenCalledWith({ where: { userId } });
@@ -83,15 +79,15 @@ describe('UserService - deleteUser', () => {
     const userId = 'user-123';
     const errorMessage = 'Database error during medication deletion';
 
-    mockPrisma.medications.findMany.mockResolvedValue([{ medicationId: 'med-1', userId: userId }]);
-    mockPrisma.medications.deleteMany.mockRejectedValue(new Error(errorMessage));
+    mockPrisma.medications.findMany.mockResolvedValue([{ medicationId: 'med-1', userId: userId }] as never);
+    mockPrisma.medications.deleteMany.mockRejectedValue(new Error(errorMessage) as never);
     
-    mockPrisma.annotations.deleteMany.mockResolvedValue({ count: 0 });
-    mockPrisma.notifications.deleteMany.mockResolvedValue({ count: 0 });
-    mockPrisma.treatmentShares.deleteMany.mockResolvedValue({ count: 0 });
-    mockPrisma.treatments.deleteMany.mockResolvedValue({ count: 0 });
-    mockPrisma.verificationCodes.deleteMany.mockResolvedValue({ count: 0 });
-    mockPrisma.users.delete.mockResolvedValue(undefined);
+    mockPrisma.annotations.deleteMany.mockResolvedValue({ count: 0 } as never);
+    mockPrisma.notifications.deleteMany.mockResolvedValue({ count: 0 } as never);
+    mockPrisma.treatmentShares.deleteMany.mockResolvedValue({ count: 0 } as never);
+    mockPrisma.treatments.deleteMany.mockResolvedValue({ count: 0 } as never);
+    mockPrisma.verificationCodes.deleteMany.mockResolvedValue({ count: 0 } as never);
+    mockPrisma.users.delete.mockResolvedValue(undefined as never);
 
     await expect(service.deleteUser(userId)).rejects.toThrow(errorMessage);
     expect(mockPrisma.medications.findMany).toHaveBeenCalledWith({ where: { userId } });
@@ -110,14 +106,14 @@ describe('UserService - deleteUser', () => {
     ];
     const medicationIds = mockMedications.map((med) => med.medicationId);
 
-    mockPrisma.medications.findMany.mockResolvedValue(mockMedications);
-    mockPrisma.annotations.deleteMany.mockResolvedValue({ count: 2 });
-    mockPrisma.notifications.deleteMany.mockResolvedValue({ count: 1 });
-    mockPrisma.treatmentShares.deleteMany.mockResolvedValue({ count: 3 });
-    mockPrisma.medications.deleteMany.mockResolvedValue({ count: 2 });
-    mockPrisma.treatments.deleteMany.mockResolvedValue({ count: 4 });
-    mockPrisma.verificationCodes.deleteMany.mockResolvedValue({ count: 1 });
-    mockPrisma.users.delete.mockResolvedValue(undefined);
+    mockPrisma.medications.findMany.mockResolvedValue(mockMedications  as never);
+    mockPrisma.annotations.deleteMany.mockResolvedValue({ count: 2 } as never);
+    mockPrisma.notifications.deleteMany.mockResolvedValue({ count: 1 } as never);
+    mockPrisma.treatmentShares.deleteMany.mockResolvedValue({ count: 3 } as never);
+    mockPrisma.medications.deleteMany.mockResolvedValue({ count: 2 } as never);
+    mockPrisma.treatments.deleteMany.mockResolvedValue({ count: 4 } as never);
+    mockPrisma.verificationCodes.deleteMany.mockResolvedValue({ count: 1 } as never);
+    mockPrisma.users.delete.mockResolvedValue(undefined as never);
 
     await expect(service.deleteUser(userId)).resolves.toBeUndefined();
 
