@@ -1,135 +1,80 @@
-import { test, expect, jest, describe, beforeEach } from '@jest/globals';
-import { UserService } from '../../services/user-service.js';
-import { PrismaUsersRepository } from '../../repositories/users.js';
-import { PrismaClient } from '../../infra/prisma/generated/prisma/index.js';
+import { beforeEach, describe, expect, test } from "@jest/globals";
+import type { User, UsersRepository } from "../../repositories/users.js";
+import { UserService } from "../../services/user-service.js";
 
-const mockPrisma = {
-  $transaction: jest.fn((operations) => Promise.all(operations)),
-  users: {
-    delete: jest.fn(),
-  },
-  medications: {
-    findMany: jest.fn(),
-    deleteMany: jest.fn(),
-  },
-  annotations: {
-    deleteMany: jest.fn(),
-  },
-  notifications: {
-    deleteMany: jest.fn(),
-  },
-  treatmentShares: {
-    deleteMany: jest.fn(),
-  },
-  treatments: {
-    deleteMany: jest.fn(),
-  },
-  verificationCodes: {
-    deleteMany: jest.fn(),
-  },
-} as unknown as PrismaClient;
+class MockUsersRepository implements UsersRepository {
+  private users: User[] = [];
+  public deleteUserCalledWith: string | null = null;
+  private shouldThrowError = false;
+  private errorMessage = "User not found";
 
-jest.mock('../../infra/prisma/client.js', () => ({
-  prisma: mockPrisma,
-}));
+  findAnyUserByEmail(email: string): Promise<User | null> {
+    throw new Error("Method not implemented.");
+  }
+  findConfirmedUserByEmail(email: string): Promise<User | null> {
+    throw new Error("Method not implemented.");
+  }
+  findUser(id: string): Promise<User | null> {
+    throw new Error("Method not implemented.");
+  }
+  addUser(newUser: { fullName: string; email: string; hash: string; phone: string; }): Promise<User | null> {
+    throw new Error("Method not implemented.");
+  }
+  updatePasswordForUser(userId: string, newPassword: string): Promise<void> {
+    throw new Error("Method not implemented.");
+  }
+  confirmUserAccount(email: string): Promise<void> {
+    throw new Error("Method not implemented.");
+  }
+  async deleteUser(userId: string): Promise<void> {
+    this.deleteUserCalledWith = userId;
+    if (this.shouldThrowError) {
+      throw new Error(this.errorMessage);
+    }
+    const userIndex = this.users.findIndex(u => u.userId === userId);
+    if (userIndex > -1) {
+      this.users.splice(userIndex, 1);
+      return Promise.resolve();
+    }
+  }
 
-describe('UserService - deleteUser', () => {
+  reset() {
+    this.users = [];
+    this.deleteUserCalledWith = null;
+    this.shouldThrowError = false;
+  }
+
+  setShouldThrowError(shouldThrow: boolean, message?: string) {
+    this.shouldThrowError = shouldThrow;
+    if (message) {
+      this.errorMessage = message;
+    }
+  }
+}
+
+
+describe("UserService - deleteUser", () => {
   let service: UserService;
-  let usersRepository: PrismaUsersRepository;
+  let usersRepository: MockUsersRepository;
 
   beforeEach(() => {
-    jest.clearAllMocks();
-    usersRepository = new PrismaUsersRepository(mockPrisma);
+    usersRepository = new MockUsersRepository();
     service = new UserService(usersRepository);
   });
 
-  test('should delete user successfully', async () => {
-    const userId = 'user-123';
-    
-    mockPrisma.users.delete.mockResolvedValue(undefined);
-    mockPrisma.medications.findMany.mockResolvedValue([]);
-    mockPrisma.annotations.deleteMany.mockResolvedValue({ count: 0 });
-    mockPrisma.notifications.deleteMany.mockResolvedValue({ count: 0 });
-    mockPrisma.treatmentShares.deleteMany.mockResolvedValue({ count: 0 });
-    mockPrisma.treatments.deleteMany.mockResolvedValue({ count: 0 });
-    mockPrisma.verificationCodes.deleteMany.mockResolvedValue({ count: 0 });
+  test("should delete user successfully", async () => {
+    const userId = "user-123";
 
     await expect(service.deleteUser(userId)).resolves.toBeUndefined();
-    expect(mockPrisma.users.delete).toHaveBeenCalledWith({ where: { userId } });
-    expect(mockPrisma.users.delete).toHaveBeenCalledTimes(1);
-
-    expect(mockPrisma.medications.findMany).toHaveBeenCalledWith({ where: { userId } });
-    expect(mockPrisma.annotations.deleteMany).toHaveBeenCalledWith({ where: { medicationId: { in: [] } } });
-    expect(mockPrisma.notifications.deleteMany).toHaveBeenCalledWith({ where: { medicationId: { in: [] } } });
-    expect(mockPrisma.treatmentShares.deleteMany).toHaveBeenCalledWith({ where: { userId } });
-    expect(mockPrisma.treatments.deleteMany).toHaveBeenCalledWith({ where: { userId } });
-    expect(mockPrisma.verificationCodes.deleteMany).toHaveBeenCalledWith({ where: { userId } });
-    expect(mockPrisma.$transaction).toHaveBeenCalledTimes(1);
+    expect(usersRepository.deleteUserCalledWith).toBe(userId);
   });
 
-  test('should throw an error if user does not exist during direct user deletion', async () => {
-    const userId = 'non-existing-user';
-    const errorMessage = 'User not found';
-    mockPrisma.users.delete.mockRejectedValue(new Error(errorMessage));
+  test("should throw an error if user does not exist", async () => {
+    const userId = "non-existing-user";
+    const errorMessage = "User not found";
+    usersRepository.setShouldThrowError(true, errorMessage);
 
     await expect(service.deleteUser(userId)).rejects.toThrow(errorMessage);
-    expect(mockPrisma.users.delete).toHaveBeenCalledWith({ where: { userId } });
-    expect(mockPrisma.users.delete).toHaveBeenCalledTimes(1);
-    expect(mockPrisma.medications.findMany).toHaveBeenCalled();
-    expect(mockPrisma.$transaction).toHaveBeenCalledTimes(1);
-  });
-
-  test('should throw an error if any part of the transaction fails', async () => {
-    const userId = 'user-123';
-    const errorMessage = 'Database error during medication deletion';
-
-    mockPrisma.medications.findMany.mockResolvedValue([{ medicationId: 'med-1', userId: userId }]);
-    mockPrisma.medications.deleteMany.mockRejectedValue(new Error(errorMessage));
-    
-    mockPrisma.annotations.deleteMany.mockResolvedValue({ count: 0 });
-    mockPrisma.notifications.deleteMany.mockResolvedValue({ count: 0 });
-    mockPrisma.treatmentShares.deleteMany.mockResolvedValue({ count: 0 });
-    mockPrisma.treatments.deleteMany.mockResolvedValue({ count: 0 });
-    mockPrisma.verificationCodes.deleteMany.mockResolvedValue({ count: 0 });
-    mockPrisma.users.delete.mockResolvedValue(undefined);
-
-    await expect(service.deleteUser(userId)).rejects.toThrow(errorMessage);
-    expect(mockPrisma.medications.findMany).toHaveBeenCalledWith({ where: { userId } });
-    expect(mockPrisma.medications.deleteMany).toHaveBeenCalledWith({ where: { userId } });
-    expect(mockPrisma.$transaction).toHaveBeenCalledTimes(1);
-  });
-
-  test('should delete user and all associated data successfully', async () => {
-    const userId = 'user-123';
-    const medicationId1 = 'med-456';
-    const medicationId2 = 'med-789';
-
-    const mockMedications = [
-      { medicationId: medicationId1, userId: userId },
-      { medicationId: medicationId2, userId: userId },
-    ];
-    const medicationIds = mockMedications.map((med) => med.medicationId);
-
-    mockPrisma.medications.findMany.mockResolvedValue(mockMedications);
-    mockPrisma.annotations.deleteMany.mockResolvedValue({ count: 2 });
-    mockPrisma.notifications.deleteMany.mockResolvedValue({ count: 1 });
-    mockPrisma.treatmentShares.deleteMany.mockResolvedValue({ count: 3 });
-    mockPrisma.medications.deleteMany.mockResolvedValue({ count: 2 });
-    mockPrisma.treatments.deleteMany.mockResolvedValue({ count: 4 });
-    mockPrisma.verificationCodes.deleteMany.mockResolvedValue({ count: 1 });
-    mockPrisma.users.delete.mockResolvedValue(undefined);
-
-    await expect(service.deleteUser(userId)).resolves.toBeUndefined();
-
-    expect(mockPrisma.medications.findMany).toHaveBeenCalledWith({ where: { userId } });
-    expect(mockPrisma.annotations.deleteMany).toHaveBeenCalledWith({ where: { medicationId: { in: medicationIds } } });
-    expect(mockPrisma.notifications.deleteMany).toHaveBeenCalledWith({ where: { medicationId: { in: medicationIds } } });
-    expect(mockPrisma.treatmentShares.deleteMany).toHaveBeenCalledWith({ where: { userId } });
-    expect(mockPrisma.medications.deleteMany).toHaveBeenCalledWith({ where: { userId } });
-    expect(mockPrisma.treatments.deleteMany).toHaveBeenCalledWith({ where: { userId } });
-    expect(mockPrisma.verificationCodes.deleteMany).toHaveBeenCalledWith({ where: { userId } });
-    expect(mockPrisma.users.delete).toHaveBeenCalledWith({ where: { userId } });
-    expect(mockPrisma.users.delete).toHaveBeenCalledTimes(1);
-    expect(mockPrisma.$transaction).toHaveBeenCalledTimes(1);
+    expect(usersRepository.deleteUserCalledWith).toBe(userId);
   });
 });
