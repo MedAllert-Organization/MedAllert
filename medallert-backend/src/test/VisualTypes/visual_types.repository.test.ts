@@ -14,7 +14,8 @@ const mockPrisma = {
     update: jest.fn(),
     delete: jest.fn(),
   },
-};
+} as any;
+
 
 const mockTreatmentMedicationRepository = {
   updateTreatmentMedication: jest.fn(),
@@ -22,7 +23,8 @@ const mockTreatmentMedicationRepository = {
   addTreatmentMedication: jest.fn(),
   deleteTreatmentMedication: jest.fn(),
   findTreatmentMedicationsByTreatmentId: jest.fn(),
-};
+} as any;
+
 
 describe("PrismaVisualTypesRepository", () => {
   let repository: PrismaVisualTypesRepository;
