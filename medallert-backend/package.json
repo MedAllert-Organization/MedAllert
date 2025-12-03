@@ -13,7 +13,8 @@
     "format": "npx @biomejs/biome check --write",
     "prepare": "husky install",
     "commit": "git-cz",
-    "test": "NODE_OPTIONS='--experimental-vm-modules' jest --watch"
+    "test:watch": "NODE_OPTIONS='--experimental-vm-modules' jest --watch",
+    "test": "NODE_OPTIONS='--experimental-vm-modules' jest"
   },
   "config": {
     "commitizen": {
