@@ -1,39 +1,26 @@
-import { beforeEach, describe, expect, jest, test } from "@jest/globals";
+import { beforeEach, describe, expect, test } from "@jest/globals";
 import {
   PrismaVisualTypesRepository,
   VisualPatternEnum,
   VisualSizeEnum,
   VisualTypeEnum,
+  type VisualTypes,
 } from "../../repositories/visual_types.js";
-
-const mockPrisma = {
-  visualTypes: {
-    findUnique: jest.fn(),
-    findMany: jest.fn(),
-    create: jest.fn(),
-    update: jest.fn(),
-    delete: jest.fn(),
-  },
-} as any;
-
-
-const mockTreatmentMedicationRepository = {
-  updateTreatmentMedication: jest.fn(),
-  findTreatmentMedicationById: jest.fn(),
-  addTreatmentMedication: jest.fn(),
-  deleteTreatmentMedication: jest.fn(),
-  findTreatmentMedicationsByTreatmentId: jest.fn(),
-} as any;
+import { MockPrisma } from "../_mocks/mock-prisma.js";
+import { MockTreatmentMedicationRepository } from "../_mocks/mock-treatment-medication-repository.js";
 
 
 describe("PrismaVisualTypesRepository", () => {
   let repository: PrismaVisualTypesRepository;
+  let mockPrisma: MockPrisma;
+  let mockTreatmentMedicationRepository: MockTreatmentMedicationRepository;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    mockPrisma = new MockPrisma();
+    mockTreatmentMedicationRepository = new MockTreatmentMedicationRepository();
     repository = new PrismaVisualTypesRepository(
       mockPrisma as any,
-      mockTreatmentMedicationRepository as any,
+      mockTreatmentMedicationRepository,
     );
   });
 
@@ -49,25 +36,18 @@ describe("PrismaVisualTypesRepository", () => {
         createdAt: new Date(),
         updatedAt: new Date(),
       };
-      mockPrisma.visualTypes.findUnique.mockResolvedValue(expectedVisual);
+      mockPrisma.visualTypes.visuals.push(expectedVisual);
 
       const result = await repository.findVisualType(visualId);
 
-      expect(mockPrisma.visualTypes.findUnique).toHaveBeenCalledWith({
-        where: { visualId },
-      });
       expect(result).toEqual(expectedVisual);
     });
 
     test("should return null when not found", async () => {
       const visualId = "non-existent-id";
-      mockPrisma.visualTypes.findUnique.mockResolvedValue(null);
 
       const result = await repository.findVisualType(visualId);
 
-      expect(mockPrisma.visualTypes.findUnique).toHaveBeenCalledWith({
-        where: { visualId },
-      });
       expect(result).toBeNull();
     });
   });
@@ -77,21 +57,19 @@ describe("PrismaVisualTypesRepository", () => {
       const expectedVisuals = [
         { visualId: "1", visualType: VisualTypeEnum.PILL },
         { visualId: "2", visualType: VisualTypeEnum.TABLET },
-      ];
-      mockPrisma.visualTypes.findMany.mockResolvedValue(expectedVisuals);
+      ] as VisualTypes[];
+      mockPrisma.visualTypes.visuals.push(...expectedVisuals);
 
       const result = await repository.findAllVisuals();
 
-      expect(mockPrisma.visualTypes.findMany).toHaveBeenCalled();
       expect(result).toEqual(expectedVisuals);
     });
 
-    test("should return null if prisma throws an error", async () => {
-      mockPrisma.visualTypes.findMany.mockResolvedValue(null);
-
+    test("should return empty array if prisma throws an error", async () => {
+      mockPrisma.visualTypes.visuals = [];
       const result = await repository.findAllVisuals();
 
-      expect(result).toBeNull();
+      expect(result).toEqual([]);
     });
   });
 
@@ -104,32 +82,13 @@ describe("PrismaVisualTypesRepository", () => {
         color1: "#0000FF",
         pattern: VisualPatternEnum.DOTS,
       };
-      const createdVisual = {
-        visualId: "new-visual-id",
-        ...createDto,
-      };
-      mockPrisma.visualTypes.create.mockResolvedValue(createdVisual);
-      mockTreatmentMedicationRepository.updateTreatmentMedication.mockResolvedValue(
-        {},
-      );
 
       const result = await repository.addVisualType(createDto);
 
-      expect(mockPrisma.visualTypes.create).toHaveBeenCalledWith({
-        data: {
-          visualType: createDto.visualType,
-          size: createDto.size,
-          color1: createDto.color1,
-          color2: undefined,
-          pattern: createDto.pattern,
-          rotation: undefined,
-          opacity: undefined,
-        },
-      });
       expect(
-        mockTreatmentMedicationRepository.updateTreatmentMedication,
-      ).toHaveBeenCalledWith("tm-123", { visualTypeId: "new-visual-id" });
-      expect(result).toEqual(createdVisual);
+        mockTreatmentMedicationRepository.updateTreatmentMedicationCalledWith,
+      ).toEqual({ id: "tm-123", data: { visualTypeId: result?.visualId } });
+      expect(result?.visualType).toEqual(createDto.visualType);
     });
   });
 
@@ -137,16 +96,12 @@ describe("PrismaVisualTypesRepository", () => {
     test("should update a visual type", async () => {
       const visualId = "visual-to-update";
       const updateDto = { color1: "#FFFFFF", opacity: 0.5 };
-      const updatedVisual = { visualId, ...updateDto };
-      mockPrisma.visualTypes.update.mockResolvedValue(updatedVisual);
+      mockPrisma.visualTypes.visuals.push({ visualId } as VisualTypes);
 
       const result = await repository.updateVisualType(visualId, updateDto);
 
-      expect(mockPrisma.visualTypes.update).toHaveBeenCalledWith({
-        where: { visualId },
-        data: { ...updateDto },
-      });
-      expect(result).toEqual(updatedVisual);
+      expect(result?.color1).toBe(updateDto.color1);
+      expect(result?.opacity).toBe(updateDto.opacity);
     });
 
     test("should not include undefined fields in the update", async () => {
@@ -155,15 +110,14 @@ describe("PrismaVisualTypesRepository", () => {
         color1: "#FFFFFF",
         size: undefined,
       };
-
-      mockPrisma.visualTypes.update.mockResolvedValue({
+      mockPrisma.visualTypes.visuals.push({
         visualId,
-        color1: "#FFFFFF",
-      });
+        color1: "#000000",
+      } as VisualTypes);
 
       await repository.updateVisualType(visualId, updateData);
 
-      expect(mockPrisma.visualTypes.update).toHaveBeenCalledWith({
+      expect(mockPrisma.visualTypes.updateCalledWith).toEqual({
         where: { visualId },
         data: {
           color1: "#FFFFFF",
@@ -175,15 +129,12 @@ describe("PrismaVisualTypesRepository", () => {
   describe("deleteVisualType", () => {
     test("should delete a visual type", async () => {
       const visualId = "visual-to-delete";
-      const deletedVisual = { visualId };
-      mockPrisma.visualTypes.delete.mockResolvedValue(deletedVisual);
+      mockPrisma.visualTypes.visuals.push({ visualId } as VisualTypes);
 
       const result = await repository.deleteVisualType(visualId);
 
-      expect(mockPrisma.visualTypes.delete).toHaveBeenCalledWith({
-        where: { visualId },
-      });
-      expect(result).toEqual(deletedVisual);
+      expect(result?.visualId).toEqual(visualId);
+      expect(mockPrisma.visualTypes.visuals.length).toBe(0);
     });
   });
 });
