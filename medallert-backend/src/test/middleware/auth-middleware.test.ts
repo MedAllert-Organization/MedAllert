@@ -1,33 +1,44 @@
-import {
-  jest,
-  describe,
-  test,
-  expect,
-  beforeEach,
-  afterEach,
-} from "@jest/globals";
+import { describe, test, expect, beforeEach } from "@jest/globals";
 import { Hono } from "hono";
-import { authMiddleware } from "../../routes/middleware/auth-middleware.js";
-import { defaultTokenProvider } from "../../common/jwt.js";
+import { authMiddlewareFactory } from "../../routes/middleware/auth-middleware.js";
+import type { Env } from "../../common/type-helpers.js";
+import type { JWTProvider } from "../../common/jwt.js";
+
+class MockJWTProvider implements JWTProvider {
+  private payload: unknown = null;
+  public lastToken: string | null = null;
+
+  async createToken(userId: string): Promise<string> {
+    return "mock-token";
+  }
+  async validateToken(token: string): Promise<unknown> {
+    this.lastToken = token;
+    if (this.payload) {
+      return Promise.resolve(this.payload);
+    }
+    return Promise.reject("Invalid token");
+  }
+
+  setTokenPayload(payload: unknown) {
+    this.payload = payload;
+  }
+}
 
 describe("authMiddleware", () => {
-  let app: Hono;
-  let validateTokenSpy: jest.SpyInstance;
+  let app: Hono<Env>;
+  let mockTokenProvider: MockJWTProvider;
 
   beforeEach(() => {
-    app = new Hono();
-    validateTokenSpy = jest.spyOn(defaultTokenProvider, "validateToken");
+    app = new Hono<Env>();
+    mockTokenProvider = new MockJWTProvider();
+    const authMiddleware = authMiddlewareFactory(mockTokenProvider);
     app.use("*", authMiddleware);
     app.get("/test", (c) => c.json({ userId: c.get("userId") }));
   });
 
-  afterEach(() => {
-    jest.restoreAllMocks();
-  });
-
   test("should set userId for a valid token", async () => {
     const userId = "user-123";
-    validateTokenSpy.mockResolvedValue({ sub: userId });
+    mockTokenProvider.setTokenPayload({ sub: userId });
 
     const req = new Request("http://localhost/test", {
       headers: {
@@ -40,20 +51,17 @@ describe("authMiddleware", () => {
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.userId).toBe(userId);
-    expect(validateTokenSpy).toHaveBeenCalledWith("valid-token");
+    expect(mockTokenProvider.lastToken).toBe("valid-token");
   });
 
   test("should return 401 for a missing token", async () => {
-    validateTokenSpy.mockResolvedValue(null);
     const req = new Request("http://localhost/test");
     const res = await app.request(req);
     expect(res.status).toBe(401);
-    expect(validateTokenSpy).toHaveBeenCalledWith("");
+    expect(mockTokenProvider.lastToken).toBe("");
   });
 
   test("should return 401 for an invalid token", async () => {
-    validateTokenSpy.mockResolvedValue(null);
-
     const req = new Request("http://localhost/test", {
       headers: {
         Authorization: "Bearer invalid-token",
@@ -63,11 +71,10 @@ describe("authMiddleware", () => {
     const res = await app.request(req);
 
     expect(res.status).toBe(401);
-    expect(validateTokenSpy).toHaveBeenCalledWith("invalid-token");
+    expect(mockTokenProvider.lastToken).toBe("invalid-token");
   });
 
   test("should return 401 for a malformed Authorization header", async () => {
-    validateTokenSpy.mockResolvedValue(null);
     const req = new Request("http://localhost/test", {
       headers: {
         Authorization: "invalid-token",
@@ -77,6 +84,6 @@ describe("authMiddleware", () => {
     const res = await app.request(req);
 
     expect(res.status).toBe(401);
-    expect(validateTokenSpy).toHaveBeenCalledWith("invalid-token");
+    expect(mockTokenProvider.lastToken).toBe("invalid-token");
   });
 });
