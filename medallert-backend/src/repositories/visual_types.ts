@@ -57,7 +57,7 @@ export interface VisualTypesRepository {
   deleteVisualType(id: string): Promise<VisualTypes | null>;
 }
 
-class PrismaVisualTypesRepository implements VisualTypesRepository {
+export class PrismaVisualTypesRepository implements VisualTypesRepository {
   constructor(
     private readonly prisma: PrismaClient,
     private readonly treatmentMedicationRepository: TreatmentMedicationRepository,

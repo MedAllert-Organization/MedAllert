@@ -2,11 +2,10 @@ import { error, ok, t } from "try";
 import z from "zod";
 import type { PromiseResult } from "../common/type-helpers.js";
 import type { MedicationRepository } from "../repositories/medications.js";
-import type {TreatmentRepository,Treatment} from "../repositories/treatments.js";
+import type { TreatmentRepository, Treatment } from "../repositories/treatments.js";
 import type { UsersRepository } from "../repositories/users.js";
 import type { TreatmentMedicationRepository } from "../repositories/treatmentMedication.js";
 import { VisualPatternEnum, VisualSizeEnum, VisualTypeEnum } from "../repositories/visual_types.ts";
-
 
 export const VisualTypeEnumZod = z.nativeEnum(VisualTypeEnum);
 export const VisualSizeEnumZod = z.nativeEnum(VisualSizeEnum);
@@ -67,71 +66,71 @@ export class TreatmentService {
     return ok(treatment);
   }
 
- async create(
-  userId: string,
-  {
-    name,
-    description,
-    startAt,
-    endAt,
-    medications,
-  }: {
-    name: string;
-    description?: string | null;
-    startAt: Date;
-    endAt?: Date | null;
-    medications: {
-      medicationId: string;
-      dose: string;
-      alertPeriodInMinutes: number;
-      totalQuantity: number;
-      visualType: {
-        visualType: string;
-        size: string;
-        color1: string;
-        color2?: string;
-        pattern: string;
-      } | null;
-    }[];
-  },
-) {
-  const user = await this.usersRepository.findUser(userId);
-  if (!user) return error("User not found!");
-
-  const meds = await this.medicationRepository.findMedications(
-    medications.map((m) => m.medicationId),
-  );
-
-  if (meds.length !== medications.length)
-    return error("Um ou mais medicamentos não foram encontrados.");
-
-  const medsWithDefaults = medications.map((m) => ({
-    ...m,
-    lastTaken: null,
-    takenQuantity: 0,
-  }));
-
-  try {
-    const createdTreatment = await this.treatmentRepository.addTreatment({
-      userId,
+  async create(
+    userId: string,
+    {
       name,
-      description: description ?? null,
+      description,
       startAt,
-      endAt: endAt ?? null,
-      medications: medsWithDefaults,
-    });
+      endAt,
+      medications,
+    }: {
+      name: string;
+      description?: string | null;
+      startAt: Date;
+      endAt?: Date | null;
+      medications: {
+        medicationId: string;
+        dose: string;
+        alertPeriodInMinutes: number;
+        totalQuantity: number;
+        visualType: {
+          visualType: string;
+          size: string;
+          color1: string;
+          color2?: string;
+          pattern: string;
+        } | null;
+      }[];
+    },
+  ) {
+    const user = await this.usersRepository.findUser(userId);
+    if (!user) return error("User not found!");
 
-    if (!createdTreatment) {
-      return error("Failed to create treatment");
+    const meds = await this.medicationRepository.findMedications(
+      medications.map((m) => m.medicationId),
+    );
+
+    if (meds.length !== medications.length)
+      return error("Um ou mais medicamentos não foram encontrados.");
+
+    const medsWithDefaults = medications.map((m) => ({
+      ...m,
+      lastTaken: null,
+      takenQuantity: 0,
+    }));
+
+    try {
+      const createdTreatment = await this.treatmentRepository.addTreatment({
+        userId,
+        name,
+        description: description ?? null,
+        startAt,
+        endAt: endAt ?? null,
+        medications: medsWithDefaults,
+      });
+
+      if (!createdTreatment) {
+        return error("Failed to create treatment");
+      }
+
+      return ok(createdTreatment);
+    } catch (err: any) {
+      // Aqui você pode mapear erros específicos do Prisma se quiser
+      console.error("Erro Prisma:", err);
+      return error(err.message || "Failed to create treatment");
     }
-
-    return ok(createdTreatment);
-  } catch (err: any) {
-    // Aqui você pode mapear erros específicos do Prisma se quiser
-    console.error("Erro Prisma:", err);
-    return error(err.message || "Failed to create treatment");
   }
-}
 
   async update(
     treatmentId: string,
