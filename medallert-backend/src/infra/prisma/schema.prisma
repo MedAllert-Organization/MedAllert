@@ -176,14 +176,26 @@ enum VisualPatternEnum {
   SOLID
   STRIPED
   HALF
-  RING
+  RINGA
   DOTS
   BAND
   GRADIENT
 }
 
+enum SoundFormatEnum{
+  MP3
+  WAV
+  M4A
+  AAC
+  OGG
+  CAF
+}
+
 model SoundTypes {
   soundId     String        @id @default(cuid()) @map("sound_id")
+  name        String
+  duration    Int
+  format      String
   sound       String
   createdAt   DateTime      @default(now()) @map("created_at")
   updatedAt   DateTime      @updatedAt @map("updated_at")

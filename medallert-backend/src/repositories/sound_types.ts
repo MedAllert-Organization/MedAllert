@@ -2,8 +2,21 @@ import { prisma } from "../infra/prisma/client.js";
 import type { PrismaClient } from "../infra/prisma/generated/prisma/index.js";
 
 export type SoundTypes = {
+  soundId: string;
+  name: string;
+  duration: number;
+  format: string;
   sound: string;
 };
+
+export enum SoundFormatEnum{
+  MP3 = 'MP3',
+  WAV = 'WAV',
+  M4A = 'M4A',
+  AAC = 'AAC',
+  OGG = 'OGG',
+  CAF = 'CAF'
+}
 
 export interface SoundTypesRepository {
   findSoundType(id: string): Promise<SoundTypes | null>;
