@@ -27,6 +27,7 @@ export interface UsersRepository {
   confirmUserAccount(email: string): Promise<void>;
   deleteUser(userId: string): Promise<void>;
   getUserTimezone(userId: string): Promise<Timezone | null>;
+  updateUserTimezone(userId: string, timezoneId: string): Promise<void>;
 }
 
 export class PrismaUsersRepository implements UsersRepository {
@@ -97,6 +98,13 @@ export class PrismaUsersRepository implements UsersRepository {
     });
 
     return user?.timezone || null;
+  }
+
+  async updateUserTimezone(userId: string, timezoneId: string): Promise<void> {
+    await this.prisma.users.update({
+      where: { userId },
+      data: { timezoneId },
+    });
   }
 }
 

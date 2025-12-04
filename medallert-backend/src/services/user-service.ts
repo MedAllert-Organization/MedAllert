@@ -12,6 +12,10 @@ export class UserService {
 
     return timezone?.name || "UTC";
   }
+
+  async updateUserTimezone(userId: string, timezoneId: string): Promise<void> {
+    await this.usersRepository.updateUserTimezone(userId, timezoneId);
+  }
 }
 
 export const defaultUserService = new UserService(defaultUsersRepository);
