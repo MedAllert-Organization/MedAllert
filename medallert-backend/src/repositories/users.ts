@@ -38,8 +38,8 @@ export class PrismaUsersRepository implements UsersRepository {
     });
   }
 
-  async findConfirmedUserByEmail(email:string): Promise<User | null> {
-    return this.prisma.users.findUnique({
+  async findConfirmedUserByEmail(email: string): Promise<User | null> {
+    return this.prisma.users.findFirst({
       where: { email, accountConfirmedAt: { not: null } },
     });
   }
