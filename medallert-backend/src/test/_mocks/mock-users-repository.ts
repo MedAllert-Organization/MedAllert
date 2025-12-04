@@ -1,56 +1,94 @@
+import { jest } from "@jest/globals";
 import type { Timezone } from "../../infra/prisma/generated/prisma/index.js";
 import type { User, UsersRepository } from "../../repositories/users.js";
 
 export class MockUsersRepository implements UsersRepository {
+  users: User[] = [];
+  timezones: Timezone[] = [];
+  deleteUserCalledWith: string | null = null;
+  private shouldThrow = false;
+  private errorMessage = "";
 
-  private users: User[] = [];
-  public deleteUserCalledWith: string | null = null;
-  private shouldThrowError = false;
-  private errorMessage = "User not found";
-  
-  getUserTimezone(userId: string): Promise<Timezone | null> {
-    throw new Error("Method not implemented.");
-  }
-  findAnyUserByEmail(email: string): Promise<User | null> {
-    throw new Error("Method not implemented.");
-  }
-  findConfirmedUserByEmail(email: string): Promise<User | null> {
-    throw new Error("Method not implemented.");
-  }
-  findUser(id: string): Promise<User | null> {
-    throw new Error("Method not implemented.");
-  }
-  addUser(newUser: { fullName: string; email: string; hash: string; phone: string; }): Promise<User | null> {
-    throw new Error("Method not implemented.");
-  }
-  updatePasswordForUser(userId: string, newPassword: string): Promise<void> {
-    throw new Error("Method not implemented.");
-  }
-  confirmUserAccount(email: string): Promise<void> {
-    throw new Error("Method not implemented.");
-  }
-  async deleteUser(userId: string): Promise<void> {
+  findAnyUserByEmail = jest.fn(async (email: string): Promise<User | null> => {
+    return this.users.find((user) => user.email === email) || null;
+  });
+
+  findConfirmedUserByEmail = jest.fn(
+    async (email: string): Promise<User | null> => {
+      return (
+        this.users.find(
+          (user) => user.email === email && user.accountConfirmedAt !== null,
+        ) || null
+      );
+    },
+  );
+
+  findUser = jest.fn(async (id: string): Promise<User | null> => {
+    return this.users.find((user) => user.userId === id) || null;
+  });
+
+  addUser = jest.fn(
+    async (newUser: {
+      fullName: string;
+      email: string;
+      hash: string;
+      phone: string;
+    }): Promise<User | null> => {
+      const user: User = {
+        userId: `user-${this.users.length + 1}`,
+        ...newUser,
+        timezoneId: null,
+        image: null,
+        acceptedTosAt: new Date(),
+        accountConfirmedAt: null,
+      };
+      this.users.push(user);
+      return user;
+    },
+  );
+
+  updatePasswordForUser = jest.fn(
+    async (userId: string, newPassword: string): Promise<void> => {
+      const user = this.users.find((user) => user.userId === userId);
+      if (user) {
+        user.hash = newPassword;
+      }
+    },
+  );
+
+  confirmUserAccount = jest.fn(async (email: string): Promise<void> => {
+    const user = this.users.find((user) => user.email === email);
+    if (user) {
+      user.accountConfirmedAt = new Date();
+    }
+  });
+
+  deleteUser = jest.fn(async (userId: string): Promise<void> => {
     this.deleteUserCalledWith = userId;
-    if (this.shouldThrowError) {
+    if (this.shouldThrow) {
       throw new Error(this.errorMessage);
     }
-    const userIndex = this.users.findIndex(u => u.userId === userId);
-    if (userIndex > -1) {
-      this.users.splice(userIndex, 1);
-      return Promise.resolve();
+    const index = this.users.findIndex((user) => user.userId === userId);
+    if (index !== -1) {
+      this.users.splice(index, 1);
     }
-  }
+  });
 
-  reset() {
-    this.users = [];
-    this.deleteUserCalledWith = null;
-    this.shouldThrowError = false;
-  }
+  getUserTimezone = jest.fn(
+    async (userId: string): Promise<Timezone | null> => {
+      const user = this.users.find((user) => user.userId === userId);
+      if (user?.timezoneId) {
+        return (
+          this.timezones.find((tz) => tz.id === user.timezoneId) ||
+          null
+        );
+      }
+      return null;
+    },
+  );
 
-  setShouldThrowError(shouldThrow: boolean, message?: string) {
-    this.shouldThrowError = shouldThrow;
-    if (message) {
-      this.errorMessage = message;
-    }
+  setShouldThrowError(shouldThrow: boolean, errorMessage: string) {
+    this.shouldThrow = shouldThrow;
+    this.errorMessage = errorMessage;
   }
 }
