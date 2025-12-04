@@ -5,12 +5,7 @@ import { defaultUsersRepository, type UsersRepository } from "./users.js";
 import { defaultTreatmentRepository, type TreatmentRepository } from "./treatments.js";
 
 export type TreatmentMedication = {
-<<<<<<< HEAD
   id: string;
-=======
- // updatedAt: Date | null | undefined;
- // createdAt: Date | null | undefined;
->>>>>>> 6fa8a3af97a674684b5e90bda82476fb39df449f
   treatmentId: string;
   medicationId: string;
   dose: string;

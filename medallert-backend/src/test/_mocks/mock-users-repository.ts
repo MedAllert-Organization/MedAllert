@@ -1,11 +1,16 @@
+import type { Timezone } from "../../infra/prisma/generated/prisma/index.js";
 import type { User, UsersRepository } from "../../repositories/users.js";
 
 export class MockUsersRepository implements UsersRepository {
+
   private users: User[] = [];
   public deleteUserCalledWith: string | null = null;
   private shouldThrowError = false;
   private errorMessage = "User not found";
-
+  
+  getUserTimezone(userId: string): Promise<Timezone | null> {
+    throw new Error("Method not implemented.");
+  }
   findAnyUserByEmail(email: string): Promise<User | null> {
     throw new Error("Method not implemented.");
   }
