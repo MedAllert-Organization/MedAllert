@@ -45,6 +45,9 @@ class PrismaSoundTypesRepository implements SoundTypesRepository {
   }
 
   async addSoundType(newSoundType: {
+    name: string;
+    duration: number;
+    format: SoundFormatEnum;
     sound: string;
   }): Promise<SoundTypes | null> {
     return await this.prisma.soundTypes.create({
@@ -58,6 +61,9 @@ class PrismaSoundTypesRepository implements SoundTypesRepository {
     id: string,
     updateSoundType: {
       sound?: string | null;
+      name?: string | null;
+      format?: SoundFormatEnum | null;
+      duration?: number | null;
     },
   ): Promise<SoundTypes | null> {
     const { ...data } = updateSoundType;
