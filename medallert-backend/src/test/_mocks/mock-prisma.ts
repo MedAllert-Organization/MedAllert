@@ -1,4 +1,5 @@
 
+import type { Medication } from "../../repositories/medications.js";
 import type { VisualTypes } from "../../repositories/visual_types.js";
 import type { User } from "../../repositories/users.js";
 import type { Timezone } from "../../infra/prisma/generated/prisma/index.js";
@@ -147,17 +148,86 @@ export class MockPrismaVisualTypes {
   }
 }
 
+export class MockPrismaMedications {
+  medications: Medication[] = [];
+
+  findUnique(query: { where: { medicationId: string } }) {
+    return Promise.resolve(
+      this.medications.find((m) => m.medicationId === query.where.medicationId) || null,
+    );
+  }
+
+  findMany(query?: { where: { medicationId?: string | { in: string[] }; userId?: string } }) {
+    let filteredMedications = this.medications;
+
+    if (query?.where?.medicationId) {
+      if (typeof query.where.medicationId === 'string') {
+        filteredMedications = filteredMedications.filter(m => m.medicationId === query.where.medicationId);
+      } else if (typeof query.where.medicationId === 'object' && query.where.medicationId !== null && 'in' in query.where.medicationId && Array.isArray((query.where.medicationId as { in: string[] }).in)) {
+        filteredMedications = filteredMedications.filter(m => (query.where.medicationId as { in: string[] }).in.includes(m.medicationId));
+      }
+    }
+    
+    if (query?.where?.userId) {
+      filteredMedications = filteredMedications.filter(m => m.userId === query.where.userId);
+    }
+    return Promise.resolve(filteredMedications);
+  }
+  
+  create(query: { data: any }) {
+    const newMedication: Medication = {
+      medicationId: `new-medication-${this.medications.length + 1}`,
+      ...query.data,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.medications.push(newMedication);
+    return Promise.resolve(newMedication);
+  }
+
+  update(query: { where: { medicationId: string }; data: any }) {
+    const medicationIndex = this.medications.findIndex(
+      (m) => m.medicationId === query.where.medicationId,
+    );
+    if (medicationIndex > -1) {
+      this.medications[medicationIndex] = { ...this.medications[medicationIndex], ...query.data, updatedAt: new Date() };
+      return Promise.resolve(this.medications[medicationIndex]);
+    }
+    return Promise.resolve(null);
+  }
+
+  delete(query: { where: { medicationId: string } }) {
+    const medicationIndex = this.medications.findIndex(
+      (m) => m.medicationId === query.where.medicationId,
+    );
+    if (medicationIndex > -1) {
+      const deleted = this.medications.splice(medicationIndex, 1);
+      return Promise.resolve(deleted[0]);
+    }
+    return Promise.resolve(null);
+  }
+
+  deleteMany() {
+    const count = this.medications.length;
+    this.medications = [];
+    return Promise.resolve({ count });
+  }
+
+  reset() {
+    this.medications = [];
+  }
+}
+
+
 export class MockPrisma {
   timezones: Timezone[] = [];
   users = new MockPrismaUsers(this.timezones);
   visualTypes = new MockPrismaVisualTypes();
+  medications = new MockPrismaMedications();
+
   $transaction(promises: any[]) {
     return Promise.all(promises);
   }
-  medications = {
-    findMany: () => Promise.resolve([]),
-    deleteMany: () => Promise.resolve({ count: 0 }),
-  };
   annotations = {
     deleteMany: () => Promise.resolve({ count: 0 }),
   };
@@ -176,6 +246,7 @@ export class MockPrisma {
   reset() {
     this.users.reset();
     this.visualTypes.reset();
+    this.medications.reset();
     this.timezones = [];
   }
 }

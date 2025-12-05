@@ -34,7 +34,7 @@ export interface MedicationRepository {
   deleteMedication(id: string): Promise<Medication | null>;
 }
 
-class PrismaMedicationRepository implements MedicationRepository {
+export class PrismaMedicationRepository implements MedicationRepository {
   constructor(private readonly prisma: PrismaClient) { }
 
   findMedications(medicationIds: string[]): Promise<Medication[]> {
