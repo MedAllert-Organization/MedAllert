@@ -2,7 +2,8 @@
 import type { Medication } from "../../repositories/medications.js";
 import type { VisualTypes } from "../../repositories/visual_types.js";
 import type { User } from "../../repositories/users.js";
-import type { Timezone } from "../../infra/prisma/generated/prisma/index.js";
+import type { Timezone, Treatments, TreatmentMedication, VisualPatternEnum, VisualSizeEnum } from "../../infra/prisma/generated/prisma/index.js";
+import { VisualTypeEnum } from "../../infra/prisma/generated/prisma/index.js";
 
 export class MockPrismaUsers {
   users: User[] = [];
@@ -107,12 +108,20 @@ export class MockPrismaVisualTypes {
     return Promise.resolve(this.visuals);
   }
   create(query: { data: any }) {
-    const newVisual = {
+    const newVisual: VisualTypes = {
       visualId: `new-visual-${this.visuals.length + 1}`,
-      ...query.data,
       createdAt: new Date(),
       updatedAt: new Date(),
+      visualType: query.data.visualType ?? VisualTypeEnum.PILL,
+      size: query.data.size,
+      color1: query.data.color1,
+      color2: query.data.color2,
+      pattern: query.data.pattern,
+      opacity: query.data.opacity,
+      rotation: query.data.rotation,
+      treatmentMedication: undefined,
     };
+
     this.visuals.push(newVisual);
     return Promise.resolve(newVisual);
   }
@@ -218,15 +227,127 @@ export class MockPrismaMedications {
   }
 }
 
+export class MockPrismaTreatments {
+  treatments: Treatments[] = [];
+
+  constructor(private readonly mockPrismaTreatmentMedication: MockPrismaTreatmentMedication, private readonly mockPrismaUsers: MockPrismaUsers) {}
+
+  create(query: { data: any }) {
+    const newTreatment: Treatments = {
+      treatmentId: `new-treatment-${this.treatments.length + 1}`,
+      ...query.data,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.treatments.push(newTreatment);
+    return Promise.resolve(newTreatment);
+  }
+
+  findUnique(query: { where: { treatmentId: string }, include?: { medications?: { include: { medication: true, visualType: true } } } }) {
+    const treatment = this.treatments.find(t => t.treatmentId === query.where.treatmentId);
+    if (!treatment) return Promise.resolve(null);
+
+    if (query.include?.medications) {
+      const medications = this.mockPrismaTreatmentMedication.treatmentMedications.filter(tm => tm.treatmentId === treatment.treatmentId);
+      return Promise.resolve({ ...treatment, medications });
+    }
+
+    return Promise.resolve(treatment);
+  }
+
+  findMany(query: { where: { userId: string }, include?: { medications?: { include: { medication: true, visualType: true } } } }) {
+    const treatments = this.treatments.filter(t => t.userId === query.where.userId);
+
+    if (query.include?.medications) {
+      const result = treatments.map(t => {
+        const medications = this.mockPrismaTreatmentMedication.treatmentMedications.filter(tm => tm.treatmentId === t.treatmentId);
+        return { ...t, medications };
+      });
+      return Promise.resolve(result);
+    }
+
+    return Promise.resolve(treatments);
+  }
+
+  update(query: { where: { treatmentId: string }; data: any }) {
+    const treatmentIndex = this.treatments.findIndex(t => t.treatmentId === query.where.treatmentId);
+    if (treatmentIndex > -1) {
+      this.treatments[treatmentIndex] = { ...this.treatments[treatmentIndex], ...query.data, updatedAt: new Date() };
+      return Promise.resolve(this.treatments[treatmentIndex]);
+    }
+    return Promise.resolve(null);
+  }
+
+  delete(query: { where: { treatmentId: string } }) {
+    const treatmentIndex = this.treatments.findIndex(t => t.treatmentId === query.where.treatmentId);
+    if (treatmentIndex > -1) {
+      const deleted = this.treatments.splice(treatmentIndex, 1);
+      return Promise.resolve(deleted[0]);
+    }
+    return Promise.resolve(null);
+  }
+
+  deleteMany() {
+    const count = this.treatments.length;
+    this.treatments = [];
+    return Promise.resolve({ count });
+  }
+
+  reset() {
+    this.treatments = [];
+  }
+}
+
+export class MockPrismaTreatmentMedication {
+  treatmentMedications: (TreatmentMedication & { medication: Medication, visualType: VisualTypes | null })[] = [];
+
+  constructor(private readonly mockPrismaMedications: MockPrismaMedications, private readonly mockPrismaVisualTypes: MockPrismaVisualTypes) {}
+
+  create(query: { data: any }) {
+    const medication = this.mockPrismaMedications.medications.find(m => m.medicationId === query.data.medicationId);
+    if (!medication) throw new Error("Medication not found");
+
+    const visualType = query.data.visualTypeId ? this.mockPrismaVisualTypes.visuals.find(v => v.visualId === query.data.visualTypeId) : null;
+
+
+    const newTm: (TreatmentMedication & { medication: Medication, visualType: VisualTypes | null }) = {
+      id: `new-tm-${this.treatmentMedications.length + 1}`,
+      ...query.data,
+      medication,
+      visualType,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.treatmentMedications.push(newTm);
+    return Promise.resolve(newTm);
+  }
+
+  deleteMany(query: { where: { treatmentId: string } }) {
+    const initialCount = this.treatmentMedications.length;
+    this.treatmentMedications = this.treatmentMedications.filter(tm => tm.treatmentId !== query.where.treatmentId);
+    return Promise.resolve({ count: initialCount - this.treatmentMedications.length });
+  }
+
+  reset() {
+    this.treatmentMedications = [];
+  }
+}
+
 
 export class MockPrisma {
   timezones: Timezone[] = [];
   users = new MockPrismaUsers(this.timezones);
   visualTypes = new MockPrismaVisualTypes();
   medications = new MockPrismaMedications();
+  treatmentMedication = new MockPrismaTreatmentMedication(this.medications, this.visualTypes);
+  treatments = new MockPrismaTreatments(this.treatmentMedication, this.users);
+  private transactionPromises: any[] = [];
 
-  $transaction(promises: any[]) {
-    return Promise.all(promises);
+  $transaction(promises: ((prisma: any) => Promise<any>) | any[]) {
+    if (Array.isArray(promises)) {
+      return Promise.all(promises);
+    }
+    return promises(this);
   }
   annotations = {
     deleteMany: () => Promise.resolve({ count: 0 }),
@@ -237,9 +358,6 @@ export class MockPrisma {
   treatmentShares = {
     deleteMany: () => Promise.resolve({ count: 0 }),
   };
-  treatments = {
-    deleteMany: () => Promise.resolve({ count: 0 }),
-  };
   verificationCodes = {
     deleteMany: () => Promise.resolve({ count: 0 }),
   };
@@ -247,6 +365,8 @@ export class MockPrisma {
     this.users.reset();
     this.visualTypes.reset();
     this.medications.reset();
+    this.treatmentMedication.reset();
+    this.treatments.reset();
     this.timezones = [];
   }
 }

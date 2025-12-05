@@ -38,11 +38,11 @@ export interface TreatmentRepository {
       takenQuantity?: number;
       totalQuantity?: number;
       visualType: {
-        visualType: string;
-        size: string;
+        visualType: VisualTypeEnum;
+        size: VisualSizeEnum;
         color1: string;
         color2?: string;
-        pattern: string;
+        pattern: VisualPatternEnum;
       } | null;
     }[];
   }): Promise<Treatment | null>;
@@ -58,7 +58,7 @@ export interface TreatmentRepository {
   deleteTreatment(id: string): Promise<Treatment | null>;
 }
 
-class PrismaTreatmentRepository implements TreatmentRepository {
+export class PrismaTreatmentRepository implements TreatmentRepository {
   constructor(private readonly prisma: PrismaClient) { }
 
   async findTreatment(id: string): Promise<Treatment | null> {
