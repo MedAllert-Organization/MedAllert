@@ -14,7 +14,8 @@
     "prepare": "husky install",
     "commit": "git-cz",
     "test:watch": "NODE_OPTIONS='--experimental-vm-modules' jest --watch",
-    "test": "NODE_OPTIONS='--experimental-vm-modules' jest"
+    "test": "NODE_OPTIONS='--experimental-vm-modules' jest",
+    "seed": "tsx src/infra/prisma/seed.ts"
   },
   "config": {
     "commitizen": {
@@ -25,7 +26,6 @@
     "@hono/node-server": "1.19.0",
     "@hono/swagger-ui": "0.5.2",
     "@hono/zod-validator": "^0.4.3",
-    "@prisma/client": "^6.16.2",
     "@prisma/client": "^6.19.0",
     "argon2": "0.44.0",
     "date-fns": "^4.1.0",

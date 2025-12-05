@@ -3,11 +3,16 @@ import type { Timezone } from "../../infra/prisma/generated/prisma/index.js";
 import type { User, UsersRepository } from "../../repositories/users.js";
 
 export class MockUsersRepository implements UsersRepository {
+
   users: User[] = [];
   timezones: Timezone[] = [];
   deleteUserCalledWith: string | null = null;
   private shouldThrow = false;
   private errorMessage = "";
+
+  updateUserTimezone(userId: string, timezoneId: string): Promise<void> {
+    throw new Error("Method not implemented.");
+  }
 
   findAnyUserByEmail = jest.fn(async (email: string): Promise<User | null> => {
     return this.users.find((user) => user.email === email) || null;
