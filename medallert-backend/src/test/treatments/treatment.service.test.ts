@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from "@jest/globals";
+import { describe, it, expect, beforeEach, jest } from "@jest/globals";
 import { TreatmentService } from "../../services/treatment-serivce.js";
 import { MockUsersRepository } from "../_mocks/mock-users-repository.js";
 import { MockTreatmentRepository } from "../_mocks/mock-treatment-repository.js";
@@ -168,6 +168,7 @@ describe("TreatmentService", () => {
         });
 
         it("should return an error if addTreatment fails", async () => {
+            const spy = jest.spyOn(console, "error").mockImplementation(() => {});
             treatmentRepository.addTreatment.mockRejectedValue(new Error("DB error"));
 
             const result = await service.create(user.userId, {
@@ -186,9 +187,11 @@ describe("TreatmentService", () => {
 
             expect(result.value).toBeUndefined();
             expect(result.error).toBe("DB error");
+            spy.mockRestore();
         });
 
         it("should return a generic error if addTreatment fails without a message", async () => {
+            const spy = jest.spyOn(console, "error").mockImplementation(() => {});
             treatmentRepository.addTreatment.mockRejectedValue(new Error());
 
             const result = await service.create(user.userId, {
@@ -207,6 +210,7 @@ describe("TreatmentService", () => {
 
             expect(result.value).toBeUndefined();
             expect(result.error).toBe("Failed to create treatment");
+            spy.mockRestore();
         });
     });
 
