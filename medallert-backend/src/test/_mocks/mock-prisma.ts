@@ -1,4 +1,3 @@
-
 import type { Medication } from "../../repositories/medications.js";
 import type { VisualTypes } from "../../repositories/visual_types.js";
 import type { User } from "../../repositories/users.js";
