@@ -85,11 +85,11 @@ export class TreatmentService {
         alertPeriodInMinutes: number;
         totalQuantity: number;
         visualType: {
-          visualType: string;
-          size: string;
+          visualType: VisualTypeEnum;
+          size: VisualSizeEnum;
           color1: string;
           color2?: string;
-          pattern: string;
+          pattern: VisualPatternEnum;
         } | null;
       }[];
     },
