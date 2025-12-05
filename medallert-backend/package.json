@@ -14,7 +14,7 @@
     "prepare": "husky install",
     "commit": "git-cz",
     "test:watch": "NODE_OPTIONS='--experimental-vm-modules' jest --watch",
-    "test": "NODE_OPTIONS='--experimental-vm-modules' jest",
+    "test": "NODE_OPTIONS='--experimental-vm-modules' jest --collectCoverage",
     "seed": "tsx src/infra/prisma/seed.ts"
   },
   "config": {
