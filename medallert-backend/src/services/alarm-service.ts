@@ -1,5 +1,9 @@
 import Sound from "react-native-sound";
 import type { SoundTypesRepository } from "../repositories/sound_types.js";
+import { SoundFormatEnum } from "../infra/prisma/generated/prisma/index.js";
+import { object } from "zod";
+import z from "zod";
+import { t } from "try";
 
 type playAlarmParams = {
   soundTypeId: string;
@@ -11,6 +15,19 @@ export class AlarmService {
   constructor(private readonly soundType_repository: SoundTypesRepository) {}
 
   private currentSound: Sound | null = null;
+
+  async createAlarm(
+    name:string,duration:number,format:string,sound:string
+  ){
+    if(!Object.values(SoundFormatEnum).includes(format as SoundFormatEnum)){
+      return Error("This format is not surported");
+    }
+    const [createdOk,_,createdAlarm] = await t(
+      this.soundType_repository.addSoundType({
+        sound
+      })
+    );
+  }
 
   async playAlarm({ soundTypeId, volume = 1.0, loop = true }: playAlarmParams) {
     const soundType = await this.soundType_repository.findSoundType(soundTypeId);
