@@ -192,43 +192,44 @@ class PrismaTreatmentMedicationRepository implements TreatmentMedicationReposito
 
   async findTodayMedicationsByUser(userId: string): Promise<any> {
     const user = await this.userRepository.findUser(userId);
+
     const timezone = user?.timezoneId
-      ? await this.prisma.timezone.findUnique({ where: { id: user.timezoneId } })
+      ? await this.prisma.timezone.findUnique({
+        where: { id: user.timezoneId },
+      })
       : null;
 
     const now = new Date();
     const todayStart = startOfDay(now);
     const todayEnd = endOfDay(now);
 
-    const treatments = await this.prisma.treatments.findMany({
+    const medicationsRaw = await this.prisma.treatmentMedication.findMany({
       where: {
-        userId,
-        startAt: { lte: todayEnd },
-        OR: [{ endAt: null }, { endAt: { gte: todayStart } }],
-      },
-      include: {
-        medications: {
-          include: { medication: true, visualType: true },
+        treatment: {
+          userId,
+          startAt: { lte: todayEnd },
+          OR: [
+            { endAt: null },
+            { endAt: { gte: todayStart } },
+          ],
         },
+      },
+      select: {
+        id: true,
+        treatmentId: true,
+        medicationId: true,
+        dose: true,
+        nextTakeAt: true,
+        lastTaken: true,
+        totalQuantity: true,
+        takenQuantity: true,
+        visualType: true,
+        medication: true,
       },
     });
 
-    const medications = treatments.flatMap(treatment =>
-      treatment.medications
-        .filter(tm => tm.takenQuantity <= tm.totalQuantity)
-        .map(tm => ({
-          id: tm.id,
-          treatmentId: tm.treatmentId,
-          medicationId: tm.medicationId,
-          name: tm.medication.name,
-          dose: tm.dose,
-          nextTakeAt: tm.nextTakeAt,
-          lastTaken: tm.lastTaken,
-          totalQuantity: tm.totalQuantity,
-          takenQuantity: tm.takenQuantity,
-          visualType: tm.visualType,
-        }))
-    );
+    const medications = medicationsRaw.filter(m => m.takenQuantity < m.totalQuantity);
+    console.log(medications);
 
     return {
       timezone,
