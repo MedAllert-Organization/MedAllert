@@ -6,6 +6,7 @@ import { authMiddleware } from "./routes/middleware/auth-middleware.js";
 import { configureOpenAPIDocs } from "./routes/open-api.js";
 
 import { user } from "./routes/user/index.js";
+import { timezone } from "./routes/timezone/index.ts";
 
 export const app = new Hono();
 
@@ -17,4 +18,5 @@ app.route("/auth", auth);
 /// Authenticated Routes
 app.use(authMiddleware);
 app.route("/medication", medicationIndex);
+app.route("/timezone", timezone);
 app.route("/user", user);

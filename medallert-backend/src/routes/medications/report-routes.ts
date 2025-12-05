@@ -1,107 +1,43 @@
-import fs from "fs";
 import { Hono } from "hono";
 import { describeRoute } from "hono-openapi";
-import { defaultTreatmentRepository } from "../../repositories/treatments.js";
 import { ReportService } from "../../services/report-service.js";
+import { defaultTreatmentRepository } from "../../repositories/treatments.js";
+import { error } from "node:console";
 
-const reportRoute = new Hono();
+export const reportRoute = new Hono();
 const reportService = new ReportService(defaultTreatmentRepository);
 
 reportRoute.get(
-  "/:period",
+  ":id/report",
   describeRoute({
     tags: ["Report"],
-    summary: "Gera relatório em PDF dos tratamentos de um usuário",
-    description:
-      "Gera um relatório em PDF com base no período solicitado (Weekly ou Monthly) para um usuário específico.",
-    parameters: [
-      {
-        name: "period",
-        in: "path",
-        required: true,
-        schema: { type: "string", enum: ["Weekly", "Monthly"] },
-        description:
-          "Período do relatório: 'Weekly' para semanal ou 'Monthly' para mensal",
+    description: "Gerar relatório sobre tratamento",
+    responses:{
+      200:{
+        description:"Successful in generate report"
       },
-    ],
-    responses: {
-      200: {
-        description: "Relatório PDF gerado com sucesso",
-        content: {
-          "application/pdf": {
-            schema: { type: "string", format: "binary" },
-          },
-        },
-      },
-      400: {
-        description: "Parâmetro inválido (period inválido)",
-        content: {
-          "application/json": {
-            schema: {
-              type: "object",
-              properties: {
-                error: {
-                  type: "string",
-                  example: "Período inválido! Use 'Weekly' ou 'Monthly'.",
-                },
-              },
-            },
-          },
-        },
-      },
-      500: {
-        description: "Erro interno ao gerar relatório",
-        content: {
-          "application/json": {
-            schema: {
-              type: "object",
-              properties: {
-                error: {
-                  type: "string",
-                  example: "Erro interno na tentativa de gerar relatório",
-                },
-              },
-            },
-          },
-        },
+      400:{
+        description:"Failed in generate report"
       },
     },
   }),
-  async (c) => {
-    try {
-      const { period } = c.req.param();
-      const userId = c.get("userId" as any);
+  async(c)=>{
+    try{
+      const id = c.req.param("id");
+      const pdfStream = await reportService.generatePDF(id);
+      
+      if(!id) return c.json({error:"Invalid or Missing id"},400);
 
-      if (period !== "Weekly" && period !== "Monthly") {
-        return c.json(
-          { error: "Período inválido! Use 'Weekly' ou 'Monthly'." },
-          400,
-        );
-      }
-
-      const filePath = await reportService.generateReport(userId, period);
-
-      if (!fs.existsSync(filePath)) {
-        return c.json({ error: "Erro ao gerar arquivo PDF" }, 500);
-      }
-
-      const fileBuffer = fs.readFileSync(filePath);
-      const fileName = `relatorio_tratamentos_${period}_${userId}.pdf`;
-
-      const uint8Array = new Uint8Array(fileBuffer);
-
-      return c.body(uint8Array, 200, {
-        "Content-Type": "application/pdf",
-        "Content-Disposition": `attachment; filename="${fileName}"`,
-        "Content-Length": fileBuffer.length.toString(),
+      return new Response(pdfStream as any,{
+        status: 200,
+        headers:{
+          "Content-type":"application/pdf",
+          "Content-Disposition":`attachment; filename="relatorio.pdf"`
+        }
       });
-    } catch (error) {
-      console.error("Erro ao gerar relatório:", error);
-      return c.json(
-        { error: "Erro interno na tentativa de gerar relatório" },
-        500,
-      );
-    }
-  },
+    }catch(error){
+      console.error(error);
+      return c.json({error:"It's not possible to generate pdf file"},400);
+    }   
+  }
 );
-export default reportRoute;

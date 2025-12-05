@@ -13,7 +13,8 @@
     "format": "npx @biomejs/biome check --write",
     "prepare": "husky install",
     "commit": "git-cz",
-    "test": "NODE_OPTIONS='--experimental-vm-modules' jest --watch"
+    "test:watch": "NODE_OPTIONS='--experimental-vm-modules' jest --watch",
+    "test": "NODE_OPTIONS='--experimental-vm-modules' jest"
   },
   "config": {
     "commitizen": {
@@ -25,9 +26,11 @@
     "@hono/swagger-ui": "0.5.2",
     "@hono/zod-validator": "^0.4.3",
     "@prisma/client": "^6.16.2",
+    "@prisma/client": "^6.19.0",
     "argon2": "0.44.0",
     "date-fns": "^4.1.0",
     "dayjs": "1.11.13",
+    "dotenv": "^17.2.3",
     "hono": "^4.9.8",
     "hono-openapi": "0.4.8",
     "install": "0.13.0",
@@ -51,8 +54,8 @@
     "dotenv-cli": "^10.0.0",
     "husky": "^9.1.7",
     "jest": "^30.2.0",
-    "prisma": "^6.16.2",
     "ts-jest": "^29.4.5",
+    "prisma": "^6.19.0",
     "tsx": "^4.20.5",
     "typescript": "5.8.3"
   },

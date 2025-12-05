@@ -1,49 +1,49 @@
-import { beforeEach, describe, expect, jest, test } from "@jest/globals";
+import { beforeEach, describe, expect, test } from "@jest/globals";
 import { error, ok } from "try";
 import {
   VisualPatternEnum,
   VisualSizeEnum,
   VisualTypeEnum,
   type VisualTypes,
-  type VisualTypesRepository,
 } from "../../repositories/visual_types.js";
 import { VisualTypesService } from "../../services/visual_type-service.js";
+import { MockVisualTypesRepository } from "../_mocks/mock-visual-types-repository.js";
 
-const mockVisualTypesRepository: jest.Mocked<VisualTypesRepository> = {
-  addVisualType: jest.fn(),
-  findAllVisuals: jest.fn(),
-  findVisualType: jest.fn(),
-  updateVisualType: jest.fn(),
-  deleteVisualType: jest.fn(),
-};
 
 describe("VisualTypesService", () => {
   let service: VisualTypesService;
+  let repository: MockVisualTypesRepository;
 
   beforeEach(() => {
-    jest.clearAllMocks();
-    service = new VisualTypesService(mockVisualTypesRepository);
+    repository = new MockVisualTypesRepository();
+    service = new VisualTypesService(repository);
   });
 
   describe("create", () => {
     test("should return ok with the created visual type", async () => {
       const newVisual = {
         treatmentMedicationId: "tm-123",
-        ...visualSample
+        ...visualSampleInput
       };
-      const created = { ...newVisual };
-      mockVisualTypesRepository.addVisualType.mockResolvedValue(created);
+      const created = {
+        visualId: "vt-1",
+        ...newVisual,
+        createdAt: expect.any(Date),
+        updatedAt: expect.any(Date),
+      };
+
 
       const result = await service.create(newVisual);
 
-      expect(mockVisualTypesRepository.addVisualType).toHaveBeenCalledWith(
-        newVisual,
-      );
-      expect(result).toEqual(ok(created));
+      expect(repository.addVisualTypeCalledWith).toEqual(newVisual);
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.value.visualId).toBeDefined();
+      }
     });
 
     test("should return an error if creation fails", async () => {
-      mockVisualTypesRepository.addVisualType.mockResolvedValue(null);
+      repository.mockAddVisualTypeFailure(true);
       const result = await service.create({} as any);
       expect(result).toEqual(error("failed to add visual"));
     });
@@ -51,18 +51,19 @@ describe("VisualTypesService", () => {
 
   describe("getAll", () => {
     test("should return ok with a list of visual types", async () => {
-      const visuals: VisualTypes[] = [
-        visualSample
+      repository.visuals = [
+        { visualId: "1" } as VisualTypes,
+        { visualId: "2" } as VisualTypes,
       ];
-      mockVisualTypesRepository.findAllVisuals.mockResolvedValue(visuals);
 
       const result = await service.getAll();
 
-      expect(result).toEqual(ok(visuals));
+      expect(result).toEqual(ok(repository.visuals));
+      expect(repository.findAllVisualsCalled).toBe(true);
     });
 
     test("should return an error if fetching fails", async () => {
-      mockVisualTypesRepository.findAllVisuals.mockResolvedValue(null);
+      repository.findAllVisuals = () => Promise.resolve(null);
       const result = await service.getAll();
       expect(result).toEqual(error("failed to get visuals"));
     });
@@ -70,19 +71,16 @@ describe("VisualTypesService", () => {
 
   describe("get", () => {
     test("should return ok with the found visual type", async () => {
-      const visual = visualSample
-      mockVisualTypesRepository.findVisualType.mockResolvedValue(visual);
+      const visual = { visualId: "vt-1" } as VisualTypes;
+      repository.visuals.push(visual);
 
       const result = await service.get("vt-1");
 
-      expect(mockVisualTypesRepository.findVisualType).toHaveBeenCalledWith(
-        "vt-1",
-      );
+      expect(repository.findVisualTypeCalledWith).toBe("vt-1");
       expect(result).toEqual(ok(visual));
     });
 
     test("should return an error if not found", async () => {
-      mockVisualTypesRepository.findVisualType.mockResolvedValue(null);
       const result = await service.get("non-existent");
       expect(result).toEqual(error("Visual not found"));
     });
@@ -92,41 +90,32 @@ describe("VisualTypesService", () => {
     test("should return ok with the updated visual type", async () => {
       const visualId = "vt-1";
       const updateData = { color1: "#FFF" };
-      const existingVisual = visualSample;
-      const updatedVisual = { ...existingVisual, ...updateData };
-
-      mockVisualTypesRepository.findVisualType.mockResolvedValue(
-        existingVisual,
-      );
-      mockVisualTypesRepository.updateVisualType.mockResolvedValue(
-        updatedVisual,
-      );
+      const existingVisual = { visualId, color1: "#000" } as VisualTypes;
+      repository.visuals.push(existingVisual);
 
       const result = await service.update(visualId, updateData);
 
-      expect(mockVisualTypesRepository.findVisualType).toHaveBeenCalledWith(
-        visualId,
-      );
-      expect(mockVisualTypesRepository.updateVisualType).toHaveBeenCalledWith(
-        visualId,
-        updateData,
-      );
-      expect(result).toEqual(ok(updatedVisual));
+      expect(repository.findVisualTypeCalledWith).toBe(visualId);
+      expect(repository.updateVisualTypeCalledWith).toEqual({
+        id: visualId,
+        data: updateData,
+      });
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.value.color1).toBe("#FFF");
+      }
     });
 
     test("should return an error if visual to update is not found", async () => {
-      mockVisualTypesRepository.findVisualType.mockResolvedValue(null);
       const result = await service.update("non-existent", {});
       expect(result).toEqual(error("visual not found"));
     });
 
     test("should return an error if update fails", async () => {
       const visualId = "vt-1";
-      const existingVisual = visualSample;
-      mockVisualTypesRepository.findVisualType.mockResolvedValue(
-        existingVisual,
-      );
-      mockVisualTypesRepository.updateVisualType.mockResolvedValue(null);
+      const existingVisual = { visualId, color1: "#000" } as VisualTypes;
+      repository.visuals.push(existingVisual);
+      repository.updateVisualType = () => Promise.resolve(null);
 
       const result = await service.update(visualId, {});
 
@@ -137,32 +126,26 @@ describe("VisualTypesService", () => {
   describe("delete", () => {
     test("should return ok with the deleted visual type", async () => {
       const visualId = "vt-1";
-      const visual = visualSample;
-      mockVisualTypesRepository.findVisualType.mockResolvedValue(visual);
-      mockVisualTypesRepository.deleteVisualType.mockResolvedValue(visual);
+      const visual = { visualId } as VisualTypes;
+      repository.visuals.push(visual);
 
       const result = await service.delete(visualId);
 
-      expect(mockVisualTypesRepository.findVisualType).toHaveBeenCalledWith(
-        visualId,
-      );
-      expect(mockVisualTypesRepository.deleteVisualType).toHaveBeenCalledWith(
-        visualId,
-      );
+      expect(repository.findVisualTypeCalledWith).toBe(visualId);
+      expect(repository.deleteVisualTypeCalledWith).toBe(visualId);
       expect(result).toEqual(ok(visual));
     });
 
     test("should return an error if visual to delete is not found", async () => {
-      mockVisualTypesRepository.findVisualType.mockResolvedValue(null);
       const result = await service.delete("non-existent");
       expect(result).toEqual(error("Visual type not found"));
     });
 
     test("should return an error if delete fails", async () => {
       const visualId = "vt-1";
-      const visual = visualSample;
-      mockVisualTypesRepository.findVisualType.mockResolvedValue(visual);
-      mockVisualTypesRepository.deleteVisualType.mockResolvedValue(null);
+      const visual = { visualId } as VisualTypes;
+      repository.visuals.push(visual);
+      repository.deleteVisualType = () => Promise.resolve(null);
 
       const result = await service.delete(visualId);
 
@@ -171,7 +154,7 @@ describe("VisualTypesService", () => {
   });
 });
 
-const visualSample = {
+const visualSampleInput = {
   visualType: VisualTypeEnum.CAPSULE,
   size: VisualSizeEnum.LARGE,
   color1: "#111",
@@ -179,7 +162,4 @@ const visualSample = {
   color2: "#222",
   rotation: 0,
   opacity: 1,
-  createdAt: new Date(),
-  updatedAt: new Date(),
-  visualId: "vt-1",
 }
