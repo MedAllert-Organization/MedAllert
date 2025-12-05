@@ -4,14 +4,10 @@ import type { Env } from "../../common/type-helpers.js";
 import { MockUsersRepository } from "../_mocks/mock-users-repository.js";
 import { MockJWTProvider } from "../_mocks/mock-jwt-provider.js";
 
-// Set environment variable before any module evaluation
 process.env.JWT_SECRET = "test-secret-key";
 
-// Create mock instances that will be reused
 let mockUsersRepository: MockUsersRepository;
 let mockJWTProvider: MockJWTProvider;
-
-// Mock PrismaClient FIRST to prevent database connection
 jest.mock("../../infra/prisma/generated/prisma/index.js", () => ({
   PrismaClient: jest.fn().mockImplementation(() => ({
     users: {
@@ -43,7 +39,6 @@ jest.mock("../../infra/prisma/generated/prisma/index.js", () => ({
   })),
 }));
 
-// Mock Prisma client module to prevent database connection
 jest.mock("../../infra/prisma/client.js", () => ({
   prisma: {
     users: {
@@ -75,17 +70,13 @@ jest.mock("../../infra/prisma/client.js", () => ({
   },
 }));
 
-// Create mock instances - must be before jest.mock that references them
 const mockUsersRepoInstance = new MockUsersRepository();
 const mockJWTInstance = new MockJWTProvider();
-
-// Mock dependencies - this must come AFTER Prisma mocks
 jest.mock("../../repositories/users.js", () => ({
   defaultUsersRepository: mockUsersRepoInstance,
 }));
 
 jest.mock("../../common/jwt.js", () => {
-  // Ensure JWT_SECRET is set before the mock is created
   if (!process.env.JWT_SECRET) {
     process.env.JWT_SECRET = "test-secret-key";
   }
@@ -99,7 +90,6 @@ jest.mock("argon2", () => ({
   verify: mockArgon2Verify,
 }));
 
-// Import after mocks
 import { login } from "../../routes/auth/login.js";
 import { defaultUsersRepository } from "../../repositories/users.js";
 import { defaultTokenProvider } from "../../common/jwt.js";
@@ -111,11 +101,9 @@ describe("Login Route", () => {
     app = new Hono<Env>();
     app.route("/", login);
 
-    // Get the mocked instances
     mockUsersRepository = mockUsersRepoInstance;
     mockJWTProvider = mockJWTInstance;
 
-    // Reset mocks
     mockUsersRepository.users = [];
     mockJWTProvider.lastToken = null;
     mockArgon2Verify.mockClear();
@@ -123,7 +111,6 @@ describe("Login Route", () => {
   });
 
   test("should return 200 with token on successful login", async () => {
-    // Setup: Create a confirmed user
     const testUser = {
       userId: "user-123",
       fullName: "Test User",
@@ -137,10 +124,8 @@ describe("Login Route", () => {
     };
     mockUsersRepository.users.push(testUser);
 
-    // Mock argon2.verify to return true (password matches)
     mockArgon2Verify.mockResolvedValue(true);
 
-    // Mock JWT provider to return a token
     const mockToken = "mock-jwt-token";
     jest.spyOn(mockJWTProvider, "createToken").mockResolvedValue(mockToken);
 
@@ -160,12 +145,10 @@ describe("Login Route", () => {
     if (res.status !== 200) {
       const errorText = await res.text();
       console.error("Unexpected error response:", res.status, errorText);
-      // Try to get more details
       try {
         const errorJson = await res.json();
         console.error("Error JSON:", errorJson);
       } catch {
-        // Not JSON
       }
     }
     expect(res.status).toBe(200);
@@ -176,7 +159,6 @@ describe("Login Route", () => {
   });
 
   test("should return 401 when user is not found", async () => {
-    // Setup: No users in repository
     mockUsersRepository.users = [];
 
     const req = new Request("http://localhost/login", {
@@ -199,7 +181,6 @@ describe("Login Route", () => {
   });
 
   test("should return 401 when user exists but password is incorrect", async () => {
-    // Setup: Create a confirmed user
     const testUser = {
       userId: "user-123",
       fullName: "Test User",
@@ -213,7 +194,6 @@ describe("Login Route", () => {
     };
     mockUsersRepository.users.push(testUser);
 
-    // Mock argon2.verify to return false (password doesn't match)
     mockArgon2Verify.mockResolvedValue(false);
 
     const req = new Request("http://localhost/login", {
@@ -235,7 +215,6 @@ describe("Login Route", () => {
   });
 
   test("should return 401 when user exists but account is not confirmed", async () => {
-    // Setup: Create an unconfirmed user
     const testUser = {
       userId: "user-123",
       fullName: "Test User",
@@ -245,7 +224,7 @@ describe("Login Route", () => {
       timezoneId: null,
       image: null,
       acceptedTosAt: new Date(),
-      accountConfirmedAt: null, // Not confirmed
+      accountConfirmedAt: null,
     };
     mockUsersRepository.users.push(testUser);
 
