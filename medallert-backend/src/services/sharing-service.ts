@@ -3,14 +3,14 @@ import {
   defaultSharingRepository,
   type SharingRepository,
 } from "../repositories/sharing.js";
-import { defaultUsersRepository } from "../repositories/users.js";
-import { defaultTreatmentRepository } from "../repositories/treatments.js";
+import { defaultUsersRepository, type UsersRepository } from "../repositories/users.js";
+import { defaultTreatmentRepository, type TreatmentRepository } from "../repositories/treatments.js";
 
 export class SharingService {
   constructor(
     private readonly sharingRepository: SharingRepository,
-    private readonly usersRepository: typeof defaultUsersRepository,
-    private readonly treatmentRepository: typeof defaultTreatmentRepository,
+    private readonly usersRepository: UsersRepository,
+    private readonly treatmentRepository: TreatmentRepository,
   ) {}
 
   async shareTreatment(
