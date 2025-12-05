@@ -18,7 +18,6 @@ export const medication = new Hono();
 const medicationService = new MedicationService(
   defaultUsersRepository,
   defaultMedicationRepository,
-  defaultSoundTypesRepository,
   defaultTreatmentMedicationRepository
 );
 

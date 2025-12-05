@@ -6,7 +6,6 @@ import type {
   Medication,
   MedicationRepository,
 } from "../repositories/medications.js";
-import type { SoundTypesRepository } from "../repositories/sound_types.js";
 import type { UsersRepository } from "../repositories/users.js";
 import type { TreatmentMedicationRepository } from "../repositories/treatmentMedication.js";
 
@@ -29,7 +28,6 @@ export class MedicationService {
   constructor(
     private readonly usersRepository: UsersRepository,
     private readonly medicationRepository: MedicationRepository,
-    private readonly soundTypesRepository: SoundTypesRepository,
     private readonly treatmentMedication: TreatmentMedicationRepository
   ) {}
 
@@ -50,17 +48,10 @@ export class MedicationService {
       name,
       description,
       visualTypeId,
-      soundTypeId,
     }: MedicationType,
   ): PromiseResult<Medication> {
     const user = await this.usersRepository.findUser(userId);
     if (!user) return error("User not found!");
-
-    if (soundTypeId) {
-      const soundType =
-        await this.soundTypesRepository.findSoundType(soundTypeId);
-      if (!soundType) return error("Sound type not found");
-    }
 
     type OptionalId = string;
 
@@ -69,7 +60,6 @@ export class MedicationService {
         userId,
         name,
         description: description ?? null,
-        soundTypeId: soundTypeId as OptionalId | null,
       }),
     );
 
@@ -86,13 +76,6 @@ export class MedicationService {
     const medication =
       await this.medicationRepository.findMedication(medicationId);
     if (!medication) return error("Medication not found");
-
-    if (updateData.soundTypeId) {
-      const soundType = await this.soundTypesRepository.findSoundType(
-        updateData.soundTypeId,
-      );
-      if (!soundType) return error("Sound type not found");
-    }
 
     const [updatedOk, _, updatedMedication] = await t(
       this.medicationRepository.updateMedication(medicationId, {

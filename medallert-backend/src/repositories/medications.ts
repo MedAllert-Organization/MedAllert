@@ -7,7 +7,6 @@ export type Medication = {
   userId: string;
   name: string;
   description: string | null;
-  soundTypeId: string | null;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -20,14 +19,12 @@ export interface MedicationRepository {
     userId: string;
     name: string;
     description: string | null;
-    soundTypeId: string | null;
   }): Promise<Medication | null>;
   updateMedication(
     id: string,
     updateMedication: {
       name?: string | null;
       description?: string | null;
-      soundTypeId?: string | null;
       endTreatmentAt?: Date | null;
     },
   ): Promise<Medication | null>;
@@ -59,7 +56,6 @@ class PrismaMedicationRepository implements MedicationRepository {
     userId: string;
     name: string;
     description: string | null;
-    soundTypeId: string | null;
     endTreatmentAt: Date | null;
   }): Promise<Medication | null> {
     return this.prisma.medications.create({
@@ -71,9 +67,7 @@ class PrismaMedicationRepository implements MedicationRepository {
     id: string,
     updateMedication: {
       name?: string | null;
-
       description?: string | null;
-      soundTypeId?: string | null;
     },
   ): Promise<Medication | null> {
     const updateData = Object.fromEntries(

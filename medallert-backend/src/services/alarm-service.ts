@@ -1,9 +1,9 @@
+import { ok } from "assert";
 import Sound from "react-native-sound";
-import type { SoundTypesRepository } from "../repositories/sound_types.js";
-import { SoundFormatEnum } from "../infra/prisma/generated/prisma/index.js";
-import { object } from "zod";
+import { error, t } from "try";
 import z from "zod";
-import { t } from "try";
+import { SoundFormatEnum } from "../infra/prisma/generated/prisma/index.js";
+import type { SoundTypesRepository } from "../repositories/sound_types.js";
 
 type playAlarmParams = {
   soundTypeId: string;
@@ -11,22 +11,75 @@ type playAlarmParams = {
   loop?: boolean;
 };
 
+export const soundTypesID_SCHEMA = z.object({
+  soundId: z.string().min(1)
+})
+
+export const soundtype_schema = z.object({
+  name: z.string().min(1),
+  duration: z.number().positive(),
+  format: z.nativeEnum(SoundFormatEnum),
+  sound: z.string().min(1)
+});
+
 export class AlarmService {
   constructor(private readonly soundType_repository: SoundTypesRepository) {}
 
   private currentSound: Sound | null = null;
 
   async createAlarm(
-    name:string,duration:number,format:string,sound:string
+    payload:{name:string,duration:number,format:string,sound:string}
   ){
-    if(!Object.values(SoundFormatEnum).includes(format as SoundFormatEnum)){
-      return Error("This format is not surported");
-    }
-    const [createdOk,_,createdAlarm] = await t(
-      this.soundType_repository.addSoundType({
-        sound
-      })
-    );
+    return t(async () => {
+    const createdAlarm = await this.soundType_repository.addSoundType(payload);
+
+    if (!createdAlarm)
+      throw new Error("Failed to create alarm in database");
+
+    return createdAlarm;
+  });
+  }
+  
+  async deleteAlarm(soundTypeId: string){
+    return t(async() => {
+      const findAlarm = 
+      await this.soundType_repository.findSoundType(soundTypeId);
+    
+      if(!findAlarm)
+        return error("Alarm doesn't exist");
+    
+      const deletedSound = await 
+      this.soundType_repository.deleteSoundType(soundTypeId)
+    
+      if(!deletedSound)
+        return error("Failed to delete sound");
+      return ok(deletedSound);
+    });
+  }
+
+  async updateAlarm(
+    soundTypeId:string,
+    payload:{name:string,duration:number,format:SoundFormatEnum,sound:string}){
+      return t(async () =>{
+        const findAlarm = 
+        await this.soundType_repository.findSoundType(soundTypeId);
+      
+        if(!findAlarm)
+          return error("Alarm doesn't exist");
+        
+        const validation = soundtype_schema.safeParse({
+          payload
+        });
+
+        const [updateOk,updateErr,updateAlarm] = await t(
+          this.soundType_repository.updateSoundType(
+            soundTypeId,payload
+          )
+        )
+        if(!updateOk||!updateAlarm)
+          return error("Failed in update sound");
+        return ok(updateAlarm);
+      });
   }
 
   async playAlarm({ soundTypeId, volume = 1.0, loop = true }: playAlarmParams) {

@@ -181,8 +181,6 @@ class PrismaTreatmentRepository implements TreatmentRepository {
   return this.findTreatment(treatmentId);
 }
 
-
-
   async updateTreatment(
     id: string,
     updateTreatment: {

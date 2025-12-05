@@ -21,11 +21,20 @@ export enum SoundFormatEnum{
 export interface SoundTypesRepository {
   findSoundType(id: string): Promise<SoundTypes | null>;
   findAllSounds(): Promise<SoundTypes[] | null>;
-  addSoundType(newSoundType: { sound: string }): Promise<SoundTypes | null>;
+  addSoundType(
+    newSoundType: { 
+      name: string,
+      duration: number,
+      format: string,
+      sound: string }
+    ): Promise<SoundTypes | null>;
   updateSoundType(
     id: string,
     updateSoundType: {
-      sound?: string | null;
+      name?:  string | null,
+      format?: string | null,
+      duration?: number | null,
+      sound?: string | null,
     },
   ): Promise<SoundTypes | null>;
   deleteSoundType(id: string): Promise<SoundTypes | null>;
