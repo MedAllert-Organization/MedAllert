@@ -52,8 +52,9 @@ describe("PrismaMedicationRepository", () => {
       userId: "user-1",
       description: "New Description",
       soundTypeId: "sound-type-1",
+      endTreatmentAt: null,
     };
-    //@ts-ignore
+
     const added = await repository.addMedication(newMedication);
 
     expect(added).toHaveProperty("medicationId");

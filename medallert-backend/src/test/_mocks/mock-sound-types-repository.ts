@@ -5,7 +5,7 @@ import type {
 } from "../../repositories/sound_types.js";
 
 export class MockSoundTypesRepository implements SoundTypesRepository {
-  // Use a type that includes the DB-level soundId for the mock's internal state
+
   public soundTypes: (SoundTypes & { soundId: string })[] = [];
 
   findSoundType = jest.fn(
